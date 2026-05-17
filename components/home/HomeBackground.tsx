@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import LightRays from "@/components/react-bits/LightRays";
+import LineWaves from "@/components/react-bits/LineWaves";
 
 export default function HomeBackground({ trailImages }: { trailImages?: string[] }) {
   useEffect(() => {
@@ -95,21 +95,22 @@ export default function HomeBackground({ trailImages }: { trailImages?: string[]
 
   return (
     <div className="home-global-bg" style={{ overflow: 'hidden' }}>
-      {/* Premium LightRays Background Canvas */}
+      {/* Premium LineWaves Background Canvas */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.6, pointerEvents: 'none' }}>
-        <LightRays
-          raysOrigin="top-center"
-          raysColor="#ffffff"
-          raysSpeed={1}
-          lightSpread={0.5}
-          rayLength={3}
-          followMouse={true}
-          mouseInfluence={0.1}
-          noiseAmount={0}
-          distortion={0}
-          pulsating={false}
-          fadeDistance={1}
-          saturation={1}
+        <LineWaves
+          speed={0.3}
+          innerLineCount={32}
+          outerLineCount={36}
+          warpIntensity={1}
+          rotation={-45}
+          edgeFadeWidth={0}
+          colorCycleSpeed={1}
+          brightness={0.2}
+          color1="#ffffff"
+          color2="#ffffff"
+          color3="#ffffff"
+          enableMouseInteraction
+          mouseInfluence={2}
         />
       </div>
 
