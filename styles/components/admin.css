@@ -177,6 +177,9 @@
   border-radius: 24px;
   border: 1px solid var(--border);
 }
+.admin-section .filter-input {
+  padding-left: 1.2rem;
+}
 .admin-section-title {
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
