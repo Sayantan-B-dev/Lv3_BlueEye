@@ -98,3 +98,97 @@ export async function sendResetPasswordEmail(email: string, otp: string) {
     return { success: false, error: err };
   }
 }
+
+// ── Event notification emails ─────────────────────────────────────────────────
+
+export async function sendEventRegistrationConfirmation(data: {
+  guestName: string;
+  guestEmail: string;
+  eventTitle: string;
+  startDate: string;
+  venue: string;
+}) {
+  try {
+    const { error } = await resend.emails.send({
+      from: "BlueEye <onboarding@resend.dev>",
+      to: [data.guestEmail],
+      subject: `Your registration for ${data.eventTitle} is received`,
+      html: `
+        <div style="font-family:sans-serif;line-height:1.6;color:#333;max-width:560px;margin:0 auto">
+          <h2 style="color:#d4a017">Registration Received ✦</h2>
+          <p>Hi <strong>${data.guestName}</strong>,</p>
+          <p>Thank you for registering for <strong>${data.eventTitle}</strong>. Your request is <strong>pending review</strong>. We'll notify you once confirmed.</p>
+          <table style="width:100%;border-collapse:collapse;margin:1rem 0">
+            <tr><td style="padding:6px 0;color:#777">Event</td><td><strong>${data.eventTitle}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#777">Date</td><td>${data.startDate}</td></tr>
+            <tr><td style="padding:6px 0;color:#777">Venue</td><td>${data.venue}</td></tr>
+          </table>
+          <p style="font-size:0.85rem;color:#777">— BlueEye Events Team</p>
+        </div>`,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.error("[Email] Event confirmation failed:", err);
+    return { success: false, error: err };
+  }
+}
+
+export async function sendEventRegistrationApproved(data: {
+  guestName: string;
+  guestEmail: string;
+  eventTitle: string;
+  startDate: string;
+  venue: string;
+}) {
+  try {
+    const { error } = await resend.emails.send({
+      from: "BlueEye <onboarding@resend.dev>",
+      to: [data.guestEmail],
+      subject: `You're confirmed for ${data.eventTitle}! 🎉`,
+      html: `
+        <div style="font-family:sans-serif;line-height:1.6;color:#333;max-width:560px;margin:0 auto">
+          <h2 style="color:#d4a017">You're In! 🎉</h2>
+          <p>Hi <strong>${data.guestName}</strong>,</p>
+          <p>Your registration for <strong>${data.eventTitle}</strong> has been <strong style="color:#16a34a">approved</strong>. We look forward to seeing you!</p>
+          <table style="width:100%;border-collapse:collapse;margin:1rem 0">
+            <tr><td style="padding:6px 0;color:#777">Event</td><td><strong>${data.eventTitle}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#777">Date</td><td>${data.startDate}</td></tr>
+            <tr><td style="padding:6px 0;color:#777">Venue</td><td>${data.venue}</td></tr>
+          </table>
+          <p style="font-size:0.85rem;color:#777">— BlueEye Events Team</p>
+        </div>`,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.error("[Email] Event approval email failed:", err);
+    return { success: false, error: err };
+  }
+}
+
+export async function sendEventRegistrationRejected(data: {
+  guestName: string;
+  guestEmail: string;
+  eventTitle: string;
+}) {
+  try {
+    const { error } = await resend.emails.send({
+      from: "BlueEye <onboarding@resend.dev>",
+      to: [data.guestEmail],
+      subject: `Update on your registration for ${data.eventTitle}`,
+      html: `
+        <div style="font-family:sans-serif;line-height:1.6;color:#333;max-width:560px;margin:0 auto">
+          <h2 style="color:#d4a017">Registration Update</h2>
+          <p>Hi <strong>${data.guestName}</strong>,</p>
+          <p>Unfortunately we couldn't accommodate your request for <strong>${data.eventTitle}</strong> this time. We hope to see you at a future event.</p>
+          <p style="font-size:0.85rem;color:#777">— BlueEye Events Team</p>
+        </div>`,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.error("[Email] Event rejection email failed:", err);
+    return { success: false, error: err };
+  }
+}

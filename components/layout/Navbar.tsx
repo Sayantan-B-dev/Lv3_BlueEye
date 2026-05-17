@@ -73,6 +73,7 @@ export default function Navbar() {
           <nav>
             <Link href="/#categories">Categories</Link>
             <Link href="/artists">Artists</Link>
+            <Link href="/events">Events</Link>
             <Link href="/#how">How It Works</Link>
             <Link href="/#testimonials">Reviews</Link>
             <Link href="/contact">Contact</Link>
@@ -109,6 +110,7 @@ export default function Navbar() {
       <nav className={`mobile-nav ${navOpen ? 'open' : ''}`} id="mobileNav">
         <Link href="/#categories" onClick={closeNav}>Categories</Link>
         <Link href="/artists" onClick={closeNav}>Artists</Link>
+        <Link href="/events" onClick={closeNav}>Events</Link>
         <Link href="/#how" onClick={closeNav}>How It Works</Link>
         <Link href="/#testimonials" onClick={closeNav}>Reviews</Link>
         <Link href="/contact" onClick={closeNav}>Contact</Link>
