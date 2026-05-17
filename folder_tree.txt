@@ -1,0 +1,214 @@
+Rentertinment
+├── app
+│   ├── about
+│   │   └── page.tsx
+│   ├── admin
+│   │   ├── (dashboard)
+│   │   │   ├── artists
+│   │   │   │   ├── [id]
+│   │   │   │   │   ├── edit
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── new
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── import
+│   │   │   │   └── page.tsx
+│   │   │   ├── inquiries
+│   │   │   │   └── page.tsx
+│   │   │   ├── settings
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   └── login
+│   │       ├── layout.tsx
+│   │       └── page.tsx
+│   ├── api
+│   │   ├── admin
+│   │   │   ├── artists
+│   │   │   │   ├── [id]
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── route.ts
+│   │   │   ├── dashboard
+│   │   │   │   └── route.ts
+│   │   │   ├── inquiries
+│   │   │   │   ├── [id]
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── route.ts
+│   │   │   ├── stats
+│   │   │   │   └── route.ts
+│   │   │   └── upload
+│   │   │       └── route.ts
+│   │   ├── artists
+│   │   │   ├── [slug]
+│   │   │   │   └── route.ts
+│   │   │   ├── id
+│   │   │   │   └── [id]
+│   │   │   │       └── route.ts
+│   │   │   └── route.ts
+│   │   ├── auth
+│   │   │   ├── [...nextauth]
+│   │   │   │   └── route.ts
+│   │   │   ├── forgot-password
+│   │   │   │   └── route.ts
+│   │   │   ├── register
+│   │   │   │   └── route.ts
+│   │   │   ├── reset-password
+│   │   │   │   └── route.ts
+│   │   │   └── verify
+│   │   │       └── route.ts
+│   │   ├── filters
+│   │   │   └── route.ts
+│   │   ├── health
+│   │   │   └── db
+│   │   │       └── route.ts
+│   │   ├── inquiries
+│   │   │   ├── [id]
+│   │   │   │   └── route.ts
+│   │   │   └── route.ts
+│   │   ├── search
+│   │   │   └── route.ts
+│   │   ├── stats
+│   │   │   └── route.ts
+│   │   └── users
+│   │       └── favorites
+│   │           └── route.ts
+│   ├── artists
+│   │   ├── [slug]
+│   │   │   └── page.tsx
+│   │   └── page.tsx
+│   ├── category
+│   │   └── [category]
+│   │       └── page.tsx
+│   ├── city
+│   │   └── [city]
+│   │       └── page.tsx
+│   ├── contact
+│   │   └── page.tsx
+│   ├── login
+│   │   └── page.tsx
+│   ├── profile
+│   │   └── page.tsx
+│   ├── reset-password
+│   │   └── page.tsx
+│   ├── search
+│   │   └── page.tsx
+│   ├── apple-icon.png
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── icon.png
+│   ├── layout.tsx
+│   ├── not-found.tsx
+│   ├── page.tsx
+│   ├── robots.ts
+│   └── sitemap.ts
+├── components
+│   ├── admin
+│   │   ├── AdminSidebar.tsx
+│   │   └── ArtistForm.tsx
+│   ├── artists
+│   ├── auth
+│   │   ├── AuthProvider.tsx
+│   │   └── ResetPasswordContent.tsx
+│   ├── home
+│   │   ├── CategoryGrid.tsx
+│   │   ├── FeaturedArtists.tsx
+│   │   ├── HeroSection.tsx
+│   │   ├── HomeBackground.tsx
+│   │   └── StatsBar.tsx
+│   ├── inquiries
+│   ├── layout
+│   │   ├── Footer.tsx
+│   │   └── Navbar.tsx
+│   ├── search
+│   └── ui
+│       ├── ArtistCard.tsx
+│       ├── ArtistFilterBar.tsx
+│       ├── button.tsx
+│       ├── ConfirmModal.tsx
+│       ├── CustomCursor.tsx
+│       └── ScrollReveal.tsx
+├── docs
+│   ├── logs
+│   │   └── 2026-05.md
+│   ├── AI_CONTEXT.md
+│   ├── ProjectDB.md
+│   ├── ProjectDemo.html
+│   ├── ProjectLog.md
+│   ├── ProjectPlan.md
+│   ├── ProjectSRS.md
+│   └── ProjectTree.md
+├── hooks
+├── lib
+│   ├── auth
+│   │   └── authOptions.ts
+│   ├── config
+│   │   └── site.ts
+│   ├── context
+│   │   └── LoadingContext.tsx
+│   ├── db
+│   │   └── connect.ts
+│   ├── models
+│   │   ├── Admin.ts
+│   │   ├── Artist.ts
+│   │   ├── Inquiry.ts
+│   │   └── User.ts
+│   ├── services
+│   │   ├── artistService.ts
+│   │   ├── imageKitService.ts
+│   │   ├── importService.ts
+│   │   ├── searchService.ts
+│   │   └── userService.ts
+│   ├── utils
+│   │   ├── apiResponse.ts
+│   │   ├── email.ts
+│   │   ├── formatters.ts
+│   │   ├── slugify.ts
+│   │   └── validators.ts
+│   └── utils.ts
+├── public
+│   ├── android-chrome-192x192.png
+│   ├── android-chrome-512x512.png
+│   ├── apple-touch-icon.png
+│   ├── favicon-16x16.png
+│   ├── favicon-32x32.png
+│   ├── favicon.ico
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── icon.png
+│   ├── next.svg
+│   ├── site.webmanifest
+│   ├── vercel.svg
+│   └── window.svg
+├── styles
+│   ├── components
+│   │   ├── admin.css
+│   │   ├── animations.css
+│   │   ├── artistPage.css
+│   │   ├── base.css
+│   │   ├── home.css
+│   │   ├── layout.css
+│   │   └── ui.css
+│   └── globals.css
+├── types
+│   └── next-auth.d.ts
+├── .env.example
+├── .env.local
+├── .gitignore
+├── .npmrc
+├── .prettierrc
+├── AGENTS.md
+├── CLAUDE.md
+├── components.json
+├── DEPLOYMENT.md
+├── eslint.config.mjs
+├── folder_tree.txt
+├── next-env.d.ts
+├── next.config.ts
+├── package.json
+├── postcss.config.mjs
+├── ProjectTree.py
+├── README.md
+├── tailwind.config.ts
+├── tsconfig.json
+└── tsconfig.tsbuildinfo

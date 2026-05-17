@@ -49,6 +49,5 @@ BlueEye/
 │   ├── services/              # Business Logic
 │   └── utils/                 # Helpers
 ├── public/                    # Assets
-├── scratch/                   # Utility Scripts
 └── styles/                    # CSS (globals.css)
 ```

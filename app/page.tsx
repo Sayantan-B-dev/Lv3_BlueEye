@@ -38,7 +38,7 @@ export default async function HomePage() {
     <div className="relative overflow-hidden">
       <HomeBackground trailImages={trailImages} />
       <HeroSection categories={categories as string[]} trailImages={trailImages} />
-      <CategoryGrid counts={counts} />
+      <CategoryGrid counts={counts} categories={categories as string[]} />
       <FeaturedArtists artists={displayArtists} favorites={favorites} />
 
       {/* How it Works */}

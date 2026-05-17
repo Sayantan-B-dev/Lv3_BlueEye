@@ -25,11 +25,9 @@ Phase 5 — Final Polish + Security Hardening
 
 ## Recently Completed
 
+- Cleaned up legacy/unused directories (`src/`, `scratch/`) and files (`proxy.ts`, `migrate_project.py`, `image_upload_exaple.py`).
+- Regenerated the updated `folder_tree.txt` to match the clean codebase.
 - Fixed `/contact` booking page spacing so the form clears the fixed Navbar on mobile.
-- Phase 2: Database Models and Backend APIs
-- Phase 3: Public Frontend (Home, Artists, Profile, Search, Inquiries)
-- Phase 4: Admin Dashboard Overhaul (Full-width, SVG icons, Inquiries Status Patching)
-- Phase 5: Real-time Data Sync (Home stats, Dynamic Search Indexes)
 
 ## Important Decisions
 

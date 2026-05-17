@@ -1,32 +1,66 @@
 from pathlib import Path
 
-IGNORE_FOLDERS = {
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
+ROOT_DIR = Path(".").resolve()
+OUTPUT_FILE = "folder_tree.txt"
+
+IGNORE_DIRS = {
     "node_modules",
+    ".next",
+    ".git",
+    "dist",
+    "build",
+    "out",
+    ".turbo",
+    ".vercel",
     ".idea",
     ".vscode",
-    ".next",
-    "dist",
-    "build"
+    "__pycache__",
+    ".pytest_cache",
+    "coverage",
+    ".husky",
+    ".cache",
+    ".pnpm-store",
+    ".yarn",
+    ".parcel-cache",
+    ".expo",
+    ".nuxt",
+    ".svelte-kit",
+    "vendor",
+    "tmp",
+    "temp"
 }
 
-def generate_tree(path: Path, prefix: str = ""):
-    items = sorted(
-        [item for item in path.iterdir() if item.name not in IGNORE_FOLDERS],
-        key=lambda x: (x.is_file(), x.name.lower())
+IGNORE_FILES = {
+    ".DS_Store",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml"
+}
+
+tree_lines = []
+
+def build_tree(path: Path, prefix: str = ""):
+    entries = sorted(
+        [
+            entry for entry in path.iterdir()
+            if entry.name not in IGNORE_DIRS
+            and entry.name not in IGNORE_FILES
+        ],
+        key=lambda e: (e.is_file(), e.name.lower())
     )
 
-    for index, item in enumerate(items):
-        connector = "└── " if index == len(items) - 1 else "├── "
-        print(f"{prefix}{connector}{item.name}")
+    for index, entry in enumerate(entries):
+        connector = "└── " if index == len(entries) - 1 else "├── "
+        tree_lines.append(f"{prefix}{connector}{entry.name}")
 
-        if item.is_dir():
-            extension = "    " if index == len(items) - 1 else "│   "
-            generate_tree(item, prefix + extension)
+        if entry.is_dir():
+            extension = "    " if index == len(entries) - 1 else "│   "
+            build_tree(entry, prefix + extension)
 
-root_path = Path(".")
-print(root_path.resolve().name)
-generate_tree(root_path)
+tree_lines.append(ROOT_DIR.name)
+build_tree(ROOT_DIR)
+
+with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
+    file.write("\n".join(tree_lines))
+
+print(f"Folder tree saved to {OUTPUT_FILE}")
