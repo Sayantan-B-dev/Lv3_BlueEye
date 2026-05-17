@@ -1,41 +1,13 @@
-import { getArtists, getRandomArtists } from "@/lib/services/artistService";
-import { getDistinctCategories, getCategoryCounts } from "@/lib/services/searchService";
-import { getUserFavorites } from "@/lib/services/userService";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/authOptions";
-import HeroSection from "@/components/home/HeroSection";
-import CategoryGrid from "@/components/home/CategoryGrid";
-import FeaturedArtists from "@/components/home/FeaturedArtists";
+import HomeDynamicContent from "@/components/home/HomeDynamicContent";
 import StatsBar from "@/components/home/StatsBar";
-import HomeBackground from "@/components/home/HomeBackground";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
+
 
 export default async function HomePage() {
-  const [randomArtists, categories, counts, session] = await Promise.all([
-    getRandomArtists(20),
-    getDistinctCategories(),
-    getCategoryCounts(),
-    getServerSession(authOptions)
-  ]);
-  
-  const favorites = session?.user ? await getUserFavorites((session.user as any).id) : [];
-
-  // Shuffle categories & featured artists to cause data rotation on every single refresh!
-  const shuffledCategories = (categories as string[]).sort(() => 0.5 - Math.random());
-  
-  // Slice 6 random artists with images for the bento grid display!
-  const displayArtists = randomArtists.slice(0, 6);
-  
-  const trailImages = randomArtists
-    .map((a: any) => a.media?.images?.[0])
-    .filter((img: string | undefined) => !!img);
-
   return (
     <div className="relative overflow-hidden">
-      <HomeBackground trailImages={trailImages} />
-      <HeroSection categories={shuffledCategories} artists={randomArtists} />
+      {/* Client-Side Hydration Controller with Golden Pulsing skeletons */}
+      <HomeDynamicContent />
 
       {/* Infinite Scrolling Premium Gold Marquee Row */}
       <div className="marquee-wrap">
@@ -55,10 +27,6 @@ export default async function HomePage() {
           <div className="marquee-item">Transparent Lowest Commission</div>
         </div>
       </div>
-
-      <CategoryGrid counts={counts} categories={shuffledCategories} />
-
-      <FeaturedArtists artists={displayArtists} favorites={favorites} />
 
       {/* How it Works */}
       <section id="how">

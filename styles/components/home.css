@@ -15,6 +15,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: #020304; /* Premium ultra-dark luxury night black */
 }
 
 .hero-bg {
@@ -1598,4 +1599,37 @@ section {
 .mouse-trail-img.exit {
   opacity: 0 !important;
   transform: scale(0.1) rotate(15deg) !important;
+}
+
+/* ── SKELETON SHIMMER ANIMATION ─────────────────────── */
+@keyframes skeletonPulse {
+  0%, 100% {
+    opacity: 0.3;
+    border-color: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    opacity: 0.7;
+    border-color: rgba(212, 175, 55, 0.25);
+    box-shadow: 0 4px 30px rgba(212, 175, 55, 0.08);
+  }
+}
+
+.pulsing {
+  animation: skeletonPulse 1.8s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: homeFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes homeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

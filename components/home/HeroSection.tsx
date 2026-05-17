@@ -29,7 +29,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
     {
       _id: "fall-1",
       name: "Arijit Singh",
-      category: "Singers",
+      category: "singer",
       location: { city: "Mumbai", state: "MH" },
       media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Arijit+Singh"] },
       performance: { genres: ["Bollywood", "Romantic"] }
@@ -37,7 +37,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
     {
       _id: "fall-2",
       name: "Zakir Khan",
-      category: "Comedians",
+      category: "Comedian",
       location: { city: "Indore", state: "MP" },
       media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Zakir+Khan"] },
       performance: { genres: ["Comedy", "Storytelling"] }
@@ -45,7 +45,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
     {
       _id: "fall-3",
       name: "Nucleya",
-      category: "DJs",
+      category: "DJ",
       location: { city: "Goa", state: "GA" },
       media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Nucleya"] },
       performance: { genres: ["EDM", "Bass"] }
@@ -53,7 +53,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
     {
       _id: "fall-4",
       name: "Raftaar",
-      category: "Rappers",
+      category: "rapper",
       location: { city: "Delhi", state: "DL" },
       media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Raftaar"] },
       performance: { genres: ["Hip-Hop", "Rap"] }
@@ -91,25 +91,25 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
 
   const categoriesGrid = [
     {
-      name: "Singers",
+      name: "Singer",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
       )
     },
     {
-      name: "Comedians",
+      name: "Comedian",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/><path d="M9.5 10c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/><path d="M12 18c-2.4 0-4.4-1.2-5.4-3h10.8c-1 1.8-3 3-5.4 3Z"/><path d="M22 12A10 10 0 1 1 12 2a10 10 0 0 1 10 10Z"/></svg>
       )
     },
     {
-      name: "DJs",
+      name: "DJ",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 12l5 5"/></svg>
       )
     },
     {
-      name: "Rappers",
+      name: "rapper",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><line x1="16" y1="8" x2="16.01" y2="8"/></svg>
       )
@@ -175,7 +175,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
           </h1>
 
           <p className="hero-sub">
-            From chart-topping Bollywood singers to legendary Sufi maestros — discover, connect, and book artists across India and the world.
+            From chart-topping Bollywood singer to legendary Sufi maestros — discover, connect, and book artists across India and the world.
           </p>
 
           <form className="hero-search" onSubmit={handleSearch}>
@@ -190,17 +190,17 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
           </form>
 
           <div className="hero-tags">
-            <Link href="/search?category=Singers" className="hero-tag">
+            <Link href="/search?category=singer" className="hero-tag">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-              Singers
+              singer
             </Link>
-            <Link href="/search?category=Comedians" className="hero-tag">
+            <Link href="/search?category=Comedian" className="hero-tag">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/><path d="M9.5 10c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/><path d="M12 18c-2.4 0-4.4-1.2-5.4-3h10.8c-1 1.8-3 3-5.4 3Z"/><path d="M22 12A10 10 0 1 1 12 2a10 10 0 0 1 10 10Z"/></svg>
-              Comedians
+              Comedian
             </Link>
-            <Link href="/search?category=DJs" className="hero-tag">
+            <Link href="/search?category=DJ" className="hero-tag">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 12l5 5"/></svg>
-              DJs
+              DJ
             </Link>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
             <div className="hero-right-bottom-left">
               {categoriesGrid.map((cat, idx) => {
                 // Determine CSS animation offset delay for clockwise flow
-                // Singers (0) -> Comedians (1) -> Rappers (3) -> DJs (2)
+                // singer (0) -> Comedian (1) -> rapper (3) -> DJ (2)
                 let delay = "0s";
                 if (idx === 0) delay = "0s";
                 else if (idx === 1) delay = "-1.0s";
@@ -263,7 +263,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
 
                 return (
                   <Link 
-                    href={`/search?category=${cat.name}`} 
+                    href={`/category/${cat.name}`} 
                     key={cat.name} 
                     className="category-pulse-box"
                     style={{ animationDelay: delay }}

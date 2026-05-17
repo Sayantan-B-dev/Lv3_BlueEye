@@ -97,7 +97,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <LoadingProvider>
-          <CustomCursor />
           <Suspense fallback={null}>
             <ScrollReveal />
           </Suspense>
