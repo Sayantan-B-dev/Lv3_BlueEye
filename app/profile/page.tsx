@@ -48,7 +48,7 @@ export default function ProfilePage() {
           {user?.name?.[0] || user?.email?.[0]?.toUpperCase()}
         </div>
         <div>
-          <h1 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-playfair)', fontWeight: 900, marginBottom: '0.25rem' }}>{user?.name || "Member"}</h1>
+          <h1 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-display)', fontWeight: 900, marginBottom: '0.25rem' }}>{user?.name || "Member"}</h1>
           <p style={{ color: 'var(--text3)' }}>@{user?.username || "user"}</p>
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
              <span style={{ padding: '0.2rem 0.6rem', background: 'rgba(212,160,23,0.1)', color: 'var(--gold)', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>{user?.role}</span>

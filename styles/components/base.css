@@ -32,6 +32,10 @@ html {
   --radius-sm: 10px;
   --hdr-h: 64px;
   --tr: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Central Typography Variables - Swap these anytime to easily customize the entire website's fonts! */
+  --font-primary: var(--font-germania), var(--font-outfit), "Outfit", sans-serif;
+  --font-display: var(--font-limelight), var(--font-playfair), "Playfair Display", serif;
 }
 
 [data-theme="light"] {
@@ -51,10 +55,29 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   line-height: 1.5;
+  letter-spacing: 0.05em;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Headings & Brand Custom display text follow the premium display typography variable */
+h1, h2, h3, h4, h5, h6, .font-display, .limelight-regular {
+  font-family: var(--font-display);
+}
+
+.limelight-regular {
+  font-family: "Limelight", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.germania-one-regular {
+  font-family: "Germania One", system-ui;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.05em;
 }
 
 /* scrollbar */

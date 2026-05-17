@@ -66,7 +66,7 @@ export default function ResetPasswordContent() {
       <div style={{ width: '100%', maxWidth: '450px', background: 'var(--surface)', padding: '2.5rem', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
         
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-playfair)', fontWeight: 900, marginBottom: '0.5rem' }}>Set New Password</h1>
+          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', fontWeight: 900, marginBottom: '0.5rem' }}>Set New Password</h1>
           <p style={{ color: 'var(--text3)', fontSize: '0.9rem' }}>Choose a strong password for your account</p>
         </div>
 

@@ -51,7 +51,7 @@ header {
   flex-shrink: 0;
 }
 .logo-text {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.1;
@@ -59,7 +59,7 @@ header {
 .logo-text span {
   display: block;
   font-size: .6rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 400;
   color: var(--gold);
   letter-spacing: .12em;

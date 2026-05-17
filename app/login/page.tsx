@@ -184,7 +184,7 @@ function LoginPageContent() {
       <div style={{ width: '100%', maxWidth: '450px', background: 'var(--surface)', padding: '2.5rem', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
         
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-playfair)', fontWeight: 900, marginBottom: '0.5rem' }}>
+          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', fontWeight: 900, marginBottom: '0.5rem' }}>
             {view === 'login' ? 'Welcome Back' : view === 'register' ? 'Create Account' : view === 'forgot-password' ? 'Reset Password' : view === 'reset-password' ? 'Set New Password' : 'Verify Email'}
           </h1>
           <p style={{ color: 'var(--text3)', fontSize: '0.9rem' }}>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Playfair_Display, Outfit } from "next/font/google";
+import { Playfair_Display, Outfit, Limelight, Germania_One } from "next/font/google";
 import "@/styles/globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -18,6 +18,18 @@ const playfair = Playfair_Display({
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+});
+
+const limelight = Limelight({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-limelight",
+});
+
+const germania = Germania_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-germania",
 });
 
 import { siteConfig } from "@/lib/config/site";
@@ -82,7 +94,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="dark"
-      className={`${playfair.variable} ${outfit.variable} h-full antialiased`}
+      className={`${playfair.variable} ${outfit.variable} ${limelight.variable} ${germania.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <LoadingProvider>
