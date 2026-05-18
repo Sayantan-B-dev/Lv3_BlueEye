@@ -72,7 +72,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>© 2026 {siteConfig.name}. All rights reserved. Made with ♥ in India.</p>
+          <p>© 2018 {siteConfig.name}. All rights reserved. Made with ♥ in India.</p>
           <div className="footer-bottom-links">
             <Link href="/#">Terms</Link>
             <Link href="/#">Privacy</Link>

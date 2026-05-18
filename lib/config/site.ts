@@ -1,4 +1,4 @@
-const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || "BlueEye";
+const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || "Blue Eye Entertainment";
 
 export interface SiteConfig {
   name: string;
