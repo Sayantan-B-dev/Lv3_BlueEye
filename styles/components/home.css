@@ -771,7 +771,7 @@
   -webkit-mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
 }
 
-/* .marquee-wrap::before {
+.marquee-wrap::before {
   content: "";
   position: absolute;
   top: 0;
@@ -779,9 +779,9 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), transparent);
-} */
+} 
 
-/* .marquee-wrap::after {
+.marquee-wrap::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -789,12 +789,12 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), transparent);
-} */
+}
 
 .marquee-track {
   display: flex;
   gap: 3rem;
-  animation: marquee 25s linear infinite;
+  animation: marquee 25s linear infinite reverse;
   white-space: nowrap;
 }
 
