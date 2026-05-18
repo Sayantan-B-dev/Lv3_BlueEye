@@ -60,29 +60,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
     }
   ];
 
-  const fallbackEvents: Event[] = [
-    {
-      _id: "evt-1",
-      title: "Sunburn Arena Delhi",
-      category: "Concerts",
-      date: "2026-11-20",
-      status: "Upcoming"
-    },
-    {
-      _id: "evt-2",
-      title: "Laughter Therapy Tour",
-      category: "Comedy",
-      date: "2026-05-18",
-      status: "Ongoing"
-    },
-    {
-      _id: "evt-3",
-      title: "Sufi Beats Festival",
-      category: "Sufi Live",
-      date: "2026-06-05",
-      status: "Upcoming"
-    }
-  ];
+  const fallbackEvents: Event[] = [];
 
   // states for dynamic widgets
   const [artists, setArtists] = useState<Artist[]>(initialArtists && initialArtists.length > 0 ? initialArtists : fallbackArtists);

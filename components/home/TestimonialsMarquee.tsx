@@ -18,40 +18,7 @@ interface ReviewItem {
   role?: string;
 }
 
-const MOCK_REVIEWS: ReviewItem[] = [
-  {
-    _id: "mock1",
-    user: { name: "Priya Sharma", username: "priya_sharma", address: "Delhi" },
-    rating: 5,
-    text: "Booking Arijit Singh for our wedding felt impossible until we found ArtistHub. The team handled everything — from the rider to sound setup. It was an absolutely magical night.",
-    isEdited: false,
-    role: "Delhi"
-  },
-  {
-    _id: "mock2",
-    user: { name: "Rohan Mehta", username: "rohan_mehta", address: "Mumbai" },
-    rating: 5,
-    text: "ArtistHub has completely transformed how we book talent for our college fests. Extremely professional team, transparent contracts, and quick responses. Highly recommended!",
-    isEdited: false,
-    role: "Mumbai"
-  },
-  {
-    _id: "mock3",
-    user: { name: "Aarav Kapoor", username: "aarav_kapoor", address: "Bangalore" },
-    rating: 5,
-    text: "We booked Zakir Khan for our corporate annual meet. The crowd was in stitches and the coordination was incredibly smooth. Incredible experience!",
-    isEdited: false,
-    role: "Bangalore"
-  },
-  {
-    _id: "mock4",
-    user: { name: "Shalini Sen", username: "shalini_sen", address: "Kolkata" },
-    rating: 5,
-    text: "Getting premium indie bands for private gigs has never been easier. The platform is transparent, secure, and hosts the finest talent pool in India.",
-    isEdited: false,
-    role: "Kolkata"
-  }
-];
+const MOCK_REVIEWS: ReviewItem[] = [];
 
 export default function TestimonialsMarquee() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
