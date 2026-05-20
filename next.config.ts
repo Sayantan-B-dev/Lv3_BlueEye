@@ -18,6 +18,29 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Apply to all routes
+        source: "/(.*)",
+        headers: [
+          // Tell ALL crawlers (Google, Brave, Bing, DuckDuckGo) to index and allow snippets
+          { key: "X-Robots-Tag", value: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
+          // Prevent MIME type sniffing (security)
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Prevent clickjacking
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
+      {
+        // Cache static assets aggressively
+        source: "/(.*)\\.(ico|png|jpg|jpeg|svg|webp|woff|woff2)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

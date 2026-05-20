@@ -1,11 +1,98 @@
+import type { Metadata } from "next";
 import HomeDynamicContent from "@/components/home/HomeDynamicContent";
 import StatsBar from "@/components/home/StatsBar";
 import TestimonialsMarquee from "@/components/home/TestimonialsMarquee";
 import PlasmaWave from "@/components/react-bits/PlasmaWave";
+import { siteConfig } from "@/lib/config/site";
+
+export const metadata: Metadata = {
+  title: "Book Celebrity Artists in India | Blue Eye Entertainment",
+  description:
+    "Book singers, DJs, comedians, Bollywood celebrities and live performers across India for weddings, corporate events and college fests. Affordable artist booking at Blue Eye Entertainment.",
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  openGraph: {
+    title: "Book Celebrity Artists in India | Blue Eye Entertainment",
+    description:
+      "Book singers, DJs, comedians, Bollywood celebrities and live performers across India for weddings, corporate events and college fests.",
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Blue Eye Entertainment" }],
+    type: "website",
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Book Celebrity Artists in India | Blue Eye Entertainment",
+    description:
+      "Book singers, DJs, comedians, Bollywood celebrities and live performers across India.",
+    images: [siteConfig.ogImage],
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteConfig.name,
+  url: siteConfig.url,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${siteConfig.url}/search?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How do I book an artist on Blue Eye Entertainment?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Browse our curated list of artists, select one that fits your event, and submit a booking enquiry. Our team will revert with pricing and availability within 24 hours.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What types of artists can I book?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You can book Bollywood singers, DJs, stand-up comedians, live bands, folk artists, emcees, anchors, dancers, and many more performers for weddings, corporate events, and private parties across India.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is artist booking on Blue Eye Entertainment affordable?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Blue Eye Entertainment offers transparent, lowest-commission pricing. You get direct access to artists with no hidden fees, making it the most affordable premium artist booking platform in India.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Which cities does Blue Eye Entertainment serve?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We serve all major Indian cities including Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Jaipur, Lucknow, Ahmedabad, and many more.",
+      },
+    },
+  ],
+};
 
 export default async function HomePage() {
   return (
     <div className="relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* Client-Side Hydration Controller with Golden Pulsing skeletons */}
       <HomeDynamicContent />
 
