@@ -282,6 +282,9 @@ Avoid changing stable APIs unnecessarily.
 # UI Rules
 
 - Match `ProjectDemo.html` as closely as possible.
+- **Styling Architecture**: Use modular CSS files in `styles/components/` (e.g., `pages.css`, `base.css`) instead of Tailwind utility classes that rely on missing theme config (like `bg-surface/30` or `border-border/40`).
+- **CSS Variables**: Rely heavily on the project's predefined CSS variables (`var(--surface)`, `var(--gold)`, `var(--border)`, `var(--text)`) via inline styles or custom class names.
+- **Icons**: NEVER use emojis. Always use high-quality SVG icons to maintain a premium look.
 - Maintain spacing consistency.
 - Maintain responsive behavior.
 - Avoid inconsistent component styling.

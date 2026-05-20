@@ -21,7 +21,9 @@ BlueEye/
 │   │   ├── inquiries/         # Public Inquiry POST
 │   │   ├── search/            # Keyword/Filter Search
 │   │   └── stats/             # Public Home Stats
+│   ├── about/                 # About Page
 │   ├── artists/               # All Artists Page
+│   ├── book-artist/           # Artist Booking Page
 │   ├── category/              # Category Browsing
 │   ├── city/                  # City Browsing
 │   ├── profile/               # Artist Profile View

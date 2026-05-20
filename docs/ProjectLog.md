@@ -7,6 +7,8 @@ MVP is functionally complete pending final polish and deployment (Phase 5).
 
 ## Latest Major Changes
 
+- Added dedicated /about and /book-artist pages, separating artist booking from the general /contact directory.
+- Integrated environment-based contact directory and social media configurations on the new /contact page.
 - Upgraded Admin Dashboard with full-width layout, professional SVG icons, and live inquiry management.
 - Implemented advanced multi-filter (Category/City) and full-text search engine using MongoDB indexing.
 - Built real-time platform statistics API to show live database counts on the homepage.
