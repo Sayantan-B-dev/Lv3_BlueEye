@@ -111,7 +111,7 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
           <div className="booking-card">
             <h3 className="text-2xl font-bold mb-2">Book {artist.name}</h3>
             <p className="text-text2 mb-6 text-sm">Professional booking services for your private events, weddings, and corporate shows.</p>
-            <Link href={`/contact?artist=${artist.slug}`} className="btn-primary w-full py-4 text-lg">
+            <Link href={`/book-artist?artist=${artist.slug}`} className="btn-primary w-full py-4 text-lg">
               Check Availability & Pricing ✦
             </Link>
           </div>

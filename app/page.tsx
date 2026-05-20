@@ -37,7 +37,7 @@ export default async function HomePage() {
               <h2 className="section-title">Book in <span>3 Easy Steps</span></h2>
               <p className="section-desc" style={{ marginTop: '.5rem' }}>From discovery to performance — we make the entire booking experience seamless and stress-free.</p>
               <br /><br />
-              <a href="/contact" className="btn-primary btn-lg">Start Booking ✦</a>
+              <a href="/book-artist" className="btn-primary btn-lg">Start Booking ✦</a>
             </div>
 
             <div className="steps">

@@ -75,12 +75,12 @@ export default function Navbar() {
             <Link href="/#categories">Categories</Link>
             <Link href="/artists">Artists</Link>
             <Link href="/events">Events</Link>
-            <Link href="/#how">How It Works</Link>
-            <Link href="/#testimonials">Reviews</Link>
+            <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
           </nav>
 
           <div className="hdr-actions" style={{ position: 'relative' }}>
-            <Link href="/contact" className="btn-primary btn-xs" style={{ padding: '0.5rem 1.25rem' }}>Book Artist ✦</Link>
+            <Link href="/book-artist" className="btn-primary btn-xs" style={{ padding: '0.5rem 1.25rem' }}>Book Artist ✦</Link>
 
             {/* Account Dropdown Menu (PC Only) - Rendered on the RIGHT of Book Artist */}
             {session ? (
@@ -217,8 +217,8 @@ export default function Navbar() {
         <Link href="/#categories" onClick={closeNav}>Categories</Link>
         <Link href="/artists" onClick={closeNav}>Artists</Link>
         <Link href="/events" onClick={closeNav}>Events</Link>
-        <Link href="/#how" onClick={closeNav}>How It Works</Link>
-        <Link href="/#testimonials" onClick={closeNav}>Reviews</Link>
+        <Link href="/about" onClick={closeNav}>About</Link>
+        <Link href="/contact" onClick={closeNav}>Contact</Link>
         {user?.role === "admin" && (
           <Link href="/admin" onClick={closeNav} style={{ color: 'var(--gold)' }}>Admin Panel</Link>
         )}
