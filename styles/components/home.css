@@ -10,12 +10,12 @@
   overflow: hidden;
 }
 
+
 .home-global-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #020304; /* Premium ultra-dark luxury night black */
 }
 
 .hero-bg {
@@ -33,6 +33,7 @@
   background-size: 60px 60px;
   opacity: 0.3;
   mask-image: radial-gradient(ellipse 80% 80% at center, black 30%, transparent 100%);
+  z-index: 2;
 }
 
 [data-theme="light"] .hero-grid {
@@ -969,7 +970,7 @@ section {
 
 /* ── FEATURED ARTISTS ─────────────────────────────── */
 #artists {
-  background: var(--bg);
+  background: transparent;
 }
 
 .artists-header {
@@ -1313,7 +1314,7 @@ section {
 
 /* ── TESTIMONIALS ─────────────────────────────────── */
 #testimonials {
-  background: var(--bg);
+  background: transparent;
 }
 
 .testimonials-grid {

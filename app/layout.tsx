@@ -9,6 +9,7 @@ import AuthProvider from "@/components/auth/AuthProvider";
 
 import CustomCursor from "@/components/ui/CustomCursor";
 import { LoadingProvider } from "@/lib/context/LoadingContext";
+import GlobalEyeBackground from "@/components/ui/GlobalEyeBackground";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -96,6 +97,7 @@ export default function RootLayout({
       className={`${playfair.variable} ${outfit.variable} ${limelight.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <GlobalEyeBackground />
         <LoadingProvider>
           <Suspense fallback={null}>
             <ScrollReveal />

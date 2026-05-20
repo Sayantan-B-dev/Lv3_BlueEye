@@ -25,40 +25,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
   const router = useRouter();
 
   // fallback premium mock data to ensure layout always looks gorgeous
-  const fallbackArtists: Artist[] = [
-    {
-      _id: "fall-1",
-      name: "Arijit Singh",
-      category: "singer",
-      location: { city: "Mumbai", state: "MH" },
-      media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Arijit+Singh"] },
-      performance: { genres: ["Bollywood", "Romantic"] }
-    },
-    {
-      _id: "fall-2",
-      name: "Zakir Khan",
-      category: "Comedian",
-      location: { city: "Indore", state: "MP" },
-      media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Zakir+Khan"] },
-      performance: { genres: ["Comedy", "Storytelling"] }
-    },
-    {
-      _id: "fall-3",
-      name: "Nucleya",
-      category: "DJ",
-      location: { city: "Goa", state: "GA" },
-      media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Nucleya"] },
-      performance: { genres: ["EDM", "Bass"] }
-    },
-    {
-      _id: "fall-4",
-      name: "Raftaar",
-      category: "rapper",
-      location: { city: "Delhi", state: "DL" },
-      media: { images: ["https://placehold.co/600x400/1a1a1a/d4a017?text=Raftaar"] },
-      performance: { genres: ["Hip-Hop", "Rap"] }
-    }
-  ];
+  const fallbackArtists: Artist[] = [];
 
   const fallbackEvents: Event[] = [];
 

@@ -104,7 +104,7 @@ export default function HomeBackground({ trailImages }: { trailImages?: string[]
   return (
     <div className="home-global-bg" style={{ overflow: 'hidden' }}>
       {/* Premium LightRays Background Canvas */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.6, pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.25, pointerEvents: 'none' }}>
         <LightRays
           raysOrigin="top-center"
           raysColor="#1d4ed8"
