@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/seo/metadata";
+import { categoryPath, cityPath } from "@/lib/seo/slugs";
 
 export const revalidate = 3600;
 
@@ -11,24 +12,25 @@ function entry(
     lastModified?: Date;
   }
 ): MetadataRoute.Sitemap[number] {
-  return {
+  const item: MetadataRoute.Sitemap[number] = {
     url: siteUrl(path),
-    lastModified: options.lastModified ?? new Date(),
     changeFrequency: options.changeFrequency,
     priority: options.priority,
   };
+  if (options.lastModified) {
+    item.lastModified = options.lastModified;
+  }
+  return item;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-
   const staticEntries: MetadataRoute.Sitemap = [
-    entry("/", { priority: 1, changeFrequency: "daily", lastModified: now }),
-    entry("/artists", { priority: 0.9, changeFrequency: "daily", lastModified: now }),
-    entry("/events", { priority: 0.85, changeFrequency: "daily", lastModified: now }),
-    entry("/book-artist", { priority: 0.8, changeFrequency: "monthly", lastModified: now }),
-    entry("/about", { priority: 0.7, changeFrequency: "monthly", lastModified: now }),
-    entry("/contact", { priority: 0.7, changeFrequency: "monthly", lastModified: now }),
+    entry("/", { priority: 1, changeFrequency: "daily" }),
+    entry("/artists", { priority: 0.9, changeFrequency: "daily" }),
+    entry("/events", { priority: 0.85, changeFrequency: "daily" }),
+    entry("/book-artist", { priority: 0.8, changeFrequency: "monthly" }),
+    entry("/about", { priority: 0.7, changeFrequency: "monthly" }),
+    entry("/contact", { priority: 0.7, changeFrequency: "monthly" }),
   ];
 
   let artistEntries: MetadataRoute.Sitemap = [];
@@ -56,27 +58,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entry(`/artists/${artist.slug}`, {
         priority: 0.8,
         changeFrequency: "weekly",
-        lastModified: artist.updatedAt ? new Date(artist.updatedAt) : now,
+        lastModified: artist.updatedAt ? new Date(artist.updatedAt) : undefined,
       })
     );
 
     categoryEntries = categories
       .filter(Boolean)
       .map((category: string) =>
-        entry(`/category/${encodeURIComponent(category)}`, {
+        entry(categoryPath(category), {
           priority: 0.75,
           changeFrequency: "weekly",
-          lastModified: now,
         })
       );
 
     cityEntries = cities
       .filter(Boolean)
       .map((city: string) =>
-        entry(`/city/${encodeURIComponent(city)}`, {
+        entry(cityPath(city), {
           priority: 0.75,
           changeFrequency: "weekly",
-          lastModified: now,
         })
       );
 
@@ -84,7 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entry(`/events/${event.slug}`, {
         priority: 0.8,
         changeFrequency: "weekly",
-        lastModified: event.updatedAt ? new Date(event.updatedAt) : now,
+        lastModified: event.updatedAt ? new Date(event.updatedAt) : undefined,
       })
     );
   } catch (error) {

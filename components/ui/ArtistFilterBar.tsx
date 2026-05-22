@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { categoryPath } from "@/lib/seo/slugs";
 
 export default function ArtistFilterBar({ 
   categories, 
@@ -30,7 +31,7 @@ export default function ArtistFilterBar({
     if (finalCity) params.set("city", finalCity);
     
     if (basePath.startsWith('/category/') && finalCat) {
-      router.push(`/category/${encodeURIComponent(finalCat)}?${params.toString()}`);
+      router.push(`${categoryPath(finalCat)}?${params.toString()}`);
     } else {
       router.push(`${basePath}?${params.toString()}`);
     }

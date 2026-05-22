@@ -7,7 +7,7 @@ export function organizationJsonLd() {
     "@type": "Organization",
     name: siteConfig.name,
     url: siteConfig.url,
-    logo: `${siteConfig.url}/favicon-96x96.png`,
+    logo: `${siteConfig.url}/android-chrome-192x192.png`,
     description: siteConfig.description,
     sameAs: Object.values(siteConfig.links).filter(Boolean),
   };

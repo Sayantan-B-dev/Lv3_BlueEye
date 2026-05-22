@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { categoryPath } from "@/lib/seo/slugs";
 
 interface Artist {
   _id: string;
@@ -208,7 +209,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
 
                 return (
                   <Link 
-                    href={`/category/${cat.name}`} 
+                    href={categoryPath(cat.name)} 
                     key={cat.name} 
                     className="category-pulse-box"
                     style={{ animationDelay: delay }}
