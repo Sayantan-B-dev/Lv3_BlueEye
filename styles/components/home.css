@@ -1646,19 +1646,353 @@ section {
 /* ── SKELETON SHIMMER ANIMATION ─────────────────────── */
 @keyframes skeletonPulse {
   0%, 100% {
-    opacity: 0.3;
-    border-color: rgba(255, 255, 255, 0.04);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    opacity: 0.35;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
   }
   50% {
-    opacity: 0.7;
-    border-color: rgba(212, 175, 55, 0.25);
-    box-shadow: 0 4px 30px rgba(212, 175, 55, 0.08);
+    opacity: 0.85;
+    border-color: rgba(0, 210, 255, 0.28);
+    box-shadow: 0 4px 36px rgba(0, 210, 255, 0.12);
+  }
+}
+
+@keyframes homeSkelShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
 .pulsing {
   animation: skeletonPulse 1.8s ease-in-out infinite;
+}
+
+.home-skel-root {
+  position: relative;
+  z-index: 1;
+}
+
+.home-skel {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.03) 8%,
+    rgba(0, 210, 255, 0.12) 18%,
+    rgba(255, 255, 255, 0.03) 33%
+  );
+  background-size: 220% 100%;
+  animation: homeSkelShimmer 2.2s ease-in-out infinite, skeletonPulse 2.4s ease-in-out infinite;
+}
+
+.home-skel-badge {
+  width: 280px;
+  max-width: 100%;
+  height: 2rem;
+  border-radius: 100px;
+  margin-bottom: 1.5rem;
+}
+
+.home-skel-title {
+  width: min(520px, 100%);
+  height: clamp(2.8rem, 6vw, 4.2rem);
+  border-radius: 16px;
+  margin-bottom: 0.75rem;
+}
+
+.home-skel-title--short {
+  width: min(380px, 75%);
+  height: clamp(2.4rem, 5vw, 3.4rem);
+  margin-bottom: 1.25rem;
+}
+
+.home-skel-line {
+  width: min(480px, 95%);
+  height: 0.9rem;
+  border-radius: 8px;
+  margin-bottom: 0.55rem;
+}
+
+.home-skel-line--short {
+  width: min(340px, 70%);
+  margin-bottom: 2rem;
+}
+
+.home-skel-search {
+  width: 100%;
+  max-width: 580px;
+  height: 3.25rem;
+  border-radius: 14px;
+  margin-bottom: 1.5rem;
+}
+
+.home-skel-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.home-skel-tag {
+  width: 110px;
+  height: 2rem;
+  border-radius: 100px;
+}
+
+.home-skel-carousel {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.home-skel-carousel-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 88px;
+  height: 1.4rem;
+  border-radius: 100px;
+}
+
+.home-skel-carousel-line {
+  width: 65%;
+  height: 1.35rem;
+  border-radius: 8px;
+}
+
+.home-skel-carousel-line--sm {
+  width: 45%;
+  height: 0.85rem;
+}
+
+.home-skel-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-radius: 20px;
+  min-height: 240px;
+  background: rgba(10, 17, 26, 0.35);
+  border: 1px solid rgba(0, 210, 255, 0.12);
+}
+
+.home-skel-matrix-cell {
+  min-height: 88px;
+  border-radius: 12px;
+  animation-delay: calc(var(--i, 0) * 0.12s);
+}
+
+.home-skel-events {
+  border-radius: 20px;
+  padding: 1.25rem;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(10, 17, 26, 0.35);
+  border: 1px solid rgba(0, 210, 255, 0.12);
+}
+
+.home-skel-events-head {
+  width: 55%;
+  height: 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.25rem;
+}
+
+.home-skel-event-row {
+  height: 3.2rem;
+  border-radius: 12px;
+}
+
+.home-skel-scroll-hint {
+  opacity: 0.35;
+}
+
+.home-skel-label {
+  width: 140px;
+  height: 0.85rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+}
+
+.home-skel-section-title {
+  width: min(320px, 80%);
+  height: 2.4rem;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
+
+.home-skel-line--section {
+  width: min(420px, 90%);
+  margin-bottom: 0;
+}
+
+.home-skel-cat-card {
+  flex: 0 1 180px;
+  min-height: 140px;
+  border-radius: var(--radius);
+}
+
+.home-skel-btn {
+  width: 140px;
+  height: 2.75rem;
+  border-radius: 12px;
+}
+
+.home-skel-bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.home-skel-bento-card {
+  height: 340px;
+  border-radius: 26px;
+}
+
+/* Home load progress HUD */
+.home-load-progress {
+  position: fixed;
+  top: calc(var(--hdr-h) + 1rem);
+  right: clamp(1rem, 3vw, 2rem);
+  z-index: 120;
+  pointer-events: none;
+  animation: fadeUp 0.5s ease both;
+}
+
+.home-load-progress-card {
+  pointer-events: auto;
+  min-width: min(300px, calc(100vw - 2rem));
+  padding: 1rem 1.15rem;
+  border-radius: 16px;
+  background: rgba(10, 17, 26, 0.92);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), 0 0 24px rgba(0, 210, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.home-load-progress-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.home-load-progress-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+}
+
+.home-load-progress-value {
+  font-family: var(--font-mono), monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.home-load-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+
+.home-load-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), var(--saffron));
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-load-progress-sections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.home-load-progress-sections li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text3);
+}
+
+.home-load-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
+}
+
+.home-load-progress-sections li.is-done {
+  color: var(--text2);
+}
+
+.home-load-progress-sections li.is-done .home-load-progress-dot {
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.45);
+}
+
+.home-load-progress-status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text3);
+}
+
+.home-load-progress-sections li.is-done .home-load-progress-status {
+  color: var(--gold);
+}
+
+.home-section-enter {
+  animation: homeSectionEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes homeSectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .home-load-progress {
+    left: 1rem;
+    right: 1rem;
+  }
+
+  .home-load-progress-card {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .animate-fade-in {

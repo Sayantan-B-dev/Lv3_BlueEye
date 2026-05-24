@@ -6,6 +6,7 @@ import Review from "@/lib/models/Review";
 import User from "@/lib/models/User";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { getCache, setCache } from "@/lib/db/redis";
+import { cacheConfig, userReviewCacheKey } from "@/lib/config/cache";
 import mongoose from "mongoose";
 
 export async function GET() {
@@ -14,7 +15,7 @@ export async function GET() {
     if (!session || !session.user) return apiError("Unauthorized", 401);
 
     const userId = (session.user as any).id;
-    const cacheKey = `user_review_${userId}`;
+    const cacheKey = userReviewCacheKey(userId);
 
     // Try cache first
     const cachedReview = await getCache<any>(cacheKey);
@@ -39,7 +40,7 @@ export async function GET() {
     }
 
     // Cache user review for 5 minutes
-    await setCache(cacheKey, review || {}, 300);
+    await setCache(cacheKey, review || {}, cacheConfig.reviews.mineTtlSeconds);
 
     return apiSuccess(review);
   } catch (error: any) {

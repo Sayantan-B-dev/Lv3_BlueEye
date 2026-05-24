@@ -5,6 +5,11 @@ import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { getCache, setCache, invalidateCache } from "@/lib/db/redis";
+import {
+  cacheConfig,
+  userFavoritesCacheKey,
+  userFavoritesIdsCacheKey,
+} from "@/lib/config/cache";
 
 export async function GET() {
   try {
@@ -12,7 +17,7 @@ export async function GET() {
     if (!session) return apiError("Unauthorized", 401);
 
     const userId = (session.user as any).id;
-    const cacheKey = `user_favorites_${userId}`;
+    const cacheKey = userFavoritesCacheKey(userId);
 
     // 1. Try to fetch from Redis
     const cachedFavs = await getCache<any[]>(cacheKey);
@@ -26,7 +31,7 @@ export async function GET() {
     const favorites = user?.favorites || [];
 
     // 3. Cache inside Redis for 30 minutes (1800 seconds)
-    await setCache(cacheKey, favorites, 1800);
+    await setCache(cacheKey, favorites, cacheConfig.user.favoritesTtlSeconds);
     
     return apiSuccess(favorites);
   } catch (error: any) {
@@ -41,8 +46,8 @@ export async function POST(request: Request) {
 
     const { artistId } = await request.json();
     const userId = (session.user as any).id;
-    const cacheKey = `user_favorites_${userId}`;
-    const cacheIdsKey = `user_favorites_ids_${userId}`;
+    const cacheKey = userFavoritesCacheKey(userId);
+    const cacheIdsKey = userFavoritesIdsCacheKey(userId);
 
     await connectToDatabase();
 

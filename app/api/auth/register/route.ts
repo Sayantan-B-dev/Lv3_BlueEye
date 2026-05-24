@@ -5,6 +5,7 @@ import User from "@/lib/models/User";
 import { sendVerificationEmail } from "@/lib/utils/email";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { setCache } from "@/lib/db/redis";
+import { cacheConfig, pendingUserCacheKey } from "@/lib/config/cache";
 
 export async function POST(request: Request) {
   try {
@@ -45,8 +46,8 @@ export async function POST(request: Request) {
     };
 
     // Save to Redis for 10 minutes
-    const redisKey = `pending-user:${email.toLowerCase()}`;
-    const cached = await setCache(redisKey, pendingUserData, 600);
+    const redisKey = pendingUserCacheKey(email);
+    const cached = await setCache(redisKey, pendingUserData, cacheConfig.auth.pendingUserTtlSeconds);
 
     if (!cached) {
       // Fallback to unverified MongoDB user if Redis cache is not available

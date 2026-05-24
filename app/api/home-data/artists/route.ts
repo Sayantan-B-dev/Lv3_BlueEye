@@ -5,9 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    return apiSuccess(await getHomePageData());
+    const data = await getHomePageData();
+    return apiSuccess({ randomArtists: data.randomArtists });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to fetch home data";
+    const message = error instanceof Error ? error.message : "Failed to fetch artists";
     return apiError(message, 500);
   }
 }

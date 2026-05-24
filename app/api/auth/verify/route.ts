@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { getCache, invalidateCache } from "@/lib/db/redis";
+import { pendingUserCacheKey } from "@/lib/config/cache";
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     await connectToDatabase();
 
     // 1. Try to read from Redis
-    const redisKey = `pending-user:${email.toLowerCase()}`;
+    const redisKey = pendingUserCacheKey(email);
     const pendingUser = await getCache<any>(redisKey);
 
     if (pendingUser) {

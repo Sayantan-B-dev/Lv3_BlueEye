@@ -1,66 +1,144 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import HomeBackground from "./HomeBackground";
 import HeroSection from "./HeroSection";
 import CategoryGrid from "./CategoryGrid";
 import FeaturedArtists from "./FeaturedArtists";
+import HomeLoadProgress, { type HomeSectionKey } from "./HomeLoadProgress";
+import { HeroSkeleton, CategorySkeleton, FeaturedSkeleton } from "./HomePageSkeleton";
+import type { HomePageData } from "@/lib/services/homeDataService";
+import { cacheConfig } from "@/lib/config/cache";
+
+const CACHE_KEY = cacheConfig.homeData.clientSessionKey;
+
+const INITIAL_READY: Record<HomeSectionKey, boolean> = {
+  ambient: false,
+  hero: false,
+  categories: false,
+  featured: false,
+};
+
+function progressFromReady(ready: Record<HomeSectionKey, boolean>) {
+  const keys = Object.keys(ready) as HomeSectionKey[];
+  const done = keys.filter((k) => ready[k]).length;
+  return Math.round((done / keys.length) * 100);
+}
 
 export default function HomeDynamicContent() {
   const { data: session } = useSession();
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<{
-    randomArtists: any[];
-    categories: string[];
-    counts: any;
-  } | null>(null);
+  const [data, setData] = useState<Partial<HomePageData>>({});
+  const [ready, setReady] = useState(INITIAL_READY);
+  const [progress, setProgress] = useState(0);
+  const [showProgress, setShowProgress] = useState(true);
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  // 1. Fetch Home dynamic data exactly ONCE on mount
+  const markReady = useCallback((key: HomeSectionKey) => {
+    setReady((prev) => {
+      if (prev[key]) return prev;
+      const next = { ...prev, [key]: true };
+      setProgress(progressFromReady(next));
+      return next;
+    });
+  }, []);
+
+  const finishLoading = useCallback((homeData: HomePageData) => {
+    setData(homeData);
+    setReady({
+      ambient: true,
+      hero: true,
+      categories: true,
+      featured: true,
+    });
+    setProgress(100);
+    window.setTimeout(() => setShowProgress(false), 550);
+  }, []);
+
   useEffect(() => {
+    let cancelled = false;
+
     async function loadHomeData() {
       try {
-        let homeData = null;
-        const cached = typeof window !== "undefined" ? sessionStorage.getItem("artist_hub_home_data") : null;
+        const cached = typeof window !== "undefined" ? sessionStorage.getItem(CACHE_KEY) : null;
         if (cached) {
           try {
-            homeData = JSON.parse(cached);
-          } catch (e) {
-            console.error("Failed to parse cached home data from sessionStorage");
+            const parsed = JSON.parse(cached) as HomePageData;
+            if (!cancelled) finishLoading(parsed);
+            return;
+          } catch {
+            sessionStorage.removeItem(CACHE_KEY);
           }
         }
 
-        if (homeData) {
-          setData(homeData);
-          setLoading(false);
-        } else {
-          const res = await fetch("/api/home-data").then(r => r.json());
-          if (res.success && res.data) {
-            setData(res.data);
-            if (typeof window !== "undefined") {
-              sessionStorage.setItem("artist_hub_home_data", JSON.stringify(res.data));
-            }
-          }
+        setShowProgress(true);
+        setProgress(0);
+        setReady(INITIAL_READY);
+        setData({});
+
+        let randomArtists: HomePageData["randomArtists"] = [];
+        let categories: string[] = [];
+        let counts: Record<string, number> = {};
+        let artistsDone = false;
+        let categoriesDone = false;
+
+        const tryComplete = () => {
+          if (cancelled || !artistsDone || !categoriesDone) return;
+          const full: HomePageData = { randomArtists, categories, counts };
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(full));
+          markReady("hero");
+          finishLoading(full);
+        };
+
+        const artistsPromise = fetch("/api/home-data/artists")
+          .then((r) => r.json())
+          .then((artistsJson) => {
+            if (cancelled || !artistsJson.success) return;
+            randomArtists = artistsJson.data.randomArtists ?? [];
+            setData((d) => ({ ...d, randomArtists }));
+            markReady("ambient");
+            markReady("featured");
+            artistsDone = true;
+            tryComplete();
+          });
+
+        const categoriesPromise = fetch("/api/home-data/categories")
+          .then((r) => r.json())
+          .then((categoriesJson) => {
+            if (cancelled || !categoriesJson.success) return;
+            categories = categoriesJson.data.categories ?? [];
+            counts = categoriesJson.data.counts ?? {};
+            setData((d) => ({ ...d, categories, counts }));
+            markReady("categories");
+            categoriesDone = true;
+            tryComplete();
+          });
+
+        await Promise.allSettled([artistsPromise, categoriesPromise]);
+
+        if (!cancelled && (!artistsDone || !categoriesDone)) {
+          setShowProgress(false);
         }
       } catch (err) {
         console.error("Failed to load home page dynamic data:", err);
-      } finally {
-        setLoading(false);
+        if (!cancelled) setShowProgress(false);
       }
     }
-    loadHomeData();
-  }, []);
 
-  // 2. Fetch user favorites asynchronously only when session is active
+    loadHomeData();
+    return () => {
+      cancelled = true;
+    };
+  }, [finishLoading, markReady]);
+
   useEffect(() => {
     if (!session) return;
-    
+
     async function loadFavorites() {
       try {
-        const res = await fetch("/api/users/favorites").then(r => r.json());
+        const res = await fetch("/api/users/favorites").then((r) => r.json());
         if (res.success && Array.isArray(res.data)) {
-          setFavorites(res.data.map((f: any) => f._id || f));
+          setFavorites(res.data.map((f: { _id?: string }) => f._id || f));
         }
       } catch (err) {
         console.error("Failed to load favorites:", err);
@@ -69,60 +147,31 @@ export default function HomeDynamicContent() {
     loadFavorites();
   }, [session]);
 
-  const trailImages = data?.randomArtists
-    ? data.randomArtists.map((a: any) => a.media?.images?.[0]).filter((img: string | undefined) => !!img)
-    : [];
+  const trailImages = useMemo(() => {
+    if (!data.randomArtists) return [] as string[];
+    return data.randomArtists
+      .map((a: { media?: { images?: string[] } }) => a.media?.images?.[0])
+      .filter((img: string | undefined): img is string => !!img);
+  }, [data.randomArtists]);
 
-  const shuffledCategories = data?.categories
-    ? data.categories
-    : [];
-
-  const displayArtists = data?.randomArtists
-    ? data.randomArtists.slice(0, 6)
-    : [];
-
-  if (loading) {
-    return (
-      <>
-        {/* Placeholder Ambient Background Layer */}
-        <HomeBackground trailImages={[]} />
-        
-        {/* Breathtaking Shimmer Hero Section Skeleton */}
-        <div className="skeleton-hero-wrapper" style={{ minHeight: '85vh', padding: '10rem 2rem 5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
-          <div className="skeleton-title pulsing" style={{ width: 'min(520px, 90%)', height: '3.6rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '14px', marginBottom: '1.5rem' }}></div>
-          <div className="skeleton-subtitle pulsing" style={{ width: 'min(380px, 80%)', height: '1.2rem', background: 'rgba(255,255,255,0.015)', borderRadius: '8px', marginBottom: '3.5rem' }}></div>
-          <div className="skeleton-search pulsing" style={{ width: 'min(640px, 95%)', height: '3.4rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '30px', boxShadow: '0 4px 30px rgba(0,0,0,0.2)' }}></div>
-        </div>
-
-        {/* Shimmer Category Grid Skeleton */}
-        <div className="container" style={{ margin: '3rem auto 5rem', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            {[1, 2, 4, 5].map((i) => (
-              <div key={i} className="pulsing" style={{ width: '150px', height: '2.8rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '30px' }}></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bento Grid Skeleton */}
-        <div className="container" style={{ margin: '5rem auto', position: 'relative', zIndex: 1 }}>
-          <div className="skeleton-grid-title pulsing" style={{ width: '240px', height: '2.2rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', marginBottom: '2.5rem' }}></div>
-          <div className="skeleton-bento-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.5rem' }}>
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="skeleton-card pulsing" style={{ height: '340px', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '26px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}></div>
-            ))}
-          </div>
-        </div>
-      </>
-    );
-  }
+  const displayArtists = data.randomArtists?.slice(0, 6) ?? [];
+  const categories = data.categories ?? [];
+  const isFullyLoaded = ready.hero && ready.categories && ready.featured;
 
   return (
-    <div className="animate-fade-in">
-      <HomeBackground trailImages={trailImages} />
-      
-      <HeroSection categories={shuffledCategories} artists={data?.randomArtists || []} />
-      
-      {/* Premium Genre Icon Divider Marquee */}
+    <div className={isFullyLoaded ? "animate-fade-in" : undefined}>
+      <HomeBackground trailImages={ready.ambient ? trailImages : []} />
+
+      <HomeLoadProgress progress={progress} ready={ready} visible={showProgress} />
+
+      {ready.hero ? (
+        <div className="home-section-enter">
+          <HeroSection categories={categories} artists={data.randomArtists ?? []} />
+        </div>
+      ) : (
+        <HeroSkeleton />
+      )}
+
       <div className="genre-divider-marquee">
         <div className="divider-marquee-track">
           {[1, 2].map((loopIndex) => (
@@ -139,10 +188,22 @@ export default function HomeDynamicContent() {
           ))}
         </div>
       </div>
-      
-      <CategoryGrid counts={data?.counts || {}} categories={shuffledCategories} />
-      
-      <FeaturedArtists artists={displayArtists} favorites={favorites} />
+
+      {ready.categories ? (
+        <div className="home-section-enter">
+          <CategoryGrid counts={data.counts ?? {}} categories={categories} />
+        </div>
+      ) : (
+        <CategorySkeleton />
+      )}
+
+      {ready.featured ? (
+        <div className="home-section-enter">
+          <FeaturedArtists artists={displayArtists} favorites={favorites} />
+        </div>
+      ) : (
+        <FeaturedSkeleton />
+      )}
     </div>
   );
 }

@@ -6,11 +6,12 @@ import Review from "@/lib/models/Review";
 import User from "@/lib/models/User"; // needed for population
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { getCache, setCache, invalidateCache } from "@/lib/db/redis";
+import { cacheConfig, userReviewCacheKey } from "@/lib/config/cache";
 import mongoose from "mongoose";
 
 export async function GET() {
   try {
-    const cacheKey = "all_reviews_marquee";
+    const cacheKey = cacheConfig.reviews.allMarqueeKey;
 
     // Try cache first
     const cachedReviews = await getCache<any[]>(cacheKey);
@@ -26,7 +27,7 @@ export async function GET() {
       .lean();
 
     // Cache for 5 minutes (300 seconds)
-    await setCache(cacheKey, reviews, 300);
+    await setCache(cacheKey, reviews, cacheConfig.reviews.allMarqueeTtlSeconds);
 
     return apiSuccess(reviews);
   } catch (error: any) {
@@ -86,8 +87,8 @@ export async function POST(request: Request) {
     }
 
     // Invalidate caches
-    await invalidateCache("all_reviews_marquee");
-    await invalidateCache(`user_review_${userId}`);
+    await invalidateCache(cacheConfig.reviews.allMarqueeKey);
+    await invalidateCache(userReviewCacheKey(userId));
 
     return apiSuccess(review, review.isEdited ? "Review edited successfully" : "Review submitted successfully");
   } catch (error: any) {
@@ -123,8 +124,8 @@ export async function DELETE() {
     }
 
     // Invalidate caches
-    await invalidateCache("all_reviews_marquee");
-    await invalidateCache(`user_review_${userId}`);
+    await invalidateCache(cacheConfig.reviews.allMarqueeKey);
+    await invalidateCache(userReviewCacheKey(userId));
 
     return apiSuccess(null, "Review deleted successfully");
   } catch (error: any) {
