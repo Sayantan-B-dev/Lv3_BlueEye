@@ -221,13 +221,21 @@
   animation: fadeUp 0.7s 0.3s ease both;
   box-shadow: var(--shadow);
   transition: border-color var(--tr);
+  position: relative;
+  z-index: 30;
+  overflow: visible;
 }
 
 .hero-search:focus-within {
   border-color: var(--gold);
 }
 
-.hero-search input {
+.hero-search .artist-search-autocomplete {
+  flex: 1;
+  min-width: 100px;
+}
+
+.hero-search input:not(.artist-search-input--hero) {
   flex: 1;
   min-width: 100px;
   background: none;
@@ -239,7 +247,8 @@
   padding: 0.4rem 0.6rem;
 }
 
-.hero-search input::placeholder {
+.hero-search input::placeholder,
+.hero-search .artist-search-input--hero::placeholder {
   color: var(--text3);
 }
 

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { categoryPath } from "@/lib/seo/slugs";
+import ArtistSearchInput from "@/components/search/ArtistSearchInput";
 
 export default function ArtistFilterBar({ 
   categories, 
@@ -50,15 +51,16 @@ export default function ArtistFilterBar({
   return (
     <div className="filter-bar">
       <div className="filter-input-wrap">
-        <input 
-          type="text" 
-          placeholder="Search by name or keyword..." 
+        <ArtistSearchInput
+          variant="filter"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
-          className="filter-input"
+          onChange={setQ}
+          onSubmit={(query) => handleFilter(query)}
+          placeholder="Search by name or keyword..."
+          category={category || undefined}
+          city={city || undefined}
+          submitPath="/artists"
         />
-        <svg style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </div>
 
       <select 

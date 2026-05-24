@@ -9,6 +9,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import Link from "next/link";
 import ArtistCard from "@/components/ui/ArtistCard";
 import ArtistFilterBar from "@/components/ui/ArtistFilterBar";
+import { Suspense } from "react";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
 
@@ -54,7 +55,9 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <ArtistFilterBar categories={categories} cities={cities} />
+      <Suspense fallback={<div className="filter-bar" style={{ minHeight: 72 }} />}>
+        <ArtistFilterBar categories={categories} cities={cities} />
+      </Suspense>
 
       <div className="artists-grid">
         {artists.map((artist, i) => (

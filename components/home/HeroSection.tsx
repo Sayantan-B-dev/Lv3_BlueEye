@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { categoryPath } from "@/lib/seo/slugs";
+import ArtistSearchInput from "@/components/search/ArtistSearchInput";
 
 interface Artist {
   _id: string;
@@ -24,6 +25,8 @@ interface Event {
 
 export default function HeroSection({ categories, artists: initialArtists }: { categories: string[], artists?: Artist[] }) {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
 
   // fallback premium mock data to ensure layout always looks gorgeous
   const fallbackArtists: Artist[] = [];
@@ -98,11 +101,10 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const q = fd.get("q") as string;
-    const cat = fd.get("category") as string;
+    const q = searchQuery.trim();
+    if (!q) return;
     let url = `/search?q=${encodeURIComponent(q)}`;
-    if (cat) url += `&category=${encodeURIComponent(cat)}`;
+    if (searchCategory) url += `&category=${encodeURIComponent(searchCategory)}`;
     router.push(url);
   };
 
@@ -125,8 +127,21 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
           </p>
 
           <form className="hero-search" onSubmit={handleSearch}>
-            <input type="text" name="q" placeholder="Search artist by name…" required />
-            <select name="category">
+            <ArtistSearchInput
+              variant="hero"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search artist by name…"
+              category={searchCategory || undefined}
+              submitPath="/search"
+              required
+            />
+            <select
+              name="category"
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value)}
+              aria-label="Category filter"
+            >
               <option value="">All Categories</option>
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>

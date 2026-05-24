@@ -35,6 +35,67 @@ export async function searchArtists(
   };
 }
 
+export type ArtistSuggestion = {
+  _id: string;
+  name: string;
+  slug: string;
+  category: string;
+  location?: { city?: string; state?: string };
+  media?: { images?: string[] };
+};
+
+/** Fast prefix/keyword matching for live search dropdowns */
+export async function suggestArtists(
+  q: string,
+  filters?: { category?: string; city?: string },
+  limit = 8
+): Promise<ArtistSuggestion[]> {
+  await connectToDatabase();
+  const trimmed = q.trim();
+  if (!trimmed) return [];
+
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(escaped, "i");
+
+  const conditions: Record<string, unknown>[] = [
+    {
+      $or: [
+        { name: regex },
+        { category: regex },
+        { "location.city": regex },
+        { "search.name_lower": regex },
+        { "performance.genres": regex },
+      ],
+    },
+  ];
+
+  if (filters?.category) {
+    conditions.push({
+      $or: [
+        { "search.category_lower": filters.category.toLowerCase() },
+        { category: { $regex: new RegExp(`^${filters.category}$`, "i") } },
+      ],
+    });
+  }
+
+  if (filters?.city) {
+    conditions.push({
+      $or: [
+        { "search.city_lower": filters.city.toLowerCase() },
+        { "location.city": { $regex: new RegExp(`^${filters.city}$`, "i") } },
+      ],
+    });
+  }
+
+  const artists = await Artist.find({ $and: conditions })
+    .select("name slug category location media.images")
+    .sort({ featured: -1, name: 1 })
+    .limit(Math.min(12, Math.max(1, limit)))
+    .lean();
+
+  return JSON.parse(JSON.stringify(artists)) as ArtistSuggestion[];
+}
+
 export async function getDistinctCategories() {
   await connectToDatabase();
   return Artist.distinct("category");
