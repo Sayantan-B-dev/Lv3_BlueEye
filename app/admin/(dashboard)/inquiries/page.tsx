@@ -22,7 +22,11 @@ export default function AdminInquiriesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastBackedAt, setLastBackedAt] = useState<Date | null>(null);
+  const [backupMinsAgo, setBackupMinsAgo] = useState<number | null>(null);
   const [backingUp, setBackingUp] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [modal, setModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -42,6 +46,7 @@ export default function AdminInquiriesPage() {
   });
 
   const handleBackup = async () => {
+    setDropdownOpen(false);
     setBackingUp(true);
     try {
       const res = await fetch("/api/admin/backup", {
@@ -51,10 +56,13 @@ export default function AdminInquiriesPage() {
       });
       const data = await res.json();
       if (data.success) {
+        const now = new Date();
+        setLastBackedAt(now);
+        setBackupMinsAgo(0);
         setModal({
           isOpen: true,
           title: "Backup Successful",
-          message: "The inquiries database backup has been completed successfully.",
+          message: `Inquiries backup completed at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
           variant: "success",
           showCancel: false,
           confirmText: "Close",
@@ -76,7 +84,7 @@ export default function AdminInquiriesPage() {
       setModal({
         isOpen: true,
         title: "Backup Failed",
-        message: "An unexpected error occurred during backup. Please check your network and try again.",
+        message: "An unexpected error occurred. Please try again.",
         variant: "danger",
         showCancel: false,
         confirmText: "Close",
@@ -85,6 +93,74 @@ export default function AdminInquiriesPage() {
     } finally {
       setBackingUp(false);
     }
+  };
+
+  // Update "X min ago" display every 30 seconds
+  useEffect(() => {
+    if (!lastBackedAt) return;
+    const tick = () => {
+      const mins = Math.floor((Date.now() - lastBackedAt.getTime()) / 60_000);
+      setBackupMinsAgo(mins);
+    };
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, [lastBackedAt]);
+
+  const handleSync = () => {
+    setModal({
+      isOpen: true,
+      title: "Sync Up Inquiries",
+      message: "This will replace all current live inquiries with the last backup snapshot. This action cannot be undone. Are you sure?",
+      variant: "warning",
+      showCancel: true,
+      confirmText: "Yes, Sync Up",
+      onConfirm: async () => {
+        setSyncing(true);
+        try {
+          const res = await fetch("/api/admin/backup", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "inquiries" }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setModal({
+              isOpen: true,
+              title: "Sync Successful",
+              message: `Live inquiries have been restored from backup (${data.count} records synced).`,
+              variant: "success",
+              showCancel: false,
+              confirmText: "Close",
+              onConfirm: () => fetchInquiries(),
+            });
+          } else {
+            setModal({
+              isOpen: true,
+              title: "Sync Failed",
+              message: "Sync failed: " + (data.error || "Unknown error"),
+              variant: "danger",
+              showCancel: false,
+              confirmText: "Close",
+              onConfirm: () => {},
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setModal({
+            isOpen: true,
+            title: "Sync Failed",
+            message: "An unexpected error occurred during sync. Please try again.",
+            variant: "danger",
+            showCancel: false,
+            confirmText: "Close",
+            onConfirm: () => {},
+          });
+        } finally {
+          setSyncing(false);
+        }
+      },
+    });
   };
 
   const fetchInquiries = async (query = "") => {
@@ -182,24 +258,56 @@ export default function AdminInquiriesPage() {
           </h1>
           <p className="admin-subtitle">Manage lead requests from clients interested in artists.</p>
         </div>
-        <div className="flex gap-4">
-          <button 
-            onClick={handleBackup} 
-            disabled={backingUp} 
-            className="btn-outline flex items-center gap-2 border-gold/40 text-gold hover:bg-gold/10 disabled:opacity-50"
-          >
-            {backingUp ? (
-              <>
-                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
-                Backing up...
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Back Up RN
-              </>
+        <div className="flex gap-4 items-center">
+          {/* Data Control Dropdown */}
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setDropdownOpen(o => !o)}
+              disabled={backingUp || syncing}
+              className="btn-outline flex items-center gap-2 disabled:opacity-50"
+              style={{ borderColor: "var(--border)", color: "var(--gold)" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+              Data Control
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: "transform 0.2s", transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {dropdownOpen && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: 220, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", zIndex: 50, boxShadow: "var(--shadow)" }}>
+                {/* Last backup timestamp */}
+                {lastBackedAt && (
+                  <div style={{ padding: "6px 10px 10px", fontSize: "0.7rem", color: "var(--text3)", borderBottom: "1px solid var(--border)", marginBottom: 6 }}>
+                    Last backup: {backupMinsAgo === 0 ? "just now" : `${backupMinsAgo}m ago`} · {lastBackedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                )}
+                <button
+                  onClick={handleBackup}
+                  disabled={backingUp}
+                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px", borderRadius: 8, background: "transparent", border: "none", color: "var(--text)", cursor: "pointer", fontSize: "0.85rem", fontWeight: 500 }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "var(--bg3)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  {backingUp
+                    ? <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  }
+                  {backingUp ? "Backing up..." : "Backup Now"}
+                </button>
+                <button
+                  onClick={() => { setDropdownOpen(false); handleSync(); }}
+                  disabled={syncing}
+                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px", borderRadius: 8, background: "transparent", border: "none", color: "var(--text)", cursor: "pointer", fontSize: "0.85rem", fontWeight: 500 }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "var(--bg3)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  {syncing
+                    ? <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                  }
+                  Sync Up
+                </button>
+              </div>
             )}
-          </button>
+          </div>
 
           {selectedIds.length > 0 && (
             <button onClick={handleBulkDelete} className="btn-outline border-crimson text-crimson bg-crimson/10 flex items-center gap-2">
