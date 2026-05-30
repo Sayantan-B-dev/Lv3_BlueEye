@@ -9,6 +9,7 @@ function BookArtistForm() {
   const artistSlug = searchParams.get("artist") || "";
   const { setIsLoading } = useLoading();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -16,6 +17,15 @@ function BookArtistForm() {
     setStatus("loading");
     const fd = new FormData(e.currentTarget);
     const data = Object.fromEntries(fd);
+
+    // Client-side validation
+    const phone = data.clientPhone as string;
+    if (!phone || phone.replace(/\D/g, '').length < 10) {
+      setStatus("error");
+      setMessage("Please enter a valid phone number (at least 10 digits).");
+      setIsLoading(false);
+      return;
+    }
 
     // Default valid ObjectId if artist not found via slug (or keep empty if backend handles it)
     data.artistId = "5f8f8c44b54764421b7156e9"; 
@@ -29,15 +39,15 @@ function BookArtistForm() {
       const result = await res.json();
       if (res.ok) {
         setStatus("success");
-        console.log("Inquiry submitted! Our team will contact you shortly.");
+        setMessage("Inquiry submitted! Our team will contact you shortly.");
         (e.target as HTMLFormElement).reset();
       } else {
         setStatus("error");
-        console.error(result.message || "Failed to submit inquiry.");
+        setMessage(result.message || "Failed to submit inquiry.");
       }
     } catch {
       setStatus("error");
-      console.error("Network error occurred.");
+      setMessage("Network error occurred.");
     } finally {
       setIsLoading(false);
       setStatus("idle");
@@ -49,6 +59,18 @@ function BookArtistForm() {
       <div className="w-full max-w-2xl">
         <div className="section-label justify-center mx-auto w-full">Booking Desk</div>
         <h1 className="section-title text-center mb-10">Book an <span>Artist</span></h1>
+
+        {status === "error" && message && (
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium text-center">
+            {message}
+          </div>
+        )}
+        
+        {status === "success" && message && (
+          <div className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium text-center">
+            {message}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="admin-section space-y-8">
           
