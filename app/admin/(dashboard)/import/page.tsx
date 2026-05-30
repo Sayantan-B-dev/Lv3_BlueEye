@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function AdminImportPage() {
+  const [importType, setImportType] = useState<"artists" | "events" | "reviews">("artists");
   const [jsonText, setJsonText] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [result, setResult] = useState<any>(null);
@@ -13,7 +14,13 @@ export default function AdminImportPage() {
       const parsed = JSON.parse(jsonText);
       const data = Array.isArray(parsed) ? parsed : [parsed];
 
-      const res = await fetch("/api/admin/artists", {
+      const endpoint = importType === "artists" 
+        ? "/api/admin/artists" 
+        : importType === "events" 
+        ? "/api/admin/events" 
+        : "/api/admin/reviews";
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -45,9 +52,29 @@ export default function AdminImportPage() {
             <h1 className="admin-title" style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>
               Bulk JSON <span style={{ color: 'var(--gold)' }}>Import</span>
             </h1>
-            <p className="admin-subtitle">Paste a JSON array of artists to bulk import or update the database.</p>
+            <p className="admin-subtitle">Paste a JSON array to bulk import or update the database.</p>
           </div>
         </div>
+      </div>
+
+      {/* Type Selection */}
+      <div className="admin-form-row-section">
+        <h3 className="admin-form-row-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+          Import Type
+        </h3>
+        <select
+          value={importType}
+          onChange={(e) => setImportType(e.target.value as any)}
+          className="admin-input-base"
+          style={{ maxWidth: '300px' }}
+        >
+          <option value="artists">Artists</option>
+          <option value="events">Events</option>
+          <option value="reviews">Reviews</option>
+        </select>
       </div>
 
       {/* JSON Input */}
@@ -61,14 +88,78 @@ export default function AdminImportPage() {
         <textarea
           value={jsonText}
           onChange={e => setJsonText(e.target.value)}
-          rows={18}
+          rows={24}
           className="admin-input-base admin-textarea"
-          style={{ fontFamily: 'monospace', fontSize: '0.85rem', minHeight: '400px' }}
-          placeholder={'[\n  {\n    "name": "Artist Name",\n    "category": "Singer",\n    "location": { "city": "Mumbai" }\n  }\n]'}
+          style={{ fontFamily: 'monospace', fontSize: '0.85rem', minHeight: '500px', whiteSpace: 'pre' }}
+          placeholder={
+            importType === "artists" 
+              ? `[
+  {
+    "id": 1,
+    "slug": "artist-name",
+    "name": "Artist Name",
+    "category": "Singer",
+    "category_tag": "Vocalist",
+    "source": { "url": "https://example.com/source", "input_category": "singers", "input_page": 1 },
+    "location": { "city": "Mumbai", "state": "MH", "country": "India" },
+    "performance": {
+      "duration_minutes": { "min": 60, "max": 120 },
+      "team_members": { "min": 1, "max": 4 },
+      "genres": ["Pop", "Jazz"],
+      "languages": ["English", "Hindi"]
+    },
+    "booking": { "url": "https://booking.com/artist" },
+    "booking_link": "https://booking.com/artist",
+    "about": "Detailed bio here...",
+    "custom_fields": { "awards": "Grammy 2023" },
+    "faq": [
+      { "question": "Are you available for weddings?", "answer": "Yes, I perform at weddings." }
+    ],
+    "media": {
+      "videos": ["https://youtube.com/watch?v=123"],
+      "images": ["https://example.com/img1.jpg"]
+    },
+    "featured": false
+  }
+]` 
+              : importType === "events"
+              ? `[
+  {
+    "title": "Summer Music Festival",
+    "slug": "summer-music-festival-2024",
+    "description": "Full HTML or markdown description here.",
+    "shortDescription": "A quick summary of the event.",
+    "category": "Concert",
+    "venue": {
+      "name": "Grand Arena",
+      "city": "Mumbai",
+      "state": "MH",
+      "address": "123 Stadium Road"
+    },
+    "startDate": "2024-12-01T18:00:00Z",
+    "endDate": "2024-12-01T23:00:00Z",
+    "coverImage": "https://example.com/cover.jpg",
+    "artists": ["65f1a2b3c4d5e6f7a8b9c0d1"],
+    "status": "Upcoming",
+    "featured": true,
+    "capacity": 5000,
+    "registrationOpen": true,
+    "tags": ["music", "live", "festival"]
+  }
+]`
+              : `[
+  {
+    "user": "65f1a2b3c4d5e6f7a8b9c0d1",
+    "rating": 5,
+    "text": "Absolutely incredible experience! The booking process was seamless.",
+    "isEdited": false
+  }
+]`
+          }
         ></textarea>
         <div className="flex justify-between items-center mt-6">
           <p className="admin-field-label" style={{ marginBottom: 0 }}>
-            Ensure the JSON strictly follows the artist schema.
+            Ensure the JSON strictly follows the {importType} schema.
           </p>
           <button
             onClick={handleImport}

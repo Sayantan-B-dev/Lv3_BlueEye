@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { getEvents, createEvent, getEventStats } from "@/lib/services/eventService";
+import { importEventsFromJSON } from "@/lib/services/importService";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,12 @@ export async function POST(req: NextRequest) {
   if (!await requireAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = await req.json();
+
+    if (Array.isArray(body)) {
+      const summary = await importEventsFromJSON(body);
+      return NextResponse.json({ success: true, data: summary, message: "Bulk import completed" }, { status: 201 });
+    }
+
     if (!body.title || !body.startDate || !body.category) {
       return NextResponse.json({ error: "title, category, and startDate are required" }, { status: 400 });
     }
