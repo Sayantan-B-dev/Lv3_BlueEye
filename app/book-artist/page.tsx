@@ -19,6 +19,30 @@ function BookArtistForm() {
     const data = Object.fromEntries(fd);
 
     // Client-side validation
+    const artistName = (data.artistName as string || "").trim();
+    if (!artistName) {
+      setStatus("error");
+      setMessage("Artist name is required.");
+      setIsLoading(false);
+      return;
+    }
+
+    const clientName = (data.clientName as string || "").trim();
+    if (!clientName) {
+      setStatus("error");
+      setMessage("Your name is required.");
+      setIsLoading(false);
+      return;
+    }
+
+    const email = (data.clientEmail as string || "").trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus("error");
+      setMessage("Please enter a valid email address.");
+      setIsLoading(false);
+      return;
+    }
+
     const phone = data.clientPhone as string;
     if (!phone || phone.replace(/\D/g, '').length < 10) {
       setStatus("error");
@@ -27,8 +51,14 @@ function BookArtistForm() {
       return;
     }
 
-    // Default valid ObjectId if artist not found via slug (or keep empty if backend handles it)
-    data.artistId = "5f8f8c44b54764421b7156e9"; 
+    const eventType = data.eventType as string;
+    if (!eventType) {
+      setStatus("error");
+      setMessage("Please select a type of event.");
+      setIsLoading(false);
+      return;
+    }
+
 
     try {
       const res = await fetch("/api/inquiries", {
