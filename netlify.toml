@@ -1,0 +1,43 @@
+# Netlify Configuration for BlueEyeEntertainment
+# Redirects all traffic from .netlify.app to the primary domain
+
+# Redirect all traffic from Netlify domain to primary domain (301 permanent redirect)
+[[redirects]]
+from = "https://blueeyeentertainment.netlify.app/*"
+to = "https://blueeyeentertainment.in/:splat"
+status = 301
+force = true
+
+# Handle apex to www redirect on main domain (optional - uncomment if needed)
+# [[redirects]]
+# from = "https://www.blueeyeentertainment.in/*"
+# to = "https://blueeyeentertainment.in/:splat"
+# status = 301
+# force = true
+
+# Preserve trailing slash behavior
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+conditions = {Trailing-Slash = "add"}
+
+# Cache control for static assets
+[[headers]]
+for = "/_next/static/*"
+[headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+for = "/*.{js,css,svg,woff,woff2}"
+[headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+
+# Security headers
+[[headers]]
+for = "/*"
+[headers.values]
+  X-Content-Type-Options = "nosniff"
+  X-Frame-Options = "SAMEORIGIN"
+  X-XSS-Protection = "1; mode=block"
+  Referrer-Policy = "strict-origin-when-cross-origin"

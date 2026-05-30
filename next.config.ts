@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.2"],
+  // NextAuth domain configuration - ensure cookies work correctly across domains
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  },
   images: {
     remotePatterns: [
       {
