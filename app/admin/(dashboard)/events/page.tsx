@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import BulkDeleteOtpModal from "@/components/ui/BulkDeleteOtpModal";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -30,6 +31,9 @@ export default function AdminEventsPage() {
     showCancel: true,
     confirmText: "Confirm",
   });
+  const [otpModal, setOtpModal] = useState(false);
+  const [pendingBulkDeleteIds, setPendingBulkDeleteIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleBackup = async () => {
     setDropdownOpen(false);
@@ -164,6 +168,7 @@ export default function AdminEventsPage() {
   }, []);
 
   async function handleDelete(id: string, title: string) {
+    // First confirmation
     setModal({
       isOpen: true,
       title: "Delete Event",
@@ -171,12 +176,43 @@ export default function AdminEventsPage() {
       variant: "danger",
       showCancel: true,
       confirmText: "Delete",
-      onConfirm: async () => {
-        await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
-        setEvents(prev => prev.filter(e => e._id !== id));
+      onConfirm: () => {
+        // Second confirmation
+        setModal({
+          isOpen: true,
+          title: "⚠️ Final Confirmation",
+          message: `This is your FINAL warning. "${title}" will be permanently removed. Proceed?`,
+          variant: "danger",
+          showCancel: true,
+          confirmText: "Yes, Delete Permanently",
+          onConfirm: async () => {
+            await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+            setEvents(prev => prev.filter(e => e._id !== id));
+          }
+        });
       }
     });
   }
+
+  const handleBulkDelete = () => {
+    setPendingBulkDeleteIds([...selectedIds]);
+    setOtpModal(true);
+  };
+
+  const executeBulkDelete = async () => {
+    try {
+      await Promise.all(
+        pendingBulkDeleteIds.map(id => fetch(`/api/admin/events/${id}`, { method: "DELETE" }))
+      );
+      setEvents(prev => prev.filter(e => !pendingBulkDeleteIds.includes(e._id)));
+      setSelectedIds([]);
+    } catch (err) {
+      console.error("Failed to bulk delete events");
+    } finally {
+      setOtpModal(false);
+      setPendingBulkDeleteIds([]);
+    }
+  };
 
   return (
     <div className="fade-in">
@@ -352,6 +388,13 @@ export default function AdminEventsPage() {
         variant={modal.variant}
         showCancel={modal.showCancel}
         confirmText={modal.confirmText}
+      />
+      <BulkDeleteOtpModal
+        isOpen={otpModal}
+        count={pendingBulkDeleteIds.length}
+        resource="events"
+        onVerified={executeBulkDelete}
+        onCancel={() => { setOtpModal(false); setPendingBulkDeleteIds([]); }}
       />
     </div>
   );

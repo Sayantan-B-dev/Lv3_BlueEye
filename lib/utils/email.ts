@@ -6,11 +6,11 @@ const resend = new Resend(process.env.RESEND_API);
 function getRecipientEmail(originalEmail: string): string {
   const allowedEmail = process.env.EMAIL_TO || "sayantanbharati611@gmail.com";
   if (originalEmail.toLowerCase().trim() !== allowedEmail.toLowerCase().trim()) {
-    console.log(`\n==================================================`);
-    console.log(`[Resend Sandbox Bypass] Redirecting email:`);
-    console.log(`- Original Recipient: ${originalEmail}`);
-    console.log(`- Redirected To: ${allowedEmail}`);
-    console.log(`==================================================\n`);
+    // console.log(`\n==================================================`);
+    // console.log(`[Resend Sandbox Bypass] Redirecting email:`);
+    // console.log(`- Original Recipient: ${originalEmail}`);
+    // console.log(`- Redirected To: ${allowedEmail}`);
+    // console.log(`==================================================\n`);
     return allowedEmail;
   }
   return originalEmail;
@@ -133,9 +133,9 @@ export async function sendVerificationEmail(email: string, code: string) {
     );
 
     const recipient = getRecipientEmail(email);
-    console.log(`\n🔑 [Verification Code Bypass]`);
-    console.log(`- Original Email: ${email}`);
-    console.log(`- Code: ${code}\n`);
+    // console.log(`\n🔑 [Verification Code Bypass]`);
+    // console.log(`- Original Email: ${email}`);
+    // console.log(`- Code: ${code}\n`);
 
     const { data: resData, error } = await resend.emails.send({
       from: "BlueEye <onboarding@resend.dev>",
@@ -169,9 +169,9 @@ export async function sendResetPasswordEmail(email: string, otp: string) {
     );
 
     const recipient = getRecipientEmail(email);
-    console.log(`\n🔑 [Password Reset OTP Bypass]`);
-    console.log(`- Original Email: ${email}`);
-    console.log(`- OTP: ${otp}\n`);
+    // console.log(`\n🔑 [Password Reset OTP Bypass]`);
+    // console.log(`- Original Email: ${email}`);
+    // console.log(`- OTP: ${otp}\n`);
 
     const { data: resData, error } = await resend.emails.send({
       from: "BlueEye <onboarding@resend.dev>",
@@ -305,6 +305,41 @@ export async function sendEventRegistrationApproved(data: {
     return { success: true };
   } catch (err) {
     console.error("[Email] Event approval email failed:", err);
+    return { success: false, error: err };
+  }
+}
+
+export async function sendBulkDeleteOtpEmail(otp: string, count: number, resource: string) {
+  const adminEmail = process.env.EMAIL_TO || "sayantanbharati611@gmail.com";
+  try {
+    const htmlContent = getLuxuryTemplate(
+      "Bulk Delete Authorization OTP",
+      `
+      <p style="margin: 0 0 20px 0; color: #d1d5db;">A request to <strong style="color: #fff;">permanently delete ${count} ${resource}</strong> was initiated from the admin dashboard.</p>
+      <p style="margin: 0 0 24px 0; color: #d1d5db;">Use the OTP below to authorize this critical action. <strong>This code expires in 5 minutes.</strong></p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <div style="font-size: 2.8rem; font-weight: 800; color: #d4a017; letter-spacing: 0.4em; background: rgba(212,160,23,0.08); padding: 20px 10px; border-radius: 12px; border: 1px dashed rgba(212,160,23,0.4); display: inline-block; width: 80%; text-shadow: 0 0 10px rgba(212,160,23,0.2);">
+          ${otp}
+        </div>
+      </div>
+      
+      <p style="margin: 20px 0 0 0; text-align: center; color: #9ca3af; font-size: 0.8rem;">If you did not initiate this action, secure your admin account immediately.</p>
+      `
+    );
+
+    const recipient = getRecipientEmail(adminEmail);
+
+    const { error } = await resend.emails.send({
+      from: "BlueEye <onboarding@resend.dev>",
+      to: [recipient],
+      subject: `Admin OTP: Authorize bulk delete of ${count} ${resource}`,
+      html: htmlContent,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.error("Bulk delete OTP email fail:", err);
     return { success: false, error: err };
   }
 }

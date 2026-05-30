@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import BulkDeleteOtpModal from "@/components/ui/BulkDeleteOtpModal";
 
 // Custom Checkbox Component
 const Checkbox = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
@@ -35,6 +36,8 @@ export default function AdminArtistsPage() {
     message: "",
     onConfirm: () => {},
   });
+  const [otpModal, setOtpModal] = useState(false);
+  const [pendingBulkDeleteIds, setPendingBulkDeleteIds] = useState<string[]>([]);
 
   const fetchArtists = async (query = "") => {
     setLoading(true);
@@ -79,46 +82,56 @@ export default function AdminArtistsPage() {
   };
 
   const handleDelete = (id: string) => {
+    // First confirmation
     setModal({
       isOpen: true,
       title: "Delete Artist",
       message: "Are you sure you want to delete this artist? This action cannot be undone.",
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`/api/artists/id/${id}`, { method: 'DELETE' });
-          const data = await res.json();
-          if (data.success) {
-            setArtists(prev => prev.filter(a => a._id !== id));
+      onConfirm: () => {
+        // Second confirmation
+        setModal({
+          isOpen: true,
+          title: "⚠️ Final Confirmation",
+          message: "This is your FINAL warning. The artist will be permanently removed from the database. Proceed?",
+          onConfirm: async () => {
+            try {
+              const res = await fetch(`/api/artists/id/${id}`, { method: 'DELETE' });
+              const data = await res.json();
+              if (data.success) {
+                setArtists(prev => prev.filter(a => a._id !== id));
+              }
+            } catch (err) {
+              console.error("Failed to delete artist");
+            }
           }
-        } catch (err) {
-          console.error("Failed to delete artist");
-        }
+        });
       }
     });
   };
 
   const handleBulkDelete = () => {
-    setModal({
-      isOpen: true,
-      title: "Delete Multiple Artists",
-      message: `Are you sure you want to delete ${selectedIds.length} artists? This will permanently remove them from the database.`,
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`/api/artists`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: selectedIds })
-          });
-          const data = await res.json();
-          if (data.success) {
-            setArtists(prev => prev.filter(a => !selectedIds.includes(a._id)));
-            setSelectedIds([]);
-          }
-        } catch (err) {
-          console.error("Failed to delete artists");
-        }
+    setPendingBulkDeleteIds([...selectedIds]);
+    setOtpModal(true);
+  };
+
+  const executeBulkDelete = async () => {
+    try {
+      const res = await fetch(`/api/artists`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: pendingBulkDeleteIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setArtists(prev => prev.filter(a => !pendingBulkDeleteIds.includes(a._id)));
+        setSelectedIds([]);
       }
-    });
+    } catch (err) {
+      console.error("Failed to delete artists");
+    } finally {
+      setOtpModal(false);
+      setPendingBulkDeleteIds([]);
+    }
   };
 
   return (
@@ -244,6 +257,14 @@ export default function AdminArtistsPage() {
         message={modal.message}
         onConfirm={modal.onConfirm}
         onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant="danger"
+      />
+      <BulkDeleteOtpModal
+        isOpen={otpModal}
+        count={pendingBulkDeleteIds.length}
+        resource="artists"
+        onVerified={executeBulkDelete}
+        onCancel={() => { setOtpModal(false); setPendingBulkDeleteIds([]); }}
       />
     </div>
   );

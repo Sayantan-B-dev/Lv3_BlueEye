@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import BulkDeleteOtpModal from "@/components/ui/BulkDeleteOtpModal";
 
 // Custom Checkbox Component
 const Checkbox = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
@@ -44,6 +45,8 @@ export default function AdminInquiriesPage() {
     showCancel: true,
     confirmText: "Confirm",
   });
+  const [otpModal, setOtpModal] = useState(false);
+  const [pendingBulkDeleteIds, setPendingBulkDeleteIds] = useState<string[]>([]);
 
   const handleBackup = async () => {
     setDropdownOpen(false);
@@ -202,27 +205,28 @@ export default function AdminInquiriesPage() {
   };
 
   const handleBulkDelete = () => {
-    setModal({
-      isOpen: true,
-      title: "Delete Inquiries",
-      message: `Are you sure you want to delete ${selectedIds.length} inquiries? This data will be permanently removed.`,
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`/api/admin/inquiries`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: selectedIds })
-          });
-          const data = await res.json();
-          if (data.success) {
-            setInquiries(prev => prev.filter(i => !selectedIds.includes(i._id)));
-            setSelectedIds([]);
-          }
-        } catch (err) {
-          console.error("Failed to delete inquiries");
-        }
+    setPendingBulkDeleteIds([...selectedIds]);
+    setOtpModal(true);
+  };
+
+  const executeBulkDelete = async () => {
+    try {
+      const res = await fetch(`/api/admin/inquiries`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: pendingBulkDeleteIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInquiries(prev => prev.filter(i => !pendingBulkDeleteIds.includes(i._id)));
+        setSelectedIds([]);
       }
-    });
+    } catch (err) {
+      console.error("Failed to delete inquiries");
+    } finally {
+      setOtpModal(false);
+      setPendingBulkDeleteIds([]);
+    }
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -411,6 +415,13 @@ export default function AdminInquiriesPage() {
         variant={modal.variant}
         showCancel={modal.showCancel}
         confirmText={modal.confirmText}
+      />
+      <BulkDeleteOtpModal
+        isOpen={otpModal}
+        count={pendingBulkDeleteIds.length}
+        resource="inquiries"
+        onVerified={executeBulkDelete}
+        onCancel={() => { setOtpModal(false); setPendingBulkDeleteIds([]); }}
       />
     </div>
   );
