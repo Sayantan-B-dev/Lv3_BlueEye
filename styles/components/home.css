@@ -778,11 +778,14 @@
   padding: 0.75rem 0;
   background: rgba(5, 7, 10, 0.7);
   backdrop-filter: blur(10px);
-  /* Gorgeous deep fading mask on both sides! */
+  -webkit-backdrop-filter: blur(10px);
   mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
   isolation: isolate;
 }
 
@@ -1344,10 +1347,21 @@ section {
 .testimonial-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.75rem;
-  transition: all var(--tr);
+  border-radius: 24px;
+  padding: 2rem;
+  width: 350px;
+  flex-shrink: 0;
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+
+  white-space: normal;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+
+  transition: all var(--tr);
 }
 
 .testimonial-card:hover {
@@ -1388,7 +1402,7 @@ section {
 }
 
 .testimonial-text {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   line-height: 1.75;
   color: var(--text2);
   margin-bottom: 1.25rem;
@@ -2019,8 +2033,9 @@ section {
   }
 }
 
-/* ── GENRE DIVIDER MARQUEE ────────────────────────── */
-.genre-divider-marquee {
+/* ── DIVIDER MARQUEES (GENRE & REVIEW) ────────────────────────── */
+.genre-divider-marquee,
+.review-divider-marquee {
   width: 100%;
   max-width:  var(--max-w);
   margin: 1.5rem auto 0;
@@ -2037,12 +2052,16 @@ section {
   /* Gorgeous deep fading mask on both sides! */
   mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
   isolation: isolate;
 }
 
-.genre-divider-marquee::before {
+.genre-divider-marquee::before,
+.review-divider-marquee::before {
   content: "";
   position: absolute;
   top: 0;
@@ -2052,7 +2071,8 @@ section {
   background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), transparent);
 }
 
-.genre-divider-marquee::after {
+.genre-divider-marquee::after,
+.review-divider-marquee::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -2062,14 +2082,18 @@ section {
   background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), transparent);
 }
 
-.divider-marquee-track {
+.divider-marquee-track,
+.review-marquee-track {
   display: flex;
   width: max-content;
-  animation: dividerScroll 25s linear infinite;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
+}
+
+.divider-marquee-track {
+  animation: dividerScroll 25s linear infinite;
 }
 
 .divider-marquee-group {
@@ -2097,6 +2121,13 @@ section {
   text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
   animation: pulseGold 2s ease-in-out infinite;
 }
+
+/* ── REVIEW DIVIDER MARQUEE OVERRIDES ────────────────────────── */
+.review-marquee-track {
+  animation: dividerScroll 60s linear infinite;
+  gap: 1rem;
+}
+
 
 @keyframes dividerScroll {
   from {
