@@ -155,3 +155,38 @@ export function eventJsonLd(event: {
       : {}),
   };
 }
+
+export function localBusinessJsonLd() {
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "EntertainmentBusiness",
+    "@id": `${siteConfig.url}#localbusiness`,
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/icon.png`,
+    image: `${siteConfig.url}/icon.png`,
+    description: siteConfig.longDescription || siteConfig.description,
+    priceRange: "₹₹₹",
+    areaServed: {
+      "@type": "Country",
+      name: "India",
+    },
+    sameAs: Object.values(siteConfig.links).filter(Boolean),
+  };
+
+  if (siteConfig.contactEmail) {
+    schema.email = siteConfig.contactEmail;
+  }
+  if (siteConfig.contactPhone) {
+    schema.telephone = siteConfig.contactPhone;
+  }
+  if (siteConfig.address) {
+    schema.address = {
+      "@type": "PostalAddress",
+      streetAddress: siteConfig.address,
+      addressCountry: "IN",
+    };
+  }
+
+  return schema;
+}

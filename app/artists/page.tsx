@@ -12,6 +12,7 @@ import ArtistFilterBar from "@/components/ui/ArtistFilterBar";
 import { Suspense } from "react";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 export async function generateMetadata({
   searchParams,
@@ -21,7 +22,7 @@ export async function generateMetadata({
   const { page } = await searchParams;
   const path = page && page !== "1" ? `/artists?page=${page}` : "/artists";
   return pageMetadata({
-    title: "Browse Artists",
+    title: "Browse Artists – Singers, DJs, Comedians & More",
     description: `Discover and book verified singers, DJs, comedians, bands, and performers across India on ${siteConfig.name}.`,
     path,
   });
@@ -45,13 +46,22 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
   const favorites = session?.user ? await getUserFavorites((session.user as any).id) : [];
 
+  const structuredData = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Artists", path: "/artists" },
+  ]);
+
   return (
     <div className="section-inner" style={{ padding: 'clamp(4rem, 8vw, 7rem) clamp(1rem, 4vw, 2.5rem)', paddingTop: 'calc(var(--hdr-h) + 2rem)' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <div className="artists-header">
         <div>
           <div className="section-label">Browse All</div>
-          <h1 className="section-title">Discover <span>Artists</span></h1>
-          <p className="section-desc">Showing {artists.length} of {total} artists</p>
+          <h1 className="section-title">India's Top <span>Artists</span></h1>
+          <p className="section-desc">Showing {artists.length} of {total} verified performers</p>
         </div>
       </div>
 
@@ -75,6 +85,27 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
           {page > 1 && <Link href={`/artists?page=${page - 1}`} className="btn-outline">← Previous</Link>}
           <span style={{ display: 'flex', alignItems: 'center' }}>Page {page} of {totalPages}</span>
           {page < totalPages && <Link href={`/artists?page=${page + 1}`} className="btn-outline">Next →</Link>}
+        </div>
+      )}
+
+      {/* Internal Linking — Browse by Category */}
+      {categories.length > 0 && (
+        <div style={{ marginTop: '5rem', paddingTop: '2.5rem', borderTop: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: 'clamp(1.1rem, 2vw, 1.35rem)', fontWeight: 800, marginBottom: '1.25rem', color: 'var(--text)', fontFamily: 'var(--font-primary)' }}>
+            Browse Artists by Category
+          </h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2rem' }}>
+            {categories.map((c) => (
+              <Link
+                key={c}
+                href={`/search?category=${encodeURIComponent(c)}`}
+                className="btn-outline"
+                style={{ padding: '0.5rem 1.25rem', fontSize: '0.82rem', borderRadius: '100px', textDecoration: 'none', fontWeight: 700 }}
+              >
+                {c} Artists ↗
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>

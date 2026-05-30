@@ -3,6 +3,7 @@ import EventCard from "@/components/events/EventCard";
 import Link from "next/link";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +29,26 @@ export default async function EventsPage({
 
   const statusTabs = ["All", "Upcoming", "Ongoing", "Completed", "Cancelled"];
 
+  const structuredData = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Events & Live Shows", path: "/events" },
+  ]);
+
   return (
     <div className="section-inner" style={{ paddingTop: "calc(var(--hdr-h) + 2.5rem)", paddingBottom: "5rem" }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
 
       {/* Header */}
       <div style={{ marginBottom: "2.5rem" }}>
-        <div className="section-label">Live & Upcoming</div>
+        <div className="section-label">Live &amp; Upcoming</div>
         <h1 className="section-title">
-          Explore <span>Events</span>
+          Live Events &amp; <span>Shows</span>
         </h1>
         <p className="section-desc" style={{ maxWidth: 560 }}>
-          From headline concerts to intimate performances — discover and register for events powered by BlueEye.
+          From headline concerts to intimate performances — discover and register for events powered by {siteConfig.shortName}.
         </p>
       </div>
 

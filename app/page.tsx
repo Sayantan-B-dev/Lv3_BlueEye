@@ -7,9 +7,11 @@ import { pageMetadata } from "@/lib/seo/metadata";
 import { connectToDatabase } from "@/lib/db/connect";
 import Artist from "@/lib/models/Artist";
 import Event from "@/lib/models/Event";
+import { categoryPath, cityPath } from "@/lib/seo/slugs";
+import { getDistinctCategories, getDistinctCities } from "@/lib/services/searchService";
 
 export const metadata = pageMetadata({
-  title: "Book Celebrity Artists in India",
+  title: "Book Celebrity Artists — Singers, DJs, Comedians & More in India",
   description: siteConfig.description,
   path: "/",
 });
@@ -56,13 +58,19 @@ const faqSchema = {
 export default async function HomePage() {
   await connectToDatabase();
   
-  const [totalArtists, totalEvents] = await Promise.all([
+  const [totalArtists, totalEvents, topCategories, topCities] = await Promise.all([
     Artist.countDocuments().catch(() => 0),
     Event.countDocuments().catch(() => 0),
+    getDistinctCategories().catch(() => [] as string[]),
+    getDistinctCities().catch(() => [] as string[]),
   ]);
 
   const artistsText = totalArtists > 0 ? `${totalArtists}+` : "20,000+";
   const eventsText = totalEvents > 0 ? `${totalEvents}+` : "5000+";
+
+  // Limit to top cities/categories for homepage display
+  const featuredCities = topCities.slice(0, 12);
+  const featuredCategories = topCategories.slice(0, 10);
 
   return (
     <div className="relative overflow-hidden">
@@ -70,6 +78,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
+      <h1 className="sr-only">Book Celebrity Artists in India</h1>
       {/* Client-Side Hydration Controller with Golden Pulsing skeletons */}
       <HomeDynamicContent />
 
@@ -146,6 +155,99 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* FAQs */}
+      <section className="faq-section">
+        <div className="faq-container">
+          <div className="reveal visible" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div className="section-label" style={{ justifyContent: 'center' }}>Got Questions?</div>
+            <h2 className="section-title" style={{ textAlign: 'center' }}>Frequently Asked <span>Questions</span></h2>
+          </div>
+          <div className="faq-list">
+            {faqSchema.mainEntity.map((faq, index) => (
+              <details className="faq-details" key={index}>
+                <summary className="faq-summary">
+                  {faq.name}
+                </summary>
+                <div className="faq-content">
+                  <p>{faq.acceptedAnswer.text}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Top Cities & Categories Internal Hub */}
+      {(featuredCities.length > 0 || featuredCategories.length > 0) && (
+        <section style={{ padding: '4rem 0', borderTop: '1px solid var(--border)' }}>
+          <div className="section-inner">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '3rem' }}>
+
+              {featuredCategories.length > 0 && (
+                <div>
+                  <h2 className="section-title" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.75rem)', marginBottom: '1.25rem' }}>
+                    Browse by <span>Category</span>
+                  </h2>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                    {featuredCategories.map((cat) => (
+                      <a
+                        key={cat}
+                        href={categoryPath(cat)}
+                        style={{
+                          padding: '0.4rem 1rem',
+                          background: 'rgba(0,210,255,0.05)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '100px',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          color: 'var(--text2)',
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'var(--font-primary)',
+                        }}
+                      >
+                        {cat} Artists
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {featuredCities.length > 0 && (
+                <div>
+                  <h2 className="section-title" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.75rem)', marginBottom: '1.25rem' }}>
+                    Book Artists by <span>City</span>
+                  </h2>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                    {featuredCities.map((city) => (
+                      <a
+                        key={city}
+                        href={cityPath(city)}
+                        style={{
+                          padding: '0.4rem 1rem',
+                          background: 'rgba(0,210,255,0.05)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '100px',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          color: 'var(--text2)',
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'var(--font-primary)',
+                        }}
+                      >
+                        Artists in {city}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Banner */}
       <section id="cta-banner" style={{ position: 'relative' }}>

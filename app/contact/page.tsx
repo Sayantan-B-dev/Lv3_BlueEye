@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { localBusinessJsonLd } from "@/lib/seo/jsonld";
 
 export const metadata = pageMetadata({
   title: "Contact Us",
@@ -22,7 +23,11 @@ export default function ContactPage() {
 
   return (
     <div className="section-inner pt-nav" style={{ minHeight: '90vh', paddingBottom: '4rem' }}>
-      
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd()) }}
+      />
+
       {/* Header */}
       <div className="page-hero">
         <div className="section-label" style={{ justifyContent: 'center' }}>Get in Touch</div>
