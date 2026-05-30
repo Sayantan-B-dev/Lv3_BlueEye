@@ -2,12 +2,30 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [backingUp, setBackingUp] = useState(false);
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: "danger" | "warning" | "info" | "success";
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "danger",
+    showCancel: true,
+    confirmText: "Confirm",
+  });
 
   const handleBackup = async () => {
     setBackingUp(true);
@@ -19,13 +37,37 @@ export default function AdminEventsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Backup completed");
+        setModal({
+          isOpen: true,
+          title: "Backup Successful",
+          message: "The events database backup has been completed successfully.",
+          variant: "success",
+          showCancel: false,
+          confirmText: "Close",
+          onConfirm: () => {},
+        });
       } else {
-        alert("Backup failed: " + (data.error || "Unknown error"));
+        setModal({
+          isOpen: true,
+          title: "Backup Failed",
+          message: "Backup failed: " + (data.error || "Unknown error"),
+          variant: "danger",
+          showCancel: false,
+          confirmText: "Close",
+          onConfirm: () => {},
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Backup failed");
+      setModal({
+        isOpen: true,
+        title: "Backup Failed",
+        message: "An unexpected error occurred during backup. Please check your network and try again.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     } finally {
       setBackingUp(false);
     }
@@ -42,9 +84,18 @@ export default function AdminEventsPage() {
   }, []);
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-    await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
-    setEvents(prev => prev.filter(e => e._id !== id));
+    setModal({
+      isOpen: true,
+      title: "Delete Event",
+      message: `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+      variant: "danger",
+      showCancel: true,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+        setEvents(prev => prev.filter(e => e._id !== id));
+      }
+    });
   }
 
   return (
@@ -181,6 +232,16 @@ export default function AdminEventsPage() {
           </table>
         </div>
       </div>
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant={modal.variant}
+        showCancel={modal.showCancel}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 }

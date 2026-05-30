@@ -5,6 +5,7 @@ import EventForm from "@/components/admin/EventForm";
 import EventUpdateForm from "@/components/admin/EventUpdateForm";
 import RegistrationTable from "@/components/admin/RegistrationTable";
 import Link from "next/link";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type Tab = "details" | "thread" | "registrations";
 
@@ -15,6 +16,23 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
   const [updates, setUpdates] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: "danger" | "warning" | "info" | "success";
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "danger",
+    showCancel: true,
+    confirmText: "Confirm",
+  });
 
   useEffect(() => {
     async function load() {
@@ -38,9 +56,18 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
   }, [id]);
 
   async function deleteUpdate(uid: string) {
-    if (!confirm("Are you sure you want to delete this update? This action cannot be undone.")) return;
-    await fetch(`/api/admin/events/${id}/updates/${uid}`, { method: "DELETE" });
-    setUpdates(prev => prev.filter(u => u._id !== uid));
+    setModal({
+      isOpen: true,
+      title: "Delete Update",
+      message: "Are you sure you want to delete this update? This action cannot be undone.",
+      variant: "danger",
+      showCancel: true,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        await fetch(`/api/admin/events/${id}/updates/${uid}`, { method: "DELETE" });
+        setUpdates(prev => prev.filter(u => u._id !== uid));
+      }
+    });
   }
 
   const tabs: { key: Tab; label: string }[] = [
@@ -168,6 +195,16 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
           <RegistrationTable initialRegistrations={registrations} eventId={id} />
         </div>
       )}
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant={modal.variant}
+        showCancel={modal.showCancel}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 }

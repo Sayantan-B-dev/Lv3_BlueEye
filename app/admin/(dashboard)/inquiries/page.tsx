@@ -28,11 +28,17 @@ export default function AdminInquiriesPage() {
     title: string;
     message: string;
     onConfirm: () => void;
+    variant?: "danger" | "warning" | "info" | "success";
+    showCancel?: boolean;
+    confirmText?: string;
   }>({
     isOpen: false,
     title: "",
     message: "",
     onConfirm: () => {},
+    variant: "danger",
+    showCancel: true,
+    confirmText: "Confirm",
   });
 
   const handleBackup = async () => {
@@ -45,13 +51,37 @@ export default function AdminInquiriesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Backup completed");
+        setModal({
+          isOpen: true,
+          title: "Backup Successful",
+          message: "The inquiries database backup has been completed successfully.",
+          variant: "success",
+          showCancel: false,
+          confirmText: "Close",
+          onConfirm: () => {},
+        });
       } else {
-        alert("Backup failed: " + (data.error || "Unknown error"));
+        setModal({
+          isOpen: true,
+          title: "Backup Failed",
+          message: "Backup failed: " + (data.error || "Unknown error"),
+          variant: "danger",
+          showCancel: false,
+          confirmText: "Close",
+          onConfirm: () => {},
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Backup failed");
+      setModal({
+        isOpen: true,
+        title: "Backup Failed",
+        message: "An unexpected error occurred during backup. Please check your network and try again.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     } finally {
       setBackingUp(false);
     }
@@ -131,7 +161,15 @@ export default function AdminInquiriesPage() {
         setInquiries(prev => prev.map(i => i._id === id ? { ...i, status } : i));
       }
     } catch (err) {
-      alert("Failed to update status");
+      setModal({
+        isOpen: true,
+        title: "Update Failed",
+        message: "Failed to update inquiry status. Please try again.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     }
   };
 
@@ -262,6 +300,9 @@ export default function AdminInquiriesPage() {
         message={modal.message}
         onConfirm={modal.onConfirm}
         onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant={modal.variant}
+        showCancel={modal.showCancel}
+        confirmText={modal.confirmText}
       />
     </div>
   );

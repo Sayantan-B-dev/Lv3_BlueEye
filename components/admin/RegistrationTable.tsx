@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 const STATUS_OPTIONS = ["Pending", "Approved", "Rejected", "Waitlisted"] as const;
 type RegStatus = typeof STATUS_OPTIONS[number];
@@ -18,6 +19,23 @@ export default function RegistrationTable({ initialRegistrations, eventId }: {
 }) {
   const [regs, setRegs] = useState<any[]>(initialRegistrations);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: "danger" | "warning" | "info" | "success";
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "danger",
+    showCancel: true,
+    confirmText: "Confirm",
+  });
 
   async function updateStatus(rid: string, status: RegStatus) {
     setLoadingId(rid);
@@ -31,7 +49,15 @@ export default function RegistrationTable({ initialRegistrations, eventId }: {
       if (!res.ok) throw new Error(json.error);
       setRegs(prev => prev.map(r => r._id === rid ? { ...r, status } : r));
     } catch (err: any) {
-      alert(err.message);
+      setModal({
+        isOpen: true,
+        title: "Update Failed",
+        message: err.message || "Failed to update registration status.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     } finally {
       setLoadingId(null);
     }
@@ -137,6 +163,16 @@ export default function RegistrationTable({ initialRegistrations, eventId }: {
           </tbody>
         </table>
       </div>
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant={modal.variant}
+        showCancel={modal.showCancel}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 }

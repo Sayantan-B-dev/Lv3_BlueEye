@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 import { useLoading } from "@/lib/context/LoadingContext";
 
@@ -16,6 +17,23 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
   const { setIsLoading } = useLoading();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: "danger" | "warning" | "info" | "success";
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "success",
+    showCancel: false,
+    confirmText: "OK",
+  });
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
@@ -76,11 +94,27 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
           }
         }));
       } else {
-        console.error(result.error || "Upload failed");
+        setModal({
+          isOpen: true,
+          title: "Upload Failed",
+          message: result.error || "Failed to upload image.",
+          variant: "danger",
+          showCancel: false,
+          confirmText: "Close",
+          onConfirm: () => {},
+        });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      console.error("Image upload failed. Please try again.");
+      setModal({
+        isOpen: true,
+        title: "Upload Error",
+        message: err.message || "Image upload failed. Please try again.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     } finally {
       setUploading(false);
     }
@@ -108,18 +142,40 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
 
       const result = await res.json();
       if (result.success) {
-        // No toast, just proceed
-        console.log(mode === "edit" ? "Artist updated successfully!" : "Artist created successfully!");
-        setTimeout(() => {
-          router.push("/admin/artists");
-          router.refresh();
-        }, 800);
+        setModal({
+          isOpen: true,
+          title: mode === "edit" ? "Profile Updated" : "Profile Created",
+          message: mode === "edit" ? "The artist profile has been successfully updated." : "The new artist profile has been successfully created.",
+          variant: "success",
+          showCancel: false,
+          confirmText: "Awesome",
+          onConfirm: () => {
+            router.push("/admin/artists");
+            router.refresh();
+          },
+        });
       } else {
-        console.error(result.error || result.message || "Operation failed");
+        setModal({
+          isOpen: true,
+          title: "Operation Failed",
+          message: result.error || result.message || "Failed to save artist profile.",
+          variant: "danger",
+          showCancel: false,
+          confirmText: "Close",
+          onConfirm: () => {},
+        });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      console.error("Something went wrong. Please try again.");
+      setModal({
+        isOpen: true,
+        title: "Operation Error",
+        message: err.message || "Something went wrong. Please try again.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -406,6 +462,16 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
           </button>
         </div>
       </form>
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant={modal.variant}
+        showCancel={modal.showCancel}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 }

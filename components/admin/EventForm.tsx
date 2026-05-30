@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type EventFormProps = {
   initial?: any;
@@ -32,6 +33,23 @@ export default function EventForm({ initial, mode, eventId }: EventFormProps) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: "danger" | "warning" | "info" | "success";
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "success",
+    showCancel: false,
+    confirmText: "OK",
+  });
 
   const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }));
 
@@ -105,10 +123,30 @@ export default function EventForm({ initial, mode, eventId }: EventFormProps) {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Save failed");
-      router.push("/admin/events");
-      router.refresh();
+      
+      setModal({
+        isOpen: true,
+        title: mode === "edit" ? "Event Updated" : "Event Created",
+        message: mode === "edit" ? "The event has been successfully updated." : "The new event has been successfully created.",
+        variant: "success",
+        showCancel: false,
+        confirmText: "Awesome",
+        onConfirm: () => {
+          router.push("/admin/events");
+          router.refresh();
+        },
+      });
     } catch (err: any) {
       setError(err.message);
+      setModal({
+        isOpen: true,
+        title: "Save Failed",
+        message: err.message || "Failed to save the event details.",
+        variant: "danger",
+        showCancel: false,
+        confirmText: "Close",
+        onConfirm: () => {},
+      });
     } finally {
       setSaving(false);
     }
@@ -371,6 +409,16 @@ export default function EventForm({ initial, mode, eventId }: EventFormProps) {
         </button>
       </div>
       </form>
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        variant={modal.variant}
+        showCancel={modal.showCancel}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 }
