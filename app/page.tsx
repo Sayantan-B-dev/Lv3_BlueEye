@@ -4,6 +4,9 @@ import TestimonialsMarquee from "@/components/home/TestimonialsMarquee";
 import PlasmaWave from "@/components/react-bits/PlasmaWave";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { connectToDatabase } from "@/lib/db/connect";
+import Artist from "@/lib/models/Artist";
+import Event from "@/lib/models/Event";
 
 export const metadata = pageMetadata({
   title: "Book Celebrity Artists in India",
@@ -51,6 +54,16 @@ const faqSchema = {
 };
 
 export default async function HomePage() {
+  await connectToDatabase();
+  
+  const [totalArtists, totalEvents] = await Promise.all([
+    Artist.countDocuments().catch(() => 0),
+    Event.countDocuments().catch(() => 0),
+  ]);
+
+  const artistsText = totalArtists > 0 ? `${totalArtists}+` : "20,000+";
+  const eventsText = totalEvents > 0 ? `${totalEvents}+` : "5000+";
+
   return (
     <div className="relative overflow-hidden">
       <script
@@ -67,14 +80,14 @@ export default async function HomePage() {
           <div className="marquee-item">Direct Secure Bookings</div>
           <div className="marquee-item">24/7 Reserved Concierge Assistance</div>
           <div className="marquee-item">India's Largest Booking Hub</div>
-          <div className="marquee-item">5000+ Staged Performances</div>
+          <div className="marquee-item">{eventsText} Staged Performances</div>
           <div className="marquee-item">Transparent Lowest Commission</div>
           {/* Double list for seamless perpetual loop */}
           <div className="marquee-item">100% Verified Celebrity Artists</div>
           <div className="marquee-item">Direct Secure Bookings</div>
           <div className="marquee-item">24/7 Reserved Concierge Assistance</div>
           <div className="marquee-item">India's Largest Booking Hub</div>
-          <div className="marquee-item">5000+ Staged Performances</div>
+          <div className="marquee-item">{eventsText} Staged Performances</div>
           <div className="marquee-item">Transparent Lowest Commission</div>
         </div>
       </div>
@@ -96,7 +109,7 @@ export default async function HomePage() {
                 <div className="step-num">01</div>
                 <div className="step-body">
                   <h4>Discover the Perfect Artist</h4>
-                  <p>Browse 20,000+ artists across all genres and cities. Filter by category, location, budget, and event type to find your ideal performer.</p>
+                  <p>Browse {artistsText} artists across all genres and cities. Filter by category, location, budget, and event type to find your ideal performer.</p>
                 </div>
               </div>
               <div className="step reveal visible" style={{ transitionDelay: '.2s' }}>

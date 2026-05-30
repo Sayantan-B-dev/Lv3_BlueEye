@@ -117,8 +117,13 @@ export default function TestimonialsMarquee() {
         background: 'transparent', 
         padding: '2rem 0',
         overflow: 'hidden',
-        maskImage: 'linear-gradient(to right, transparent, #000 15%, #000 85%, transparent)',
-        WebkitMaskImage: 'linear-gradient(to right, transparent, #000 15%, #000 85%, transparent)'
+        maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        isolation: 'isolate'
       }}
     >
       <div 
@@ -132,7 +137,11 @@ export default function TestimonialsMarquee() {
           animation: 'marquee 50s linear infinite', 
           animationPlayState: isPaused ? 'paused' : 'running',
           whiteSpace: 'nowrap',
-          width: 'max-content'
+          width: 'max-content',
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          willChange: 'transform'
         }}
       >
         {marqueeItems.map((item, idx) => {

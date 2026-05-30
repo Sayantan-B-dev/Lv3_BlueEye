@@ -779,6 +779,9 @@
   /* Gorgeous deep fading mask on both sides! */
   mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  isolation: isolate;
 }
 
 .marquee-wrap::before {
