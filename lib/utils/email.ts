@@ -97,7 +97,7 @@ export async function sendInquiryEmail(data: {
     );
 
     const { data: resData, error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [toEmail],
       subject: `✦ New Artist Inquiry: ${data.artistName} from ${data.clientName}`,
       html: htmlContent,
@@ -138,7 +138,7 @@ export async function sendVerificationEmail(email: string, code: string) {
     // console.log(`- Code: ${code}\n`);
 
     const { data: resData, error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [recipient],
       subject: "✦ Verify your BlueEye Account",
       html: htmlContent,
@@ -174,7 +174,7 @@ export async function sendResetPasswordEmail(email: string, otp: string) {
     // console.log(`- OTP: ${otp}\n`);
 
     const { data: resData, error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [recipient],
       subject: "✦ Your Password Reset OTP",
       html: htmlContent,
@@ -233,7 +233,7 @@ export async function sendEventRegistrationConfirmation(data: {
 
     const recipient = getRecipientEmail(data.guestEmail);
     const { error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [recipient],
       subject: `✦ RSVP Received: ${data.eventTitle}`,
       html: htmlContent,
@@ -296,7 +296,7 @@ export async function sendEventRegistrationApproved(data: {
 
     const recipient = getRecipientEmail(data.guestEmail);
     const { error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [recipient],
       subject: `🎉 Ticket Confirmed: ${data.eventTitle}!`,
       html: htmlContent,
@@ -331,9 +331,9 @@ export async function sendBulkDeleteOtpEmail(otp: string, count: number, resourc
     const recipient = getRecipientEmail(adminEmail);
 
     const { error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [recipient],
-      subject: `Admin OTP: Authorize bulk delete of ${count} ${resource}`,
+      subject: `🔐 Admin OTP: Authorize bulk delete of ${count} ${resource}`,
       html: htmlContent,
     });
     if (error) throw error;
@@ -366,7 +366,7 @@ export async function sendEventRegistrationRejected(data: {
 
     const recipient = getRecipientEmail(data.guestEmail);
     const { error } = await resend.emails.send({
-      from: "BlueEye <onboarding@resend.dev>",
+      from: "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [recipient],
       subject: `Update on your RSVP for ${data.eventTitle}`,
       html: htmlContent,
