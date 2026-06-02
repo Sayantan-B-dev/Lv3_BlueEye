@@ -9,12 +9,11 @@ import EventHero from "@/components/events/EventHero";
 import EventTimeline from "@/components/events/EventTimeline";
 import EventRegistrationForm from "@/components/events/EventRegistrationForm";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/authOptions";
+import AdminEditEventButton from "@/components/ui/AdminEditEventButton";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { eventJsonLd } from "@/lib/seo/jsonld";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -47,22 +46,11 @@ export default async function EventDetailPage({
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const session = await getServerSession(authOptions);
-  const isAdmin = session?.user && (session.user as any).role === "admin";
-
   const registrationCount = await getRegistrationCountByEvent(event._id);
   const spotsLeft = event.capacity > 0 ? event.capacity - registrationCount : null;
   const registrationClosed =
     !event.registrationOpen ||
     ["Completed", "Cancelled"].includes(event.status);
-
-  const userRegistration =
-    session?.user?.email
-      ? await getRegistrationForUser(event._id, {
-          userId: (session.user as { id?: string }).id,
-          email: session.user.email,
-        })
-      : null;
 
   return (
     <article style={{ paddingTop: "var(--hdr-h)" }}>
@@ -79,12 +67,7 @@ export default async function EventDetailPage({
             <span>/</span>
             <span>{event.title}</span>
           </div>
-          {isAdmin && (
-            <Link href={`/admin/events/${event._id}`} className="btn-outline" style={{ fontSize: "0.8rem", textDecoration: "none", color: "var(--gold,#d4a017)", borderColor: "var(--gold,#d4a017)44", borderRadius: "8px", padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit Event (Admin) ✦
-            </Link>
-          )}
+          <AdminEditEventButton eventId={event._id.toString()} />
         </div>
 
         {/* Hero Banner */}
@@ -207,8 +190,6 @@ export default async function EventDetailPage({
               <EventRegistrationForm
                 slug={event.slug}
                 closed={registrationClosed}
-                initialRegistration={userRegistration}
-                registrationPrefetched={!!session?.user?.email}
               />
             </div>
 

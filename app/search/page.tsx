@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { searchArtists } from "@/lib/services/searchService";
-import { getUserFavorites } from "@/lib/services/userService";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/authOptions";
 import Link from "next/link";
 import ArtistCard from "@/components/ui/ArtistCard";
 import { siteConfig } from "@/lib/config/site";
@@ -42,10 +39,7 @@ export async function generateMetadata({
 }
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string, category?: string, city?: string }> }) {
-  const [params, session] = await Promise.all([
-    searchParams,
-    getServerSession(authOptions)
-  ]);
+  const params = await searchParams;
   
   const q = params.q || "";
   const searchResult = q 
@@ -54,7 +48,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const artists = searchResult.artists;
   const totalCount = searchResult.pagination.total;
 
-  const favorites = session?.user ? await getUserFavorites((session.user as any).id) : [];
+
 
   return (
     <div className="section-inner" style={{ padding: 'clamp(4rem, 8vw, 7rem) clamp(1rem, 4vw, 2.5rem)', paddingTop: 'calc(var(--hdr-h) + 2rem)' }}>
@@ -78,7 +72,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               key={artist.slug} 
               artist={artist} 
               index={i} 
-              initialIsFavorite={favorites.includes(artist._id.toString())} 
             />
           ))}
         </div>

@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = pageMetadata({
   title: "Events & Live Shows",

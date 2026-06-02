@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { getArtists } from "@/lib/services/artistService";
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
-import { getUserFavorites } from "@/lib/services/userService";
 import { getDistinctCategories, getDistinctCities } from "@/lib/services/searchService";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/authOptions";
 import ArtistCard from "@/components/ui/ArtistCard";
 import ArtistFilterBar from "@/components/ui/ArtistFilterBar";
 import { siteConfig } from "@/lib/config/site";
@@ -36,10 +33,9 @@ export default async function CategoryArtistsPage({
   params: Promise<{ category: string }>;
   searchParams: Promise<{ q?: string; city?: string }>;
 }) {
-  const [{ category }, sParams, session, categories, cities] = await Promise.all([
+  const [{ category }, sParams, categories, cities] = await Promise.all([
     params,
     searchParams,
-    getServerSession(authOptions),
     getDistinctCategories(),
     getDistinctCities(),
   ]);
@@ -54,7 +50,7 @@ export default async function CategoryArtistsPage({
     limit: 100,
   })) as { artists: any[]; total: number };
 
-  const favorites = session?.user ? await getUserFavorites((session.user as any).id) : [];
+
 
   const structuredData = breadcrumbJsonLd([
     { name: "Home", path: "/" },
@@ -116,7 +112,6 @@ export default async function CategoryArtistsPage({
             key={artist.slug}
             artist={artist}
             index={i}
-            initialIsFavorite={favorites.includes(artist._id.toString())}
           />
         ))}
       </div>

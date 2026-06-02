@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { getArtists } from "@/lib/services/artistService";
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
-import { getUserFavorites } from "@/lib/services/userService";
 import { getDistinctCities } from "@/lib/services/searchService";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/authOptions";
 import ArtistCard from "@/components/ui/ArtistCard";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -35,10 +32,9 @@ export default async function CityArtistsPage({
   params: Promise<{ city: string }>;
   searchParams: Promise<{ q?: string; category?: string }>;
 }) {
-  const [{ city }, sParams, session, cities] = await Promise.all([
+  const [{ city }, sParams, cities] = await Promise.all([
     params,
     searchParams,
-    getServerSession(authOptions),
     getDistinctCities(),
   ]);
 
@@ -51,7 +47,7 @@ export default async function CityArtistsPage({
     limit: 100,
   })) as { artists: any[]; total: number };
 
-  const favorites = session?.user ? await getUserFavorites((session.user as any).id) : [];
+
 
   const structuredData = breadcrumbJsonLd([
     { name: "Home", path: "/" },
@@ -110,7 +106,6 @@ export default async function CityArtistsPage({
             key={artist.slug}
             artist={artist}
             index={i}
-            initialIsFavorite={favorites.includes(artist._id.toString())}
           />
         ))}
       </div>

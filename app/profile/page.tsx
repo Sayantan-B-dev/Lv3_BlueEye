@@ -476,7 +476,7 @@ export default function ProfilePage() {
       ) : (
         <div className="artists-grid">
           {favorites.map((artist, i) => (
-            <ArtistCard key={artist._id} artist={artist} index={i} initialIsFavorite={true} />
+            <ArtistCard key={artist._id} artist={artist} index={i} />
           ))}
         </div>
       )}

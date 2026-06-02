@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import AuthProvider from "@/components/auth/AuthProvider";
+import FavoritesProvider from "@/components/providers/FavoritesProvider";
 
 import AppChrome from "@/components/layout/AppChrome";
 import { LoadingProvider } from "@/lib/context/LoadingContext";
@@ -128,9 +129,11 @@ export default function RootLayout({
             <ScrollReveal />
           </Suspense>
           <AuthProvider>
-            <Navbar />
-            <main className="site-main flex-grow">{children}</main>
-            <Footer />
+            <FavoritesProvider>
+              <Navbar />
+              <main className="site-main flex-grow">{children}</main>
+              <Footer />
+            </FavoritesProvider>
           </AuthProvider>
         </LoadingProvider>
       </body>
