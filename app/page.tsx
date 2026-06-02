@@ -16,6 +16,8 @@ export const metadata = pageMetadata({
   path: "/",
 });
 
+export const revalidate = 86400; // 24 hours
+
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",

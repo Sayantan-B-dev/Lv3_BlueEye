@@ -12,6 +12,7 @@ import type { HomePageData } from "@/lib/services/homeDataService";
 import { cacheConfig } from "@/lib/config/cache";
 
 const CACHE_KEY = cacheConfig.homeData.clientSessionKey;
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const INITIAL_READY: Record<HomeSectionKey, boolean> = {
   ambient: false,
@@ -60,14 +61,19 @@ export default function HomeDynamicContent() {
 
     async function loadHomeData() {
       try {
-        const cached = typeof window !== "undefined" ? sessionStorage.getItem(CACHE_KEY) : null;
-        if (cached) {
+        const cachedStr = typeof window !== "undefined" ? localStorage.getItem(CACHE_KEY) : null;
+        if (cachedStr) {
           try {
-            const parsed = JSON.parse(cached) as HomePageData;
-            if (!cancelled) finishLoading(parsed);
-            return;
+            const parsed = JSON.parse(cachedStr);
+            // Check if cache has expired
+            if (parsed.timestamp && Date.now() - parsed.timestamp < CACHE_EXPIRY_MS) {
+              if (!cancelled) finishLoading(parsed.data as HomePageData);
+              return;
+            } else {
+              localStorage.removeItem(CACHE_KEY);
+            }
           } catch {
-            sessionStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(CACHE_KEY);
           }
         }
 
@@ -85,7 +91,7 @@ export default function HomeDynamicContent() {
         const tryComplete = () => {
           if (cancelled || !artistsDone || !categoriesDone) return;
           const full: HomePageData = { randomArtists, categories, counts };
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify(full));
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ data: full, timestamp: Date.now() }));
           markReady("hero");
           finishLoading(full);
         };
