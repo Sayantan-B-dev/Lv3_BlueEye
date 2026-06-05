@@ -1,10 +1,27 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/authOptions";
+import { checkCooldown, updateCooldown } from "@/lib/auth/cooldown";
 
 const resend = new Resend(process.env.RESEND_API);
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
+    const cooldown = await checkCooldown();
+    if (!cooldown.allowed) {
+      return NextResponse.json({
+        success: false,
+        message: `Please wait ${cooldown.remainingMin} min before sending another message.`,
+        cooldown: cooldown.remainingMs,
+      }, { status: 429 });
+    }
+
     const { name, email, message } = await request.json();
 
     if (!name || !email || !message) {
@@ -37,6 +54,8 @@ export async function POST(request: Request) {
       console.error("Resend error:", error);
       return NextResponse.json({ success: false, message: "Failed to send message" }, { status: 500 });
     }
+
+    await updateCooldown();
 
     return NextResponse.json({ success: true, message: "Message sent successfully" });
   } catch (err) {

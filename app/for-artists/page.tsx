@@ -134,7 +134,7 @@ export default function ForArtistsPage() {
         </div>
       </div>
 
-      {/* <div className="page-cta-banner">
+      <div className="page-cta-banner">
         <span className="ornament">✦ ✦ ✦</span>
         <h2>
           Ready to <em className="cta-accent">Join?</em>
@@ -143,14 +143,11 @@ export default function ForArtistsPage() {
           Create your artist profile in minutes and start receiving booking requests from top event organisers.
         </p>
         <div className="cta-actions">
-          <Link href="/register" className="btn-primary">
-            Create Your Profile ✦
-          </Link>
           <Link href="/contact" className="btn-outline">
             Talk to Our Team
           </Link>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }

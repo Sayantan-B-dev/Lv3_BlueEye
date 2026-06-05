@@ -6,10 +6,25 @@ import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { sendInquiryEmail } from "@/lib/utils/email";
+import { checkCooldown, updateCooldown } from "@/lib/auth/cooldown";
 
 // PUBLIC: Submit a new inquiry
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return apiError("Unauthorized", 401);
+    }
+
+    const cooldown = await checkCooldown();
+    if (!cooldown.allowed) {
+      return NextResponse.json({
+        success: false,
+        message: `Please wait ${cooldown.remainingMin} min before sending another inquiry.`,
+        cooldown: cooldown.remainingMs,
+      }, { status: 429 });
+    }
+
     await connectToDatabase();
     const body = await request.json();
     const result = inquirySchemaValidation.safeParse(body);
@@ -20,6 +35,8 @@ export async function POST(request: Request) {
     
     const inquiry = await Inquiry.create(result.data);
     
+    await updateCooldown();
+
     // Send email notification (don't await to avoid delaying the response)
     sendInquiryEmail(result.data).catch(err => console.error("Email notify fail:", err));
 

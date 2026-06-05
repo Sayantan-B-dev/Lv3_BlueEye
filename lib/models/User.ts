@@ -14,7 +14,8 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   address: { type: String },
   contactDetails: { type: String },
-  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Artist" }]
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Artist" }],
+  lastSubmissionAt: { type: Date }
 }, { timestamps: true });
 
 // Clear the cached model if it exists to force re-compilation with the updated schema

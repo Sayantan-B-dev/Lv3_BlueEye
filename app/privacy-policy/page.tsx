@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
-import { siteConfig } from "@/lib/config/site";
+import EmailForm from "@/components/forms/EmailForm";
 
 const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "theblueeyeentertainment@gmail.com";
 const phone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 91379 52580";
@@ -73,36 +73,6 @@ To exercise any of these rights, please contact us using the information below.`
 ];
 
 export default function PrivacyPolicyPage() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [statusMsg, setStatusMsg] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("loading");
-    setStatusMsg("");
-
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStatus("success");
-        setStatusMsg("Your message has been sent. We'll get back to you shortly.");
-        setForm({ name: "", email: "", message: "" });
-      } else {
-        setStatus("error");
-        setStatusMsg(data.message || "Failed to send message.");
-      }
-    } catch {
-      setStatus("error");
-      setStatusMsg("Network error. Please try again.");
-    }
-  };
-
   return (
     <div className="section-inner pt-nav" style={{ minHeight: "90vh", paddingBottom: "4rem" }}>
       <div className="page-hero">
@@ -212,104 +182,9 @@ export default function PrivacyPolicyPage() {
         </div>
       </div>
 
-      {/* Email Form */}
-      <div
-        className="page-card"
-        style={{ marginTop: "2rem" }}
-      >
-        <h2
-          style={{
-            fontSize: "1.15rem",
-            fontWeight: 700,
-            color: "var(--gold)",
-            marginBottom: "0.5rem",
-          }}
-        >
-          Send Us a Message
-        </h2>
-        <p style={{ color: "var(--text2)", lineHeight: 1.8, marginBottom: "1.5rem" }}>
-          Have a privacy concern or question? Fill out the form below and we&apos;ll get back to you.
-        </p>
-
-        <form onSubmit={handleSubmit} className="admin-section" style={{ padding: 0, border: "none" }}>
-          {status === "success" && (
-            <div
-              style={{
-                padding: "1rem",
-                borderRadius: "12px",
-                background: "rgba(0, 200, 80, 0.1)",
-                border: "1px solid rgba(0, 200, 80, 0.2)",
-                color: "#00c850",
-                marginBottom: "1.5rem",
-                textAlign: "center",
-                fontWeight: 600,
-              }}
-            >
-              {statusMsg}
-            </div>
-          )}
-          {status === "error" && (
-            <div
-              style={{
-                padding: "1rem",
-                borderRadius: "12px",
-                background: "rgba(255, 0, 0, 0.1)",
-                border: "1px solid rgba(255, 0, 0, 0.2)",
-                color: "#ff4444",
-                marginBottom: "1.5rem",
-                textAlign: "center",
-                fontWeight: 600,
-              }}
-            >
-              {statusMsg}
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem" }}>
-            <div>
-              <label className="form-label">Your Name</label>
-              <input
-                type="text"
-                required
-                className="filter-input"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <label className="form-label">Your Email</label>
-              <input
-                type="email"
-                required
-                className="filter-input"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="john@example.com"
-              />
-            </div>
-          </div>
-          <div style={{ marginTop: "1.5rem" }}>
-            <label className="form-label">Message</label>
-            <textarea
-              required
-              rows={5}
-              className="filter-input"
-              style={{ minHeight: "120px", resize: "vertical" }}
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-              placeholder="Describe your privacy concern or question..."
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="btn-primary"
-            style={{ marginTop: "1.5rem", border: "none", cursor: "pointer" }}
-          >
-            {status === "loading" ? "Sending..." : "Send Message ✦"}
-          </button>
-        </form>
-      </div>
+      <Suspense fallback={<div style={{ marginTop: "2rem", textAlign: "center", padding: "2rem", color: "var(--text3)" }}>Loading form...</div>}>
+        <EmailForm variant="contact" />
+      </Suspense>
     </div>
   );
 }
