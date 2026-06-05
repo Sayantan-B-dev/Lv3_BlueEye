@@ -1,744 +1,255 @@
-# Blue Eye Entertainment Optimization Plan - Complete
-
-**Status:** Implementation Ready  
-**Created:** May 31, 2026  
-**Deployed:** Netlify (blueeyeentertainment.in)  
-**Current Netlify Credits:** 32 remaining ⚠️  
+# Blue Eye Entertainment — Global Audit & SEO Optimization Plan
 
 ---
 
-## 🎯 Executive Summary
+## 📊 Executive Summary
 
-Reduce Netlify compute costs by **40-60%** through:
-1. Eliminating unnecessary `force-dynamic` (allows ISR caching)
-2. Adding rate limiting to prevent brute force + spam
-3. Implementing aggressive caching for search/filter endpoints
-4. Fixing cache invalidation bugs on mutations
+**Project:** Artist Booking Platform (Next.js 16, MongoDB, Redis)  
+**Domain:** blueeyeentertainment.in  
+**Deployed on:** Vercel (primary) + Netlify (secondary)  
 
-**Expected outcome:** 60% reduction in dynamic route executions → Sustainable compute usage
-
----
-
-## 📊 Current State Analysis
-
-### API Routes: 44+ Total
-- **Public routes:** ~15 (search, filters, home data)
-- **Authenticated routes:** ~8 (user profile, favorites)
-- **Admin-only routes:** ~21+ (dashboard, management)
-
-### Rate Limiting Status
-- ❌ NO rate limiting installed
-- ❌ NO `express-rate-limit` or similar packages
-- **Risk:** Brute force attacks on `/api/auth/*`, DOS on `/api/search`
-
-### Force-Dynamic Usage
-- ✅ **3 home-data routes** — Already Redis cached, can remove `force-dynamic`
-- ✅ **9 page routes** — Can use ISR instead (artists, events, category, city)
-- ⚠️ **8 admin routes** — Keep dynamic (real-time required)
-- ⚠️ **2 mutation routes** — Keep dynamic (POST/PUT/DELETE)
-
-### Caching Status
-- ✅ Redis properly configured (ioredis ^5.10.1)
-- ✅ Home data cached (TTL: 600s)
-- ✅ User favorites cached (TTL: 1800s)
-- ❌ Search results NOT cached
-- ❌ Filter results NOT cached
-- ❌ Event details NOT cached
-- ❌ **BUG:** No cache invalidation after mutations (stale data risk)
-
-### Search/Filter Optimization Opportunity
-| Route | Status | Optimization |
-|-------|--------|---|
-| `/api/filters` | No cache | Use ISR (1 hour) |
-| `/api/search/suggest` | No cache, `force-dynamic` | Cache with Redis (10 min) |
-| `/api/search` | No cache | Cache with Redis (5 min) |
-| `/api/events/[slug]` | No cache | Cache with Redis (10 min) |
+Status: MVP complete. Phases 1-4 done. Phase 5 (security/performance) in progress.  
+SEO improvements implemented: content expansion, blog section, GA4, pagination, root cleanup.
 
 ---
 
-## 📋 Implementation Phases
+## ✅ What's Already Done Well (SEO)
 
-### ✅ PHASE 1: Rate Limiting (2 days) — 🔴 CRITICAL
-
-**Objective:** Prevent brute force, DOS attacks, spam
-
-#### 1.1 Install Dependencies
-- [ ] `npm install @vercel/kv` (Redis-backed, Netlify-native)
-- [ ] Verify installation: `npm ls @vercel/kv`
-
-#### 1.2 Create Rate Limiting Utility
-- [ ] Create `lib/rate-limit.ts`
-- [ ] Implement `createRateLimiter(key, limit, window)` function
-- [ ] Use @vercel/kv for distributed tracking
-- [ ] Return: `{ isLimited: boolean, remaining: number, resetAt: Date }`
-- [ ] Add comments explaining the implementation
-
-**Implementation details:**
-```typescript
-// Use @vercel/kv for rate limiting
-// Key format: `ratelimit:${type}:${identifier}:${window}`
-// Prevents brute force attacks on auth endpoints
-// Handles: IP-based (public endpoints), email-based (auth), user-based (authenticated)
-```
-
-#### 1.3 Add Rate Limiting to Auth Endpoints
-**Critical: Prevent credential brute force**
-
-- [ ] `/app/api/auth/register/route.ts`
-  - Limit: 5 requests per 15 minutes per email
-  - Key: `ratelimit:register:${email}`
-  
-- [ ] `/app/api/auth/forgot-password/route.ts`
-  - Limit: 3 requests per 30 minutes per email
-  - Key: `ratelimit:forgot-password:${email}`
-  
-- [ ] `/app/api/auth/verify/route.ts`
-  - Limit: 10 attempts per 15 minutes per code
-  - Key: `ratelimit:verify:${code}`
-  
-- [ ] `/app/api/auth/reset-password/route.ts`
-  - Limit: 5 attempts per 30 minutes per email
-  - Key: `ratelimit:reset:${email}`
-
-**For each route:**
-- Check rate limit before processing
-- Return 429 (Too Many Requests) if limited
-- Include headers: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`
-- Add comment with rate limit policy
-
-#### 1.4 Add Rate Limiting to Public Endpoints
-**Medium priority: Prevent DOS and spam**
-
-- [ ] `/app/api/inquiries/route.ts` (POST)
-  - Limit: 5 per day per IP
-  - Key: `ratelimit:inquiries:${ip}`
-  
-- [ ] `/app/api/search/route.ts` (GET)
-  - Limit: 30 per minute per IP
-  - Key: `ratelimit:search:${ip}`
-  
-- [ ] `/app/api/search/suggest/route.ts` (GET)
-  - Limit: 60 per minute per IP
-  - Key: `ratelimit:suggest:${ip}`
-  
-- [ ] `/app/api/reviews/route.ts` (POST)
-  - Limit: 5 per day per user (authenticated)
-  - Key: `ratelimit:review:${userId}`
-
-**For each route:**
-- Extract IP from headers: `x-forwarded-for` or `x-real-ip`
-- Return 429 if limited
-- Include rate limit headers
-
-#### 1.5 Testing
-- [ ] Unit test: Rate limit logic
-- [ ] Integration test: Register endpoint (5 requests → 6th fails)
-- [ ] Integration test: Search endpoint (31 requests → 31st fails)
-- [ ] Verify headers are returned correctly
-- [ ] Test Netlify deployment (verify @vercel/kv works)
+| Area | Status | Notes |
+|------|--------|-------|
+| XML Sitemap | ✅ Dynamic | Includes static + dynamic (artists, events, categories, cities) |
+| Robots.txt | ✅ Clean | Blocks `/admin/`, `/api/`, `/login`, `/profile`, `/reset-password` |
+| Canonical URLs | ✅ Via `pageMetadata()` | Every page has alternates.canonical |
+| Open Graph Tags | ✅ | title, description, image, locale, siteName |
+| Twitter Cards | ✅ | summary_large_image with creator handle |
+| JSON-LD Structured Data | ✅ | Organization, Website, FAQPage, BreadcrumbList, Event, Artist, LocalBusiness |
+| Favicon Set | ✅ | Multiple sizes + apple-touch-icon + android-chrome |
+| Web Manifest | ✅ | site.webmanifest with theme_color, background_color |
+| Google/Bing Verification | ✅ | google77db56515cdc1333.html + meta tags |
+| Responsive Design | ✅ | Tailwind v4, mobile-friendly |
+| URL Normalization Middleware | ✅ | Slugifies /category/:path and /city/:path with 301 redirect |
+| Security Headers | ✅ | X-Content-Type-Options, X-Frame-Options, X-Robots-Tag |
+| Static Asset Caching | ✅ | 1-year immutable cache on static assets |
+| Schema Markup in Layout | ✅ | organizationJsonLd + websiteJsonLd in root head |
+| Page-Level Metadata | ✅ | generateMetadata on artists, events, category, city pages |
+| Breadcrumb JSON-LD | ✅ | On profile, category, and city pages |
+| Blog Section | ✅ | `/blog` route with listing, detail, model, sitemap, Article JSON-LD |
+| Article JSON-LD | ✅ | `articleJsonLd()` in jsonld.ts for blog posts |
+| Category/City SEO Content | ✅ | 300-500 words dynamic content via `lib/seo/content.ts` |
+| Pagination | ✅ | Category + city listing pages (24/page) |
+| Google Analytics 4 | ✅ | gtag script in layout via `NEXT_PUBLIC_GA_ID` |
+| Image Sitemap | ✅ | `/images-sitemap.xml` with artist photos + event covers |
+| Descriptive Image Alt Text | ✅ | ArtistCard images include name, category, city |
+| `lastmod` in Sitemap | ✅ | Category + city entries have dynamic `lastmod` from DB |
+| `hreflang` Tags | ✅ | en + x-default alternates in layout |
+| `theme-color` Meta Tag | ✅ | `#d4a017` (gold) in layout head |
+| LCP Preload | ✅ | eye.webp preload uncommented with `fetchPriority="high"` |
+| Unique Meta Descriptions | ✅ | `categoryMetaDescription()` + `cityMetaDescription()` per type/city |
+| Preconnect to ImageKit | ✅ | `Link: <https://ik.imagekit.io>; rel=preconnect` in headers |
+| Performance Monitoring | ✅ | WebVitals component reports CWV to GA4 |
 
 ---
 
-### ✅ PHASE 2: Remove force-dynamic (1 day) — 🔴 CRITICAL
+## 🛑 SEO Gaps — Critical to Fix
 
-**Objective:** Allow Next.js to use ISR instead of executing every request
+### 🔴 P0 — Must Fix (High Impact)
 
-#### 2.1 Home-Data Endpoints
-**These are already Redis cached, remove `force-dynamic`**
+| # | Issue | Location | Impact | Status |
+|---|-------|----------|--------|--------|
+| 1 | **Category/City pages content-thin** | `app/category/[category]/page.tsx`, `app/city/[city]/page.tsx` | High | ✅ Done — `lib/seo/content.ts` generates 300-500 words per page |
+| 2 | **No Blog / Content Marketing** | Missing entirely | High | ✅ Done — `/blog` route with model, listing, detail, sitemap |
+| 3 | **No Google Analytics 4** | Missing entirely | High | ✅ Done — gtag script in layout via `NEXT_PUBLIC_GA_ID` |
+| 4 | **No Search Console monitoring** | Verification file exists but not used | High | ⏳ Manual — submit sitemap in GSC dashboard |
+| 5 | **No pagination on artist listings** | Category + city pages used `limit: 100` | High | ✅ Done — 24/page with prev/next + numbered pages |
+| 6 | **OG image is identical logo for all pages** | `pageMetadata()` uses `siteConfig.ogImage` | Medium | ⏳ Open — needs `@vercel/og` or `next/og` API route |
 
-- [ ] `/app/api/home-data/route.ts`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 300;` (5 minutes)
-  - Reason: Redis cached, ISR acceptable
+### 🟡 P1 — Should Fix (Medium Impact)
 
-- [ ] `/app/api/home-data/artists/route.ts`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 300;`
+| # | Issue | Location | Impact | Status |
+|---|-------|----------|--------|--------|
+| 7 | **No image sitemap** | Missing | Medium | ✅ Done — `app/images-sitemap.xml/route.ts` with artist + event images |
+| 8 | **ArtistCard images lack descriptive alt text** | `components/ui/ArtistCard.tsx` | Medium | ✅ Done — alt includes name, category, city |
+| 9 | **Category/City pages have no `lastmod` in sitemap** | `app/sitemap.ts` | Medium | ✅ Done — `getLatestCategoryUpdates` + `getLatestCityUpdates` in sitemap |
+| 10 | **No breadcrumb JSON-LD on artists list page** | `app/artists/page.tsx` | Medium | ✅ Already existed — no change needed |
+| 11 | **No `hreflang` tags** | `app/layout.tsx` | Low | ✅ Done — en + x-default alternates added |
+| 12 | **No `theme-color` meta tag** | `app/layout.tsx` | Low | ✅ Done — `#d4a017` (gold) |
+| 13 | **Preload comment for eye.webp** | `app/layout.tsx:117` | Low | ✅ Done — uncommented with `fetchPriority="high"` |
+| 14 | **Category/city meta descriptions templated** | Category + city pages | Medium | ✅ Done — `categoryMetaDescription()` + `cityMetaDescription()` with unique text per type |
+| 15 | **No `Link` headers for preconnect to ImageKit** | `next.config.ts` | Medium | ✅ Done — preconnect header added |
+| 16 | **No performance monitoring** | Missing | Medium | ✅ Done — `WebVitals` component using `useReportWebVitals` + GA4 events |
+| 17 | **No social media preview per artist** | `app/artists/[slug]/page.tsx` | Medium | ⏳ Open — needs `@vercel/og` or `next/og` API route |
+| 18 | **search page has `noIndex`** | `app/search/page.tsx` | Correct | ✅ Already done |
 
-- [ ] `/app/api/home-data/categories/route.ts`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 300;`
+---
 
-#### 2.2 Events Routes
-**Add ISR caching**
+## 🔧 Technical SEO — Improvements
 
-- [ ] `/app/api/events/route.ts`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 300;` (event list updates ~5min acceptable)
+| # | Improvement | Details |
+|---|-------------|---------|
+| 1 | **Preconnect to ImageKit** | Add `Link` header in next.config.ts for `https://ik.imagekit.io` |
+| 2 | **Add `Cache-Control` headers to API routes** | Already planned in existing todo — search, filters, events |
+| 3 | **Enable ISR on more pages** | Already planned — replace `force-dynamic` with `revalidate` |
+| 4 | **Add HTTP security headers (CSP)** | Add `Content-Security-Policy` in next.config.ts |
+| 5 | **Enable Brotli compression** | Vercel does this by default ✅ |
+| 6 | **Verify Core Web Vitals** | Run PageSpeed Insights after optimizations |
 
-- [ ] `/app/api/events/[slug]/route.ts`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 600;` (10 minutes for individual event)
+---
 
-#### 2.3 Page Routes (Server Components)
-**Replace `force-dynamic` with ISR**
+## 📝 Content Strategy — Recommended
 
-- [ ] `/app/artists/page.tsx`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 300;`
-  - Test: Page loads, data refreshes every 5 minutes
+| Content Type | Frequency | Target Keywords | Priority |
+|-------------|-----------|-----------------|----------|
+| **Blog Posts** | 4-6/month | Long-tail booking queries | 🔴 High |
+| **Category Guides** | One per category | "book [category] artists india" | 🔴 High |
+| **City Guides** | One per major city | "[city] event entertainment" | 🟡 Medium |
+| **Artist Spotlights** | Weekly | "[artist name] booking" | 🟢 Low |
+| **Industry News** | Monthly | "event entertainment trends india" | 🟢 Low |
 
-- [ ] `/app/artists/[slug]/page.tsx`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 600;`
+### Blog Topic Ideas
+- "How to Book a Singer for Your Wedding in India — Complete Guide 2026"
+- "Top 10 DJs for Corporate Events in Mumbai, Delhi & Bangalore"
+- "How Much Does It Cost to Hire a Celebrity for an Event in India?"
+- "Bollywood vs Indie Artists — Which Is Right for Your Event?"
+- "Artist Booking Checklist — 7 Things to Ask Before You Book"
+- "Best Wedding Entertainment Ideas for Indian Weddings 2026"
 
-- [ ] `/app/events/page.tsx`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 300;`
+---
 
-- [ ] `/app/events/[slug]/page.tsx`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 600;`
+## 🌐 Off-Page SEO
 
-- [ ] `/app/category/[category]/page.tsx`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 600;`
+| Tactic | Effort | Impact | Timeline |
+|--------|--------|--------|----------|
+| Google Business Profile setup | Low | High | Week 1 |
+| Entertainment directories (eventfaqs, humaraevent) | Medium | Medium | Week 2-3 |
+| Guest posts on event/wedding blogs | High | High | Month 2+ |
+| Press releases for major bookings | Medium | Medium | Ongoing |
+| Influencer collaborations | High | High | Month 3+ |
+| Wedding planner partnerships | Medium | High | Month 2+ |
 
-- [ ] `/app/city/[city]/page.tsx`
-  - Remove: `export const dynamic = 'force-dynamic'`
-  - Add: `export const revalidate = 600;`
+---
 
-#### 2.4 Admin Routes - NO CHANGES
-**Keep `force-dynamic` for admin (only admin users, need real-time)**
+## 🗑️ Unnecessary Files in Root — Cleanup ✅ Done
 
-- `/app/admin/(dashboard)/layout.tsx` — Keep as-is
-- `/app/admin/(dashboard)/events/new/page.tsx` — Keep as-is
-- `/app/admin/login/layout.tsx` — Keep as-is
+| File | Action Taken |
+|------|-------------|
+| **`linkedin.txt`** | ✅ Deleted + removed from git tracking |
+| **`API_ROUTES_ANALYSIS.txt`** | ✅ Moved to `docs/` |
+| **`folder_tree.txt`** | ✅ Deleted + removed from git tracking |
+| **`ProjectTree.py`** | ✅ Deleted + removed from git tracking |
+| **`CLAUDE.md`** | ✅ Deleted + removed from git tracking |
+| **`.env.local.copy`** | ✅ Deleted (was already gitignored) |
+| **`.next/`** | Already gitignored — no action needed |
+| **`next-env.d.ts`** | Keep (auto-generated, required by TS) |
+| **`AGENTS.md`** | Keep (in use) |
+| **`todo.md`** | Keep (active document) |
+| **`docs/deep-research-report.md`** | Already in `docs/` ✅ |
 
-#### 2.5 Testing
+---
+
+## 📈 Performance Targets (Post-Optimization)
+
+| Metric | Current (est.) | Target |
+|--------|---------------|--------|
+| Lighthouse Performance | ~60-70 | >85 |
+| LCP | ~3-4s | <2.5s |
+| CLS | ~0.15 | <0.1 |
+| INP | ~250ms | <200ms |
+| Dynamic Route Executions | High | -40-60% via ISR |
+| Search Result Caching | None | 5-min Redis TTL |
+| Filter Caching | None | 1-hour Redis TTL |
+
+---
+
+## ⏱️ Implementation Roadmap
+
+### ✅ Phase A — Quick Wins (Week 1)
+- [x] Add GA4 script to layout (via `NEXT_PUBLIC_GA_ID`)
+- [x] Delete unnecessary root files (linkedin.txt, folder_tree.txt, ProjectTree.py, CLAUDE.md, .env.local.copy)
+- [x] Move API_ROUTES_ANALYSIS.txt → docs/
+- [x] Add `theme-color` meta tag (#d4a017)
+- [x] Add `preconnect` to ImageKit in next.config headers
+- [x] Uncomment `preload` for eye.webp (fetchPriority="high")
+- [x] Add breadcrumb JSON-LD on /artists page (already existed)
+- [x] Add `hreflang` tags (en + x-default)
+- [x] Add performance monitoring (WebVitals component with GA4 events)
+
+### ✅ Phase B — Content Depth (Week 2-3)
+- [x] Expand category pages with 300-500 words SEO content (via `lib/seo/content.ts`)
+- [x] Expand city pages with 300-500 words SEO content (via `lib/seo/content.ts`)
+- [x] Unique meta descriptions for category/city (via `categoryMetaDescription` + `cityMetaDescription`)
+- [x] Image sitemap (`/images-sitemap.xml` with artist + event images)
+- [ ] Add dynamic OG images per artist profile
+
+### Phase C — Technical SEO (Week 3-4)
+- [x] Implement pagination on category + city listing pages (24 per page)
+- [x] Add `lastmod` to category/city sitemap entries (via aggregate queries)
+- [x] ArtistCard descriptive alt text (name + category + city)
+- [ ] Add `Cache-Control` and CSP headers
+- [ ] Configure ISR (remove force-dynamic) — already planned in existing todo
+- [ ] Add Redis caching for search/filters — already planned in existing todo
+
+### Phase D — Content Marketing (Month 2+)
+- [x] Create `/blog` section with listing + detail pages + MongoDB model
+- [x] Add blog sitemap entries
+- [x] Add `articleJsonLd` structured data
+- [ ] Publish 4-6 blog posts/month
+- [ ] City & category guide pages
+- [ ] Guest posting & directory outreach
+
+### Phase E — Ongoing
+- [ ] Google Business Profile reviews
+- [ ] Backlink building
+- [ ] Monthly SEO performance review
+- [ ] Content calendar maintenance
+
+---
+
+## 📋 Existing Optimization Plan (from previous todo)
+
+**Already documented in earlier plan — kept for reference:**
+
+### PHASE 1-6 (from existing implementation)
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| 1. Rate Limiting | ⏳ Ready | Install @vercel/kv, protect auth + public endpoints |
+| 2. Remove force-dynamic | ⏳ Ready | Replace with ISR revalidation on home-data + page routes |
+| 3. Search/Filter Caching | ⏳ Ready | Redis cache for filters, search, suggestions, events |
+| 4. Cache Invalidation | ⏳ Ready | Clear Redis keys on artist/event/review mutations |
+| 5. Remaining Optimization | ⏳ Ready | Cache headers, ImageKit review, admin security |
+| 6. Code Comments | ⏳ Ready | Document caching + rate limiting logic |
+
+**Total effort:** ~7 days for existing + 2-3 weeks for new SEO improvements
+
+---
+
+## 🚀 Deployment Checklist
+
+- [x] Delete unnecessary root files before push
+- [x] Add GA4 env var (`NEXT_PUBLIC_GA_ID`) to `.env.example`
+- [x] Ensure `.env.local.copy` is removed and gitignored
+- [ ] Set `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX` in `.env.local` and Vercel/Netlify
 - [ ] Build succeeds: `npm run build`
-- [ ] Home page loads <500ms (cached)
-- [ ] Data refreshes every 5-10 minutes (ISR revalidation)
-- [ ] Admin dashboard still real-time
-- [ ] No console warnings
+- [ ] Lighthouse audit > 85 performance
+- [ ] Submit new sitemap to Google Search Console
+- [ ] Verify all redirects work (middleware + netlify.toml)
+- [ ] Ensure first blog post is created via MongoDB
 
 ---
 
-### ✅ PHASE 3: Search/Filter Caching (1 day) — 🟡 HIGH
+## 📁 New Files Created
 
-**Objective:** Cache expensive query operations (highest ROI)
-
-#### 3.1 Create Filter Caching
-**File:** `lib/cache/filters.ts`
-
-```typescript
-// Filter cache: distinct categories and cities
-// Used on: artist listing page, search filters
-// TTL: 3600s (1 hour) — rarely changes
-// Invalidated on: artist/event mutations only
-// Key: 'filters'
-
-export async function getCachedFilters() {
-  // Try cache first
-  // If miss: query DB for distinct categories + cities
-  // Store in Redis with TTL 3600s
-  // Return cached result
-}
-
-export async function invalidateFilters() {
-  // Clear 'filters' key from Redis
-}
-```
-
-- [ ] Create file with `getCachedFilters()` function
-- [ ] Query: `distinct categories + cities` from DB
-- [ ] Cache key: `'filters'` (static data)
-- [ ] TTL: 3600s (1 hour)
-- [ ] Add comment explaining cache strategy
-- [ ] Handle Redis unavailability gracefully
-
-#### 3.2 Create Search Caching
-**File:** `lib/cache/search.ts`
-
-```typescript
-// Search cache: query-based result caching
-// Used on: /api/search route
-// TTL: 300s (5 minutes) — results may vary based on DB state
-// Invalidated on: artist profile changes
-// Key: search:${hash(query)}:${category}:${city}:${page}
-
-export async function getCachedSearch(query, filters, page) {
-  // Key: hash query + filters + page
-  // Try cache first (5 min TTL)
-  // If miss: execute search query
-  // Return results
-}
-
-export async function invalidateSearchCache(query?, category?, city?) {
-  // If specific query: delete specific cache key
-  // If any param: delete all search cache keys (use pattern matching)
-}
-```
-
-- [ ] Create file with caching wrapper for search
-- [ ] Cache key: `search:${hashQuery}:${category}:${city}:${page}`
-- [ ] TTL: 300s (5 minutes)
-- [ ] Add comments explaining invalidation strategy
-- [ ] Handle cache key generation carefully
-
-#### 3.3 Create Search Suggestion Caching
-**File:** `lib/cache/search.ts` (same file)
-
-```typescript
-// Search suggestions cache: autocomplete results
-// Used on: /api/search/suggest route
-// TTL: 600s (10 minutes) — suggestions don't change frequently
-// Invalidated on: artist profile changes
-// Key: search:suggest:${query}
-
-export async function getCachedSuggestions(query, category?, city?) {
-  // Key: search:suggest:${hash(query)}:${category}:${city}
-  // TTL: 600s
-  // Cache top 8 suggestions
-  // Return results
-}
-```
-
-- [ ] Reuse same file as search caching
-- [ ] Cache key: `search:suggest:${query}:${category}:${city}`
-- [ ] TTL: 600s (10 minutes)
-- [ ] Limit results to 8 (avoid large cache entries)
-
-#### 3.4 Create Event Detail Caching
-**File:** `lib/cache/events.ts`
-
-```typescript
-// Event detail cache: individual event data
-// Used on: /api/events/[slug] route
-// TTL: 600s (10 minutes)
-// Invalidated on: event updates/deletes
-// Key: event:${slug}
-
-export async function getCachedEvent(slug) {
-  // Key: event:${slug}
-  // TTL: 600s
-  // Try cache first
-  // If miss: query DB for event by slug
-  // Return event data
-}
-
-export async function invalidateEventCache(slug) {
-  // Clear event:${slug} from Redis
-}
-```
-
-- [ ] Create file for event caching
-- [ ] Cache key: `event:${slug}`
-- [ ] TTL: 600s (10 minutes)
-- [ ] Add invalidation function
-
-#### 3.5 Update API Routes to Use Caching
-
-**`/app/api/filters/route.ts`**
-- [ ] Remove `force-dynamic` (if present)
-- [ ] Add: `export const revalidate = 3600;` (1 hour ISR)
-- [ ] Call `getCachedFilters()` instead of direct DB query
-- [ ] Add comment: "Distinct categories/cities rarely change"
-
-**`/app/api/search/route.ts`**
-- [ ] Call `getCachedSearch(q, filters, page)` 
-- [ ] Add cache-control header: `public, max-age=300`
-- [ ] Add comment: "Per-query result caching (5 min TTL)"
-
-**`/app/api/search/suggest/route.ts`**
-- [ ] Remove: `export const dynamic = 'force-dynamic'`
-- [ ] Call `getCachedSuggestions(q, category, city)`
-- [ ] Add cache-control header: `public, max-age=600`
-- [ ] Add comment: "Search suggestions cached (10 min TTL)"
-
-**`/app/api/events/[slug]/route.ts`**
-- [ ] Call `getCachedEvent(slug)` instead of direct query
-- [ ] Add cache-control header: `public, max-age=600`
-- [ ] Add comment: "Individual event details cached (10 min TTL)"
-
-#### 3.6 Testing
-- [ ] Filter request 1: slow (queries DB)
-- [ ] Filter request 2 within 1 hour: fast (cached) ✅
-- [ ] Search results cached for 5 minutes ✅
-- [ ] Suggestions cached for 10 minutes ✅
-- [ ] Event details cached for 10 minutes ✅
+| File | Purpose |
+|------|---------|
+| `lib/seo/content.ts` | Dynamic SEO content generators for category + city pages |
+| `lib/models/BlogPost.ts` | Mongoose model for blog posts |
+| `lib/services/blogService.ts` | CRUD + sitemap service for blog |
+| `app/blog/page.tsx` | Blog listing with category filter + pagination |
+| `app/blog/[slug]/page.tsx` | Blog detail with Article JSON-LD + breadcrumbs |
+| `app/images-sitemap.xml/route.ts` | Image sitemap with artist + event images |
+| `components/analytics/WebVitals.tsx` | Core Web Vitals reporting to GA4 |
 
 ---
 
-### ✅ PHASE 4: Cache Invalidation (1 day) — 🟡 HIGH
-
-**Objective:** Prevent stale data by clearing caches on mutations
-
-#### 4.1 Create Invalidation Helper
-**File:** `lib/cache/invalidate.ts`
-
-```typescript
-// Cache invalidation on mutation
-// Artist create/update/delete → invalidates:
-// - filters (distinct categories/cities)
-// - search results (text index)
-// - home-data (featured artists)
-// 
-// Event create/update/delete → invalidates:
-// - event details cache
-// - event list cache
-// - home-data cache
-// 
-// Review create/delete → invalidates:
-// - reviews marquee cache
-
-import { invalidateFilters } from './filters';
-import { invalidateSearchCache, invalidateSuggestionsCache } from './search';
-
-export async function invalidateArtistCaches(artistId) {
-  // Invalidate affected caches
-  await invalidateFilters();
-  await invalidateSearchCache(); // All search results
-  // Invalidate home-data Redis cache too
-}
-
-export async function invalidateEventCaches(eventId) {
-  // Invalidate event + home-data
-}
-
-export async function invalidateReviewCaches() {
-  // Invalidate reviews marquee
-}
-```
-
-- [ ] Create file with invalidation functions
-- [ ] Add: `invalidateArtistCaches(artistId)`
-- [ ] Add: `invalidateEventCaches(eventId)`
-- [ ] Add: `invalidateReviewCaches()`
-- [ ] Add: `invalidateHomeCaches()` (clears featured data)
-- [ ] Each function clears related Redis keys
-
-#### 4.2 Add Invalidation to Artist Mutations
-
-**`/app/api/admin/artists/route.ts`** (POST - create)
-- [ ] After artist created successfully
-- [ ] Call: `invalidateArtistCaches(newArtist._id)`
-- [ ] Add comment: "Clear filters, search, and home-data caches"
-
-**`/app/api/artists/id/[id]/route.ts`** (PATCH - update)
-- [ ] After artist updated successfully
-- [ ] Call: `invalidateArtistCaches(id)`
-- [ ] Add comment explaining invalidation
-
-**`/app/api/artists/id/[id]/route.ts`** (DELETE)
-- [ ] After artist deleted successfully
-- [ ] Call: `invalidateArtistCaches(id)`
-
-**`/app/api/admin/artists/[id]/route.ts`** (PUT - update)
-- [ ] After artist updated
-- [ ] Call: `invalidateArtistCaches(id)`
-
-**`/app/api/admin/artists/[id]/route.ts`** (DELETE)
-- [ ] After artist deleted
-- [ ] Call: `invalidateArtistCaches(id)`
-
-#### 4.3 Add Invalidation to Event Mutations
-
-**`/app/api/admin/events/route.ts`** (POST - create)
-- [ ] After event created
-- [ ] Call: `invalidateEventCaches(newEvent._id)` and `invalidateHomeCaches()`
-
-**`/app/api/admin/events/[id]/route.ts`** (PUT - update)
-- [ ] After event updated
-- [ ] Call: `invalidateEventCaches(id)` and `invalidateHomeCaches()`
-
-**`/app/api/admin/events/[id]/route.ts`** (DELETE)
-- [ ] After event deleted
-- [ ] Call: `invalidateEventCaches(id)` and `invalidateHomeCaches()`
-
-#### 4.4 Add Invalidation to Review Mutations
-
-**`/app/api/admin/reviews/route.ts`** (POST - bulk import)
-- [ ] After reviews imported
-- [ ] Call: `invalidateReviewCaches()`
-
-**`/app/api/reviews/route.ts`** (POST - new review)
-- [ ] After review created
-- [ ] Call: `invalidateReviewCaches()`
-
-**`/app/api/reviews/route.ts`** (DELETE)
-- [ ] After review deleted
-- [ ] Call: `invalidateReviewCaches()`
-
-#### 4.5 Testing
-- [ ] Create artist → filters endpoint returns updated categories ✅
-- [ ] Update event → event detail route shows new data ✅
-- [ ] Delete artist → search results no longer show artist ✅
-- [ ] Add review → marquee shows new review ✅
-- [ ] No stale data visible to users
-
----
-
-### ✅ PHASE 5: Optimize Remaining Routes (1 day) — 🟢 MEDIUM
-
-#### 5.1 Add Cache Control Headers
-- [ ] Static endpoints return: `Cache-Control: public, max-age=3600`
-- [ ] Short-lived endpoints return: `Cache-Control: public, max-age=300`
-- [ ] Dynamic endpoints return: `Cache-Control: no-store` (auth required)
-
-#### 5.2 Review ImageKit Usage
-**File:** `/app/api/admin/upload/route.ts`
-
-- [ ] Check max image dimensions
-- [ ] Verify compression is enabled
-- [ ] Add comment noting optimization status
-- [ ] Example: "Images optimized for web: max 1920px width, quality 80%"
-
-#### 5.3 Verify Admin Security
-**Check all admin routes:**
-
-- [ ] Every admin endpoint checks: `if (session?.user?.role !== 'admin') return 401`
-- [ ] OTP-protected operations: `/api/admin/delete-otp` has proper validation
-- [ ] Add comment explaining security model
-- [ ] Example: "Admin routes require verified admin role + OTP for destructive ops"
-
-#### 5.4 Testing
-- [ ] Cache headers present: `curl -i https://domain/api/filters`
-- [ ] Admin operations require auth
-- [ ] OTP validation works for bulk delete
-
----
-
-### ✅ PHASE 6: Code Comments (0.5 days) — 🟢 LOW
-
-**Objective:** Document caching and rate limiting logic for future maintainers
-
-#### 6.1 Rate Limiting Comments
-**`lib/rate-limit.ts`**
-```typescript
-// Rate limiting using @vercel/kv (Redis-backed, Netlify-native)
-// Prevents: brute force attacks on auth, DOS on public endpoints, spam
-// Key format: `ratelimit:${type}:${identifier}:${window}`
-// Fallback: Gracefully degrade if Redis unavailable (no rate limiting applied)
-```
-
-#### 6.2 Caching Comments
-**`lib/cache/*.ts`**
-```typescript
-// Filter cache: categories + cities (rarely change)
-// TTL: 3600s (1 hour)
-// Invalidated on: artist/event mutations only
-// Key: 'filters'
-// Fallback: Query DB directly if cache unavailable
-```
-
-#### 6.3 Invalidation Comments
-**`lib/cache/invalidate.ts`**
-```typescript
-// Cache invalidation on mutation
-// Artist: affects filters, search, home-data (cascade invalidation)
-// Event: affects event details, event list, home-data
-// Review: affects marquee cache only
-// Implement: Delete specific Redis keys + invalidate @vercel/kv tags
-```
-
-#### 6.4 API Route Comments
-**Each modified API route:**
-```typescript
-// Cache: Redis with 300s TTL
-// Invalidation: Cleared on artist mutations
-// Rate limit: 30 per minute per IP
-// Fallback: Direct DB query if cache unavailable
-```
-
-#### 6.5 Testing
-- [ ] Comments are clear and helpful
-- [ ] No outdated comments
-- [ ] All team members understand caching strategy
-
----
-
-## ✅ Deployment Checklist
-
-### Pre-Deployment Testing
-- [ ] Build succeeds: `npm run build`
-- [ ] No TypeScript errors
-- [ ] No console warnings
-- [ ] Rate limiting works locally
-- [ ] Caching works locally
-- [ ] Cache invalidation works locally
-
-### Environment Variables (Netlify)
-Set in **Netlify Dashboard → Site Settings → Environment:**
-
-```
-VERCEL_KV_REST_API_URL=<provided by Netlify>
-VERCEL_KV_REST_API_TOKEN=<provided by Netlify>
-MONGODB_URI=<existing>
-NEXTAUTH_URL=https://blueeyeentertainment.in
-NEXTAUTH_SECRET=<existing>
-REDIS_URL=<existing>
-# ... all other existing variables
-```
-
-### Netlify Domain Setup
-- [ ] Primary domain: `blueeyeentertainment.in`
-- [ ] Redirect from `.netlify.app` → custom domain (301)
-- [ ] DNS configured correctly
-- [ ] SSL certificate valid
-
-### Deployment Steps
-1. [ ] Commit changes: `git commit -m "feat: Phase 1-4 optimization (rate limit, cache, invalidation)"`
-2. [ ] Push to main: `git push origin main`
-3. [ ] Netlify auto-deploys
-4. [ ] Verify deployment: Check Netlify build logs
-5. [ ] Test on production domain
-
-### Post-Deployment Verification
-- [ ] [ ] Production site loads: https://blueeyeentertainment.in
-- [ ] [ ] Rate limiting works: Try 6 registrations in 15 min → 6th fails
-- [ ] [ ] Caching works: Request filters 2x → 2nd is fast
-- [ ] [ ] Cache invalidation works: Create artist → filters updated
-- [ ] [ ] Admin dashboard real-time: Admin operations instant
-- [ ] [ ] No errors in Netlify logs
-- [ ] [ ] Netlify compute usage reduced 40-60% (monitor dashboard)
-
----
-
-## 📊 Success Criteria
-
-✅ **Rate Limiting**
-- [ ] Auth endpoints protected (5-10 req/15min per email)
-- [ ] Public endpoints protected (30-60 req/min per IP)
-- [ ] Proper 429 responses with rate limit headers
-- [ ] No false positives (legitimate users not blocked)
-
-✅ **Force-Dynamic Removal**
-- [ ] 6 page routes use ISR instead of dynamic
-- [ ] 3 home-data routes use ISR instead of dynamic
-- [ ] Build succeeds without warnings
-- [ ] Data refreshes every 5-10 minutes (acceptable)
-
-✅ **Caching Improvements**
-- [ ] Filters cached (1 hour)
-- [ ] Search results cached (5 minutes)
-- [ ] Suggestions cached (10 minutes)
-- [ ] Event details cached (10 minutes)
-
-✅ **Cache Invalidation**
-- [ ] Artist mutations invalidate filters + search
-- [ ] Event mutations invalidate event + home-data
-- [ ] Review mutations invalidate marquee
-- [ ] No stale data visible to users
-- [ ] Zero cache invalidation bugs reported
-
-✅ **Admin Functionality**
-- [ ] Admin dashboard real-time (not affected by ISR)
-- [ ] All admin operations work correctly
-- [ ] OTP protection for destructive operations intact
-
-✅ **Netlify Metrics**
-- [ ] Compute usage reduced 40-60%
-- [ ] Credits no longer burning rapidly
-- [ ] Sustainable usage pattern achieved
-- [ ] Site performance maintained or improved
-
----
-
-## 📈 Performance Targets
-
-**Before Optimization:**
-- Netlify compute usage: ~X units/day (32 credits burning)
-- Dynamic route executions: ~Y per day
-- Average response time: TBD
-
-**After Optimization:**
-- Netlify compute usage: ~0.4X units/day (target)
-- Dynamic route executions: ~0.4Y per day (reduced by ISR)
-- Average response time: <500ms (ISR cached)
-
-**Monitoring:**
-- Track Netlify dashboard weekly
-- Monitor response times in browser DevTools
-- Check Redis cache hit/miss rates
-- Verify no rate limit false positives
-
----
-
-## 🔍 Files to Modify/Create
-
-### New Files
-- `lib/rate-limit.ts` — Rate limiting utility
-- `lib/cache/filters.ts` — Filter caching
-- `lib/cache/search.ts` — Search result + suggestion caching
-- `lib/cache/events.ts` — Event detail caching
-- `lib/cache/invalidate.ts` — Cache invalidation helpers
-
-### Modified API Routes (~15 files)
-- `app/api/auth/register/route.ts` — Add rate limiting
-- `app/api/auth/forgot-password/route.ts` — Add rate limiting
-- `app/api/auth/verify/route.ts` — Add rate limiting
-- `app/api/auth/reset-password/route.ts` — Add rate limiting
-- `app/api/inquiries/route.ts` — Add rate limiting (POST)
-- `app/api/search/route.ts` — Add caching
-- `app/api/search/suggest/route.ts` — Remove force-dynamic, add caching
-- `app/api/filters/route.ts` — Add caching
-- `app/api/events/route.ts` — Remove force-dynamic
-- `app/api/events/[slug]/route.ts` — Remove force-dynamic, add caching
-- `app/api/reviews/route.ts` — Add rate limiting (POST)
-- `app/api/admin/artists/route.ts` — Add invalidation
-- `app/api/admin/artists/[id]/route.ts` — Add invalidation
-- `app/api/admin/events/route.ts` — Add invalidation
-- `app/api/admin/events/[id]/route.ts` — Add invalidation
-- `app/api/admin/reviews/route.ts` — Add invalidation (bulk)
-
-### Modified Page Routes (~6 files)
-- `app/artists/page.tsx` — Remove force-dynamic, add ISR
-- `app/artists/[slug]/page.tsx` — Remove force-dynamic, add ISR
-- `app/events/page.tsx` — Remove force-dynamic, add ISR
-- `app/events/[slug]/page.tsx` — Remove force-dynamic, add ISR
-- `app/category/[category]/page.tsx` — Remove force-dynamic, add ISR
-- `app/city/[city]/page.tsx` — Remove force-dynamic, add ISR
-
-### Config Updates
-- `package.json` — Add @vercel/kv dependency
-
----
-
-## 📞 Support & Troubleshooting
-
-### Issue: Rate limit too strict
-- Solution: Increase limit in `lib/rate-limit.ts`, restart server
-
-### Issue: Stale data visible to users
-- Solution: Check cache invalidation is being called, verify Redis connection
-
-### Issue: Netlify build fails
-- Solution: Check environment variables set in Netlify dashboard, verify package.json updated
-
-### Issue: @vercel/kv not available
-- Solution: Ensure `npm install @vercel/kv` completed, restart dev server
-
-### Issue: Search cache not working
-- Solution: Verify Redis running, check cache hit logs, ensure invalidation not clearing too aggressively
-
----
-
-## 📅 Timeline & Effort
-
-| Phase | Duration | Priority | Status |
-|-------|----------|----------|--------|
-| 1. Rate limiting | 2 days | 🔴 CRITICAL | ⏳ Ready |
-| 2. Remove force-dynamic | 1 day | 🔴 CRITICAL | ⏳ Ready |
-| 3. Search/filter caching | 1 day | 🟡 HIGH | ⏳ Ready |
-| 4. Cache invalidation | 1 day | 🟡 HIGH | ⏳ Ready |
-| 5. Remaining optimizations | 1 day | 🟢 MEDIUM | ⏳ Ready |
-| 6. Code comments | 0.5 day | 🟢 LOW | ⏳ Ready |
-| Testing & deployment | 1 day | — | ⏳ Ready |
-| **TOTAL** | **~7 days** | — | **⏳ Ready to start** |
-
----
-
-## 🚀 Next Steps
-
-1. **Confirm deployment successful** on Netlify
-2. **Start Phase 1:** Install @vercel/kv, create rate-limit utility
-3. **Test locally** each phase before deploying
-4. **Monitor Netlify dashboard** during and after deployment
-5. **Document any issues** encountered
-
----
-
-**Last Updated:** May 31, 2026  
-**Status:** Implementation Ready  
-**Next Action:** Start Phase 1 - Install @vercel/kv
+**Last Updated:** June 5, 2026  
+**Next Priority:** Implement dynamic OG images (P0#6) → Deploy to production → Start content calendar

@@ -10,6 +10,7 @@ import { pageMetadata } from "@/lib/seo/metadata";
 import { categoryPath, resolveCategorySlug } from "@/lib/seo/slugs";
 import Link from "next/link";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { categorySeoContent, categoryMetaDescription } from "@/lib/seo/content";
 
 export async function generateMetadata({
   params,
@@ -21,17 +22,19 @@ export async function generateMetadata({
   const label = resolveCategorySlug(category, categories);
   return pageMetadata({
     title: `${label} Artists for Hire — Weddings, Corporate & Events in India`,
-    description: `Browse and book verified ${label.toLowerCase()} artists for weddings, corporate events, and private parties across India on ${siteConfig.name}.`,
+    description: categoryMetaDescription(label),
     path: categoryPath(label),
   });
 }
+
+const PAGE_SIZE = 24;
 
 export default async function CategoryArtistsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ q?: string; city?: string }>;
+  searchParams: Promise<{ q?: string; city?: string; page?: string }>;
 }) {
   const [{ category }, sParams, categories, cities] = await Promise.all([
     params,
@@ -42,13 +45,17 @@ export default async function CategoryArtistsPage({
 
   const decodedCategory = resolveCategorySlug(category, categories);
   const canonicalPath = categoryPath(decodedCategory);
+  const currentPage = Math.max(1, parseInt(sParams.page || "1", 10));
 
   const { artists, total } = (await getArtists({
     category: decodedCategory,
     q: sParams.q,
     city: sParams.city,
-    limit: 100,
+    page: currentPage,
+    limit: PAGE_SIZE,
   })) as { artists: any[]; total: number };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
 
 
@@ -115,6 +122,75 @@ export default async function CategoryArtistsPage({
           />
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav
+          aria-label="Artist pages"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "0.5rem",
+            marginTop: "3rem",
+            flexWrap: "wrap",
+          }}
+        >
+          {currentPage > 1 && (
+            <Link
+              href={`${canonicalPath}?page=${currentPage - 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.city ? `&city=${encodeURIComponent(sParams.city)}` : ""}`}
+              className="btn-outline"
+              style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
+            >
+              ← Prev
+            </Link>
+          )}
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+            const startPage = Math.max(1, currentPage - 4);
+            const pageNum = startPage + i;
+            if (pageNum > totalPages) return null;
+            const href = pageNum === 1 ? canonicalPath : `${canonicalPath}?page=${pageNum}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.city ? `&city=${encodeURIComponent(sParams.city)}` : ""}`;
+            return (
+              <Link
+                key={pageNum}
+                href={href}
+                className="btn-outline"
+                style={{
+                  padding: "0.5rem 0.9rem",
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                  fontWeight: pageNum === currentPage ? 800 : 500,
+                  background: pageNum === currentPage ? "var(--gold)" : "transparent",
+                  color: pageNum === currentPage ? "#000" : "var(--text)",
+                  borderColor: pageNum === currentPage ? "var(--gold)" : "var(--border)",
+                }}
+              >
+                {pageNum}
+              </Link>
+            );
+          })}
+          {currentPage < totalPages && (
+            <Link
+              href={`${canonicalPath}?page=${currentPage + 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.city ? `&city=${encodeURIComponent(sParams.city)}` : ""}`}
+              className="btn-outline"
+              style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
+            >
+              Next →
+            </Link>
+          )}
+        </nav>
+      )}
+
+      {/* SEO Content Section */}
+      <section style={{ marginTop: "5rem", paddingTop: "2.5rem", borderTop: "1px solid var(--border)" }}>
+        <h2 style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.75rem)", fontWeight: 800, marginBottom: "1.25rem", color: "var(--text)", fontFamily: "var(--font-primary)" }}>
+          Why Hire {decodedCategory} Artists on {siteConfig.name}
+        </h2>
+        <div style={{ color: "var(--text2)", lineHeight: 1.8, fontSize: "0.95rem", maxWidth: "900px" }}>
+          {categorySeoContent(decodedCategory, total).split("\n\n").map((paragraph, i) => (
+            <p key={i} style={{ marginBottom: "1rem" }}>{paragraph}</p>
+          ))}
+        </div>
+      </section>
 
       {/* Explore Related Categories (Internal Linking SEO) */}
       {categories.length > 1 && (

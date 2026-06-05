@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Script from "next/script";
 import { Playfair_Display, Outfit, Limelight, JetBrains_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import Navbar from "@/components/layout/Navbar";
@@ -7,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import AuthProvider from "@/components/auth/AuthProvider";
 import FavoritesProvider from "@/components/providers/FavoritesProvider";
+import { WebVitals } from "@/components/analytics/WebVitals";
 
 import AppChrome from "@/components/layout/AppChrome";
 import { LoadingProvider } from "@/lib/context/LoadingContext";
@@ -114,15 +116,37 @@ export default function RootLayout({
       className={`${playfair.variable} ${outfit.variable} ${limelight.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <head>
-        {/* <link rel="preload" as="image" href="/eye.webp" type="image/webp" fetchPriority="high" /> */}
+        <meta name="theme-color" content="#d4a017" />
+        <link rel="preload" as="image" href="/eye.webp" type="image/webp" fetchPriority="high" />
+        <link rel="alternate" hreflang="en" href={siteConfig.url} />
+        <link rel="alternate" hreflang="x-default" href={siteConfig.url} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify([organizationJsonLd(), websiteJsonLd()]),
           }}
         />
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                  page_path: window.location.pathname,
+                });
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body className="min-h-full flex flex-col">
+        <WebVitals />
         <LoadingProvider>
           <AppChrome />
           <Suspense fallback={null}>

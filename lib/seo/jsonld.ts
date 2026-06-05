@@ -156,6 +156,36 @@ export function eventJsonLd(event: {
   };
 }
 
+export function articleJsonLd(options: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string;
+  datePublished: string | Date;
+  dateModified?: string | Date;
+  author: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: options.title,
+    description: options.description,
+    url: options.url,
+    ...(options.image ? { image: options.image } : {}),
+    datePublished: new Date(options.datePublished).toISOString(),
+    ...(options.dateModified ? { dateModified: new Date(options.dateModified).toISOString() } : {}),
+    author: {
+      "@type": "Person",
+      name: options.author,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+  };
+}
+
 export function localBusinessJsonLd() {
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",

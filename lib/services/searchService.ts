@@ -116,3 +116,25 @@ export async function getCategoryCounts() {
     return acc;
   }, {});
 }
+
+export async function getLatestCategoryUpdates() {
+  await connectToDatabase();
+  const result = await Artist.aggregate([
+    { $match: { category: { $exists: true, $ne: "" } } },
+    { $sort: { updatedAt: -1 } },
+    { $group: { _id: "$category", updatedAt: { $first: "$updatedAt" } } },
+    { $project: { _id: 0, category: "$_id", updatedAt: 1 } },
+  ]);
+  return result as { category: string; updatedAt: Date }[];
+}
+
+export async function getLatestCityUpdates() {
+  await connectToDatabase();
+  const result = await Artist.aggregate([
+    { $match: { "location.city": { $exists: true, $ne: "" } } },
+    { $sort: { updatedAt: -1 } },
+    { $group: { _id: "$location.city", updatedAt: { $first: "$updatedAt" } } },
+    { $project: { _id: 0, city: "$_id", updatedAt: 1 } },
+  ]);
+  return result as { city: string; updatedAt: Date }[];
+}

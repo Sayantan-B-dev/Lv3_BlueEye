@@ -9,6 +9,7 @@ import { pageMetadata } from "@/lib/seo/metadata";
 import { cityPath, resolveCitySlug } from "@/lib/seo/slugs";
 import Link from "next/link";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { citySeoContent, cityMetaDescription } from "@/lib/seo/content";
 
 export async function generateMetadata({
   params,
@@ -20,17 +21,19 @@ export async function generateMetadata({
   const label = resolveCitySlug(city, cities);
   return pageMetadata({
     title: `Book Artists in ${label} — Singers, DJs & Performers for Events`,
-    description: `Find and book top performers available in ${label} for weddings, corporate events, and private parties on ${siteConfig.name}.`,
+    description: cityMetaDescription(label),
     path: cityPath(label),
   });
 }
+
+const PAGE_SIZE = 24;
 
 export default async function CityArtistsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; page?: string }>;
 }) {
   const [{ city }, sParams, cities] = await Promise.all([
     params,
@@ -39,13 +42,18 @@ export default async function CityArtistsPage({
   ]);
 
   const decodedCity = resolveCitySlug(city, cities);
+  const canonicalPath = cityPath(decodedCity);
+  const currentPage = Math.max(1, parseInt(sParams.page || "1", 10));
 
   const { artists, total } = (await getArtists({
     city: decodedCity,
     q: sParams.q,
     category: sParams.category,
-    limit: 100,
+    page: currentPage,
+    limit: PAGE_SIZE,
   })) as { artists: any[]; total: number };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
 
 
@@ -109,6 +117,75 @@ export default async function CityArtistsPage({
           />
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav
+          aria-label="Artist pages"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "0.5rem",
+            marginTop: "3rem",
+            flexWrap: "wrap",
+          }}
+        >
+          {currentPage > 1 && (
+            <Link
+              href={`${canonicalPath}?page=${currentPage - 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.category ? `&category=${encodeURIComponent(sParams.category)}` : ""}`}
+              className="btn-outline"
+              style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
+            >
+              ← Prev
+            </Link>
+          )}
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+            const startPage = Math.max(1, currentPage - 4);
+            const pageNum = startPage + i;
+            if (pageNum > totalPages) return null;
+            const href = pageNum === 1 ? canonicalPath : `${canonicalPath}?page=${pageNum}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.category ? `&category=${encodeURIComponent(sParams.category)}` : ""}`;
+            return (
+              <Link
+                key={pageNum}
+                href={href}
+                className="btn-outline"
+                style={{
+                  padding: "0.5rem 0.9rem",
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                  fontWeight: pageNum === currentPage ? 800 : 500,
+                  background: pageNum === currentPage ? "var(--gold)" : "transparent",
+                  color: pageNum === currentPage ? "#000" : "var(--text)",
+                  borderColor: pageNum === currentPage ? "var(--gold)" : "var(--border)",
+                }}
+              >
+                {pageNum}
+              </Link>
+            );
+          })}
+          {currentPage < totalPages && (
+            <Link
+              href={`${canonicalPath}?page=${currentPage + 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.category ? `&category=${encodeURIComponent(sParams.category)}` : ""}`}
+              className="btn-outline"
+              style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
+            >
+              Next →
+            </Link>
+          )}
+        </nav>
+      )}
+
+      {/* SEO Content Section */}
+      <section style={{ marginTop: "5rem", paddingTop: "2.5rem", borderTop: "1px solid var(--border)" }}>
+        <h2 style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.75rem)", fontWeight: 800, marginBottom: "1.25rem", color: "var(--text)", fontFamily: "var(--font-primary)" }}>
+          Book Artists in {decodedCity} — Premium Entertainment
+        </h2>
+        <div style={{ color: "var(--text2)", lineHeight: 1.8, fontSize: "0.95rem", maxWidth: "900px" }}>
+          {citySeoContent(decodedCity, total).split("\n\n").map((paragraph, i) => (
+            <p key={i} style={{ marginBottom: "1rem" }}>{paragraph}</p>
+          ))}
+        </div>
+      </section>
 
       {/* Explore Other Cities (Internal Linking SEO) */}
       {cities.length > 1 && (

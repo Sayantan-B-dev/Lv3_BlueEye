@@ -37,6 +37,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Preconnect to ImageKit for faster image loading
+        source: "/",
+        headers: [
+          { key: "Link", value: "<https://ik.imagekit.io>; rel=preconnect" },
+        ],
+      },
+      {
         // Cache static assets aggressively
         source: "/(.*)\\.(ico|png|jpg|jpeg|svg|webp|woff|woff2)",
         headers: [

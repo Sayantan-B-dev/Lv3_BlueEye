@@ -37,22 +37,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let categoryEntries: MetadataRoute.Sitemap = [];
   let cityEntries: MetadataRoute.Sitemap = [];
   let eventEntries: MetadataRoute.Sitemap = [];
+  let blogEntries: MetadataRoute.Sitemap = [];
 
   try {
     const { getArtistsForSitemap } = await import("@/lib/services/artistService");
-    const { getDistinctCategories, getDistinctCities } = await import(
+    const { getDistinctCategories, getDistinctCities, getLatestCategoryUpdates, getLatestCityUpdates } = await import(
       "@/lib/services/searchService"
     );
     const { getEventsForSitemap } = await import("@/lib/services/eventService");
+    const { getBlogPostsForSitemap } = await import("@/lib/services/blogService");
 
     type SitemapEntry = { slug: string; updatedAt?: string };
 
-    const [artists, categories, cities, events] = await Promise.all([
+    const [artists, categories, cities, events, blogPosts, catUpdates, cityUpdates] = await Promise.all([
       getArtistsForSitemap().catch(() => [] as SitemapEntry[]),
       getDistinctCategories().catch(() => [] as string[]),
       getDistinctCities().catch(() => [] as string[]),
       getEventsForSitemap().catch(() => [] as SitemapEntry[]),
+      getBlogPostsForSitemap().catch(() => [] as SitemapEntry[]),
+      getLatestCategoryUpdates().catch(() => [] as { category: string; updatedAt: Date }[]),
+      getLatestCityUpdates().catch(() => [] as { city: string; updatedAt: Date }[]),
     ]);
+
+    const categoryUpdateMap = new Map(catUpdates.map((c: { category: string; updatedAt: Date }) => [c.category.toLowerCase(), c.updatedAt]));
+    const cityUpdateMap = new Map(cityUpdates.map((c: { city: string; updatedAt: Date }) => [c.city.toLowerCase(), c.updatedAt]));
 
     artistEntries = artists.map((artist: SitemapEntry) =>
       entry(`/artists/${artist.slug}`, {
@@ -68,6 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry(categoryPath(category), {
           priority: 0.75,
           changeFrequency: "weekly",
+          lastModified: categoryUpdateMap.get(category.toLowerCase()) || undefined,
         })
       );
 
@@ -77,6 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry(cityPath(city), {
           priority: 0.75,
           changeFrequency: "weekly",
+          lastModified: cityUpdateMap.get(city.toLowerCase()) || undefined,
         })
       );
 
@@ -87,6 +97,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: event.updatedAt ? new Date(event.updatedAt) : undefined,
       })
     );
+
+    blogEntries = [
+      entry("/blog", { priority: 0.7, changeFrequency: "daily" }),
+      ...blogPosts.map((post: SitemapEntry) =>
+        entry(`/blog/${post.slug}`, {
+          priority: 0.7,
+          changeFrequency: "monthly",
+          lastModified: post.updatedAt ? new Date(post.updatedAt) : undefined,
+        })
+      ),
+    ];
   } catch (error) {
     console.error("Sitemap: failed to fetch dynamic routes:", error);
   }
@@ -97,5 +118,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cityEntries,
     ...artistEntries,
     ...eventEntries,
+    ...blogEntries,
   ];
 }
