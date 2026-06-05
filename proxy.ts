@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { slugify } from "@/lib/utils/slugify";
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   const categoryMatch = pathname.match(/^\/category\/([^/]+)$/);
