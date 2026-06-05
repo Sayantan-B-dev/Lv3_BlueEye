@@ -113,6 +113,7 @@ export default function RootLayout({
     <html
       lang="en-IN"
       data-theme="dark"
+      data-scroll-behavior="smooth"
       className={`${playfair.variable} ${outfit.variable} ${limelight.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <head>
