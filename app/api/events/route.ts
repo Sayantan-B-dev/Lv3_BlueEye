@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getEvents, getDistinctEventCategories } from "@/lib/services/eventService";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
       getDistinctEventCategories(),
     ]);
 
-    return NextResponse.json({ ...result, categories });
+    return NextResponse.json({ ...result, categories }, {
+      headers: { "Cache-Control": "public, max-age=300, s-maxage=300" },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

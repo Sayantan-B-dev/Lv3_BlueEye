@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getEventBySlug } from "@/lib/services/eventService";
 import { getRegistrationCountByEvent } from "@/lib/services/eventRegistrationService";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export async function GET(
   _req: NextRequest,
@@ -12,9 +12,10 @@ export async function GET(
     const { slug } = await params;
     const event = await getEventBySlug(slug);
     if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
-
     const registrationCount = await getRegistrationCountByEvent(event._id);
-    return NextResponse.json({ ...event, registrationCount });
+    return NextResponse.json({ ...event, registrationCount }, {
+      headers: { "Cache-Control": "public, max-age=600, s-maxage=600" },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

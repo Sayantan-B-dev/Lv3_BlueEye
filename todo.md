@@ -50,6 +50,8 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 | Dynamic OG Images | ✅ | `/og` edge route renders custom OG (title, photo, category) per page |
 | Artist-Specific OG | ✅ | Artist pages show name + photo + category in OG card |
 | Category/City OG | ✅ | Category/city pages show name + type badge in OG card |
+| API Route Caching | ✅ | `Cache-Control` headers on 7 public API routes, ISR via `revalidate` |
+| CSP Headers | ✅ | `Content-Security-Policy` restricting script/img/font sources |
 
 ---
 
@@ -87,14 +89,14 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 
 ## 🔧 Technical SEO — Improvements
 
-| # | Improvement | Details |
-|---|-------------|---------|
-| 1 | **Preconnect to ImageKit** | Add `Link` header in next.config.ts for `https://ik.imagekit.io` |
-| 2 | **Add `Cache-Control` headers to API routes** | Already planned in existing todo — search, filters, events |
-| 3 | **Enable ISR on more pages** | Already planned — replace `force-dynamic` with `revalidate` |
-| 4 | **Add HTTP security headers (CSP)** | Add `Content-Security-Policy` in next.config.ts |
-| 5 | **Enable Brotli compression** | Vercel does this by default ✅ |
-| 6 | **Verify Core Web Vitals** | Run PageSpeed Insights after optimizations |
+| # | Improvement | Status |
+|---|-------------|--------|
+| 1 | **Preconnect to ImageKit** | ✅ Done — `Link: <https://ik.imagekit.io>; rel=preconnect` in headers |
+| 2 | **Add `Cache-Control` headers to API routes** | ✅ Done — home-data(300s), events(300s), event-detail(600s), search(300s), suggest(600s), filters(3600s) |
+| 3 | **Enable ISR on more pages** | ✅ Done — replaced `force-dynamic` with `revalidate` on 7 public API routes |
+| 4 | **Add HTTP security headers (CSP)** | ✅ Done — `Content-Security-Policy` in next.config.ts |
+| 5 | **Enable Brotli compression** | ✅ Vercel default |
+| 6 | **Verify Core Web Vitals** | ⏳ Manual — run PageSpeed Insights after deploy |
 
 ---
 
@@ -183,12 +185,13 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 - [x] Image sitemap (`/images-sitemap.xml` with artist + event images)
 - [x] Dynamic OG images per page (`/og` edge route, artist photo + name + category)
 
-### Phase C — Technical SEO (Week 3-4)
+### ✅ Phase C — Technical SEO (Week 3-4)
 - [x] Implement pagination on category + city listing pages (24 per page)
 - [x] Add `lastmod` to category/city sitemap entries (via aggregate queries)
 - [x] ArtistCard descriptive alt text (name + category + city)
-- [ ] Add `Cache-Control` and CSP headers
-- [ ] Configure ISR (remove force-dynamic) — already planned in existing todo
+- [x] Add `Cache-Control` headers (home-data:300s, events:300s, event:600s, search:300s, suggest:600s, filters:3600s)
+- [x] Add CSP headers (`Content-Security-Policy` in next.config.ts)
+- [x] Configure ISR — replaced `force-dynamic` with `revalidate` on 7 public API routes
 - [ ] Add Redis caching for search/filters — already planned in existing todo
 
 ### Phase D — Content Marketing (Month 2+)

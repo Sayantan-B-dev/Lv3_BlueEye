@@ -1,7 +1,7 @@
 import { suggestArtists } from "@/lib/services/searchService";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export async function GET(request: Request) {
   try {
@@ -12,11 +12,11 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "8", 10);
 
     if (!q) {
-      return apiSuccess({ artists: [] });
+      return apiSuccess({ artists: [] }, "Success", 200, 600);
     }
 
     const artists = await suggestArtists(q, { category, city }, limit);
-    return apiSuccess({ artists });
+    return apiSuccess({ artists }, "Success", 200, 600);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to load suggestions";
     return apiError(message, 500);

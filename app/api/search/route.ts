@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     }
 
     const data = await searchArtists(q, { category, city }, { page, limit });
-    return apiSuccess(data);
+    return apiSuccess(data, "Success", 200, 300);
   } catch (error: any) {
     return apiError(error.message || "Failed to search artists", 500);
   }
