@@ -24,6 +24,8 @@ export async function generateMetadata({
     title: `${label} Artists for Hire — Weddings, Corporate & Events in India`,
     description: categoryMetaDescription(label),
     path: categoryPath(label),
+    ogType: "category",
+    ogCategory: label,
   });
 }
 

@@ -29,11 +29,15 @@ export async function generateMetadata({
   const description = artistSummary(artist);
   const image = resolveMediaUrl(artist.media?.images?.[0]);
 
+  const ogImage = image || undefined;
+
   return pageMetadata({
     title: `Book ${artist.name}${artist.category ? ` — ${artist.category}` : ""}`,
     description,
     path: artistProfilePath(slug),
-    image,
+    image: ogImage,
+    ogType: "artist",
+    ogCategory: artist.category,
   });
 }
 

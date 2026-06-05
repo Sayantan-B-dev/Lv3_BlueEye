@@ -23,6 +23,7 @@ export async function generateMetadata({
     title: `Book Artists in ${label} — Singers, DJs & Performers for Events`,
     description: cityMetaDescription(label),
     path: cityPath(label),
+    ogType: "city",
   });
 }
 

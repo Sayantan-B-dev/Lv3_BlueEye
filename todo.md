@@ -47,6 +47,9 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 | Unique Meta Descriptions | ✅ | `categoryMetaDescription()` + `cityMetaDescription()` per type/city |
 | Preconnect to ImageKit | ✅ | `Link: <https://ik.imagekit.io>; rel=preconnect` in headers |
 | Performance Monitoring | ✅ | WebVitals component reports CWV to GA4 |
+| Dynamic OG Images | ✅ | `/og` edge route renders custom OG (title, photo, category) per page |
+| Artist-Specific OG | ✅ | Artist pages show name + photo + category in OG card |
+| Category/City OG | ✅ | Category/city pages show name + type badge in OG card |
 
 ---
 
@@ -61,7 +64,7 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 | 3 | **No Google Analytics 4** | Missing entirely | High | ✅ Done — gtag script in layout via `NEXT_PUBLIC_GA_ID` |
 | 4 | **No Search Console monitoring** | Verification file exists but not used | High | ⏳ Manual — submit sitemap in GSC dashboard |
 | 5 | **No pagination on artist listings** | Category + city pages used `limit: 100` | High | ✅ Done — 24/page with prev/next + numbered pages |
-| 6 | **OG image is identical logo for all pages** | `pageMetadata()` uses `siteConfig.ogImage` | Medium | ⏳ Open — needs `@vercel/og` or `next/og` API route |
+| 6 | **OG image is identical logo for all pages** | `pageMetadata()` uses `siteConfig.ogImage` | Medium | ✅ Done — dynamic OG via `/og` route with title, image, category per page type |
 
 ### 🟡 P1 — Should Fix (Medium Impact)
 
@@ -77,7 +80,7 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 | 14 | **Category/city meta descriptions templated** | Category + city pages | Medium | ✅ Done — `categoryMetaDescription()` + `cityMetaDescription()` with unique text per type |
 | 15 | **No `Link` headers for preconnect to ImageKit** | `next.config.ts` | Medium | ✅ Done — preconnect header added |
 | 16 | **No performance monitoring** | Missing | Medium | ✅ Done — `WebVitals` component using `useReportWebVitals` + GA4 events |
-| 17 | **No social media preview per artist** | `app/artists/[slug]/page.tsx` | Medium | ⏳ Open — needs `@vercel/og` or `next/og` API route |
+| 17 | **No social media preview per artist** | `app/artists/[slug]/page.tsx` | Medium | ✅ Done — artist photo + name + category rendered in `/og` route |
 | 18 | **search page has `noIndex`** | `app/search/page.tsx` | Correct | ✅ Already done |
 
 ---
@@ -178,7 +181,7 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 - [x] Expand city pages with 300-500 words SEO content (via `lib/seo/content.ts`)
 - [x] Unique meta descriptions for category/city (via `categoryMetaDescription` + `cityMetaDescription`)
 - [x] Image sitemap (`/images-sitemap.xml` with artist + event images)
-- [ ] Add dynamic OG images per artist profile
+- [x] Dynamic OG images per page (`/og` edge route, artist photo + name + category)
 
 ### Phase C — Technical SEO (Week 3-4)
 - [x] Implement pagination on category + city listing pages (24 per page)
@@ -248,8 +251,10 @@ SEO improvements implemented: content expansion, blog section, GA4, pagination, 
 | `app/blog/[slug]/page.tsx` | Blog detail with Article JSON-LD + breadcrumbs |
 | `app/images-sitemap.xml/route.ts` | Image sitemap with artist + event images |
 | `components/analytics/WebVitals.tsx` | Core Web Vitals reporting to GA4 |
+| `app/og/route.tsx` | Dynamic OG image generator (edge, next/og) |
+| `lib/seo/og.ts` | OG image URL builder helper |
 
 ---
 
 **Last Updated:** June 5, 2026  
-**Next Priority:** Implement dynamic OG images (P0#6) → Deploy to production → Start content calendar
+**Next Priority:** Deploy to production → Start content calendar → Implement remaining Phase C items (Cache-Control, ISR)

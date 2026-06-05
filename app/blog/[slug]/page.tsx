@@ -23,6 +23,7 @@ export async function generateMetadata({
     path: `/blog/${slug}`,
     image: post.coverImage,
     openGraphType: "article",
+    ogType: "blog",
   });
 }
 

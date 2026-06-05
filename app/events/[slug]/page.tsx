@@ -34,6 +34,7 @@ export async function generateMetadata({
     path: `/events/${slug}`,
     image: event.coverImage,
     openGraphType: "article",
+    ogType: "event",
   });
 }
 

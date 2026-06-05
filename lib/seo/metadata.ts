@@ -20,9 +20,15 @@ export function pageMetadata(options: {
   image?: string;
   noIndex?: boolean;
   openGraphType?: "website" | "article";
+  ogType?: "default" | "artist" | "category" | "city" | "event" | "blog";
+  ogCategory?: string;
 }): Metadata {
   const url = siteUrl(options.path);
   const image = options.image || siteConfig.ogImage;
+  const dynamicOg = options.ogType || (options.image ? "default" : undefined);
+  const ogUrl = dynamicOg
+    ? siteUrl(`/og?title=${encodeURIComponent(options.title.slice(0, 120))}${options.description ? `&description=${encodeURIComponent(options.description.slice(0, 200))}` : ""}${options.image ? `&image=${encodeURIComponent(options.image)}&type=artist` : `&type=${options.ogType || "default"}`}${options.ogCategory ? `&category=${encodeURIComponent(options.ogCategory)}` : ""}`)
+    : image;
 
   return {
     title: options.title,
@@ -36,13 +42,13 @@ export function pageMetadata(options: {
       type: options.openGraphType ?? "website",
       locale: "en_IN",
       siteName: siteConfig.name,
-      images: [{ url: image, width: 1200, height: 630, alt: options.title }],
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: options.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: options.title,
       description: options.description,
-      images: [image],
+      images: [ogUrl],
       ...(siteConfig.twitterHandle ? { creator: siteConfig.twitterHandle } : {}),
     },
   };
