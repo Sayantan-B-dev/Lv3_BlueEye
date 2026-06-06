@@ -35,10 +35,11 @@ const jetbrains = JetBrains_Mono({
 });
 
 import { siteConfig } from "@/lib/config/site";
-import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
+import { organizationJsonLd, websiteJsonLd, localBusinessJsonLd } from "@/lib/seo/jsonld";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  alternates: { canonical: siteConfig.url },
   applicationName: siteConfig.shortName,
   title: {
     default: `${siteConfig.name} | Book India's Top Artists`,
@@ -124,7 +125,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify([organizationJsonLd(), websiteJsonLd()]),
+            __html: JSON.stringify([organizationJsonLd(), websiteJsonLd(), localBusinessJsonLd()]),
           }}
         />
         {process.env.NEXT_PUBLIC_GA_ID && (

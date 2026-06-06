@@ -1,5 +1,4 @@
 import { MetadataRoute } from "next";
-import { siteConfig } from "@/lib/config/site";
 import { siteUrl } from "@/lib/seo/metadata";
 
 export default function robots(): MetadataRoute.Robots {
@@ -18,6 +17,5 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: [siteUrl("/sitemap.xml"), siteUrl("/images-sitemap.xml")],
-    host: siteConfig.url.replace(/\/$/, ""),
   };
 }

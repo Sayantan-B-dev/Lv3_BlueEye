@@ -101,9 +101,47 @@ export async function getDistinctCategories() {
   return Artist.distinct("category");
 }
 
+const CITY_ALIASES: Record<string, string> = {
+  "new delhi": "Delhi",
+  "new delhi ncr": "Delhi",
+  "delhi ncr": "Delhi",
+  "bengaluru": "Bangalore",
+  "kolkata": "Kolkata",
+  "mumbai": "Mumbai",
+  "chennai": "Chennai",
+  "hyderabad": "Hyderabad",
+  "pune": "Pune",
+  "ahmedabad": "Ahmedabad",
+  "jaipur": "Jaipur",
+  "lucknow": "Lucknow",
+  "surat": "Surat",
+  "indore": "Indore",
+  "chandigarh": "Chandigarh",
+  "bhopal": "Bhopal",
+  "nagpur": "Nagpur",
+  "patna": "Patna",
+  "kochi": "Kochi",
+  "coimbatore": "Coimbatore",
+  "goa": "Goa",
+  "vizag": "Visakhapatnam",
+  "thiruvananthapuram": "Thiruvananthapuram",
+};
+
+function normalizeCity(city: string): string {
+  const normalized = city.trim().toLowerCase();
+  return CITY_ALIASES[normalized] || city.trim();
+}
+
 export async function getDistinctCities() {
   await connectToDatabase();
-  return Artist.distinct("location.city");
+  const cities = await Artist.distinct("location.city", {
+    $or: [
+      { "location.country": "India" },
+      { "location.country": { $exists: false } },
+    ],
+  });
+  const normalized = [...new Set(cities.filter(Boolean).map(normalizeCity))];
+  return normalized.sort();
 }
 
 export async function getCategoryCounts() {
@@ -131,10 +169,26 @@ export async function getLatestCategoryUpdates() {
 export async function getLatestCityUpdates() {
   await connectToDatabase();
   const result = await Artist.aggregate([
-    { $match: { "location.city": { $exists: true, $ne: "" } } },
+    {
+      $match: {
+        "location.city": { $exists: true, $ne: "" },
+        $or: [
+          { "location.country": "India" },
+          { "location.country": { $exists: false } },
+        ],
+      },
+    },
     { $sort: { updatedAt: -1 } },
     { $group: { _id: "$location.city", updatedAt: { $first: "$updatedAt" } } },
     { $project: { _id: 0, city: "$_id", updatedAt: 1 } },
   ]);
-  return result as { city: string; updatedAt: Date }[];
+  const normalized = new Map<string, Date>();
+  for (const item of result as { city: string; updatedAt: Date }[]) {
+    const canonical = normalizeCity(item.city);
+    const existing = normalized.get(canonical);
+    if (!existing || item.updatedAt > existing) {
+      normalized.set(canonical, item.updatedAt);
+    }
+  }
+  return Array.from(normalized.entries()).map(([city, updatedAt]) => ({ city, updatedAt }));
 }

@@ -4,6 +4,14 @@ import { slugify } from "@/lib/utils/slugify";
 
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const host = request.headers.get("host") || "";
+  const isDeployPreview = host.includes("netlify.app") || host.includes("vercel.app");
+
+  if (isDeployPreview) {
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
 
   const categoryMatch = pathname.match(/^\/category\/([^/]+)$/);
   if (categoryMatch) {
@@ -33,5 +41,7 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/category/:path*", "/city/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.png|site.webmanifest|android-chrome-.*|apple-touch-icon.*).*)",
+  ],
 };

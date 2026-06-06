@@ -1,9 +1,15 @@
 # Netlify Configuration for BlueEyeEntertainment
 # Redirects all traffic from .netlify.app to the primary domain
 
-# Redirect all traffic from Netlify domain to primary domain (301 permanent redirect)
+# Redirect all traffic from Netlify domains to primary domain (301 permanent redirect)
 [[redirects]]
 from = "https://blueeyeentertainment.netlify.app/*"
+to = "https://blueeyeentertainment.in/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "https://blueeyeentertainmentbackup2.netlify.app/*"
 to = "https://blueeyeentertainment.in/:splat"
 status = 301
 force = true
