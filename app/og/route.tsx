@@ -34,7 +34,7 @@ export async function GET(request: Request) {
             justifyContent: "center",
             background: `linear-gradient(135deg, ${bg} 0%, #1a0f0a 50%, ${bg} 100%)`,
             color: text,
-            fontFamily: "Geist",
+            fontFamily: "system-ui, -apple-system, sans-serif",
             position: "relative",
             overflow: "hidden",
           }}

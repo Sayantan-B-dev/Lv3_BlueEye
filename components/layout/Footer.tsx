@@ -74,9 +74,9 @@ export default function Footer() {
         <div className="footer-bottom">
           <p>© 2018 {siteConfig.name}. All rights reserved. Made with ♥ in India.</p>
           <div className="footer-bottom-links">
-            <Link href="/#">Terms</Link>
-            <Link href="/#">Privacy</Link>
-            <Link href="/#">Sitemap</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy-policy">Privacy</Link>
+            <Link href="/sitemap.xml">Sitemap</Link>
           </div>
         </div>
       </div>

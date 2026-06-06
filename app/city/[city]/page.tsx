@@ -135,6 +135,7 @@ export default async function CityArtistsPage({
             <Link
               href={`${canonicalPath}?page=${currentPage - 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.category ? `&category=${encodeURIComponent(sParams.category)}` : ""}`}
               className="btn-outline"
+              rel="prev"
               style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
             >
               ← Prev
@@ -168,6 +169,7 @@ export default async function CityArtistsPage({
             <Link
               href={`${canonicalPath}?page=${currentPage + 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.category ? `&category=${encodeURIComponent(sParams.category)}` : ""}`}
               className="btn-outline"
+              rel="next"
               style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
             >
               Next →

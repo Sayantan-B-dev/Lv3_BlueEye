@@ -77,18 +77,18 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
       {totalPages > 1 && (
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '3rem' }}>
-          {page > 1 && <Link href={`/artists?page=${page - 1}`} className="btn-outline">← Previous</Link>}
+          {page > 1 && <Link href={`/artists?page=${page - 1}`} className="btn-outline" rel="prev">← Previous</Link>}
           <span style={{ display: 'flex', alignItems: 'center' }}>Page {page} of {totalPages}</span>
-          {page < totalPages && <Link href={`/artists?page=${page + 1}`} className="btn-outline">Next →</Link>}
+          {page < totalPages && <Link href={`/artists?page=${page + 1}`} className="btn-outline" rel="next">Next →</Link>}
         </div>
       )}
 
       {/* Internal Linking — Browse by Category */}
       {categories.length > 0 && (
         <div style={{ marginTop: '5rem', paddingTop: '2.5rem', borderTop: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: 'clamp(1.1rem, 2vw, 1.35rem)', fontWeight: 800, marginBottom: '1.25rem', color: 'var(--text)', fontFamily: 'var(--font-primary)' }}>
+          <h2 style={{ fontSize: 'clamp(1.1rem, 2vw, 1.35rem)', fontWeight: 800, marginBottom: '1.25rem', color: 'var(--text)', fontFamily: 'var(--font-primary)' }}>
             Browse Artists by Category
-          </h3>
+          </h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2rem' }}>
             {categories.map((c) => (
               <Link

@@ -8,6 +8,7 @@ import ArtistSearchInput from "@/components/search/ArtistSearchInput";
 
 interface Artist {
   _id: string;
+  slug: string;
   name: string;
   category: string;
   location?: { city?: string; state?: string };
@@ -221,7 +222,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
                       <span key={g} className="carousel-genre-pill">{g}</span>
                     ))}
                   </div>
-                  <Link href={`/artists/${activeArtist.name.toLowerCase().replace(/ /g, "-")}`} className="carousel-book-btn">
+                  <Link href={`/artists/${activeArtist.slug}`} className="carousel-book-btn">
                     View Profile ↗
                   </Link>
                 </div>

@@ -133,13 +133,17 @@ const CITY_BLOCKLIST = new Set([
   "lahore", "karachi", "islamabad", "rawalpindi", "faisalabad",
 ]);
 
+function titleCase(s: string): string {
+  return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 function normalizeCity(city: string): string {
   const trimmed = city.trim();
   const lower = trimmed.toLowerCase();
   if (CITY_BLOCKLIST.has(lower)) return "";
   const aliased = CITY_ALIASES[lower];
   if (aliased) return aliased;
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  return titleCase(trimmed);
 }
 
 export async function getDistinctCities() {

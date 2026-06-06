@@ -26,8 +26,9 @@ export function pageMetadata(options: {
   const url = siteUrl(options.path);
   const image = options.image || siteConfig.ogImage;
   const dynamicOg = options.ogType || (options.image ? "default" : undefined);
+  const ogType = options.ogType || "default";
   const ogUrl = dynamicOg
-    ? siteUrl(`/og?title=${encodeURIComponent(options.title.slice(0, 120))}${options.description ? `&description=${encodeURIComponent(options.description.slice(0, 200))}` : ""}${options.image ? `&image=${encodeURIComponent(options.image)}&type=artist` : `&type=${options.ogType || "default"}`}${options.ogCategory ? `&category=${encodeURIComponent(options.ogCategory)}` : ""}`)
+    ? siteUrl(`/og?title=${encodeURIComponent(options.title.slice(0, 120))}${options.description ? `&description=${encodeURIComponent(options.description.slice(0, 200))}` : ""}${options.image ? `&image=${encodeURIComponent(options.image)}` : ""}&type=${ogType}${options.ogCategory ? `&category=${encodeURIComponent(options.ogCategory)}` : ""}`)
     : image;
 
   return {

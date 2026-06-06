@@ -141,6 +141,7 @@ export default async function CategoryArtistsPage({
             <Link
               href={`${canonicalPath}?page=${currentPage - 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.city ? `&city=${encodeURIComponent(sParams.city)}` : ""}`}
               className="btn-outline"
+              rel="prev"
               style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
             >
               ← Prev
@@ -174,6 +175,7 @@ export default async function CategoryArtistsPage({
             <Link
               href={`${canonicalPath}?page=${currentPage + 1}${sParams.q ? `&q=${encodeURIComponent(sParams.q)}` : ""}${sParams.city ? `&city=${encodeURIComponent(sParams.city)}` : ""}`}
               className="btn-outline"
+              rel="next"
               style={{ padding: "0.5rem 1rem", borderRadius: "8px", textDecoration: "none" }}
             >
               Next →

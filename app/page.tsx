@@ -82,7 +82,6 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      <h1 className="sr-only">Book Celebrity Artists in India</h1>
       {/* Homepage dynamic sections with server-provided initial data */}
       <HomeDynamicContent initialData={homeData} />
 
