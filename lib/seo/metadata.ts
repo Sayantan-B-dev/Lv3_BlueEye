@@ -76,7 +76,10 @@ export function artistSummary(artist: {
       : "";
   const fallback = `Book ${artist.name}${artist.category ? `, a ${artist.category}` : ""} for weddings, corporate events, and private parties in ${artist.location?.city || "India"} via ${siteConfig.name}.`;
   const text = (aboutText || fallback).replace(/\s+/g, " ").trim();
-  return text.length > 160 ? `${text.slice(0, 157)}...` : text;
+  if (text.length <= 160) return text;
+  const truncated = text.slice(0, 157);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return lastSpace > 0 ? `${truncated.slice(0, lastSpace)}...` : `${truncated}...`;
 }
 
 export function artistProfilePath(slug: string): string {

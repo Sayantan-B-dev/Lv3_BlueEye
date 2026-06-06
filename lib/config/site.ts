@@ -1,6 +1,6 @@
 function resolveBaseUrl(): string {
   const env = process.env.NEXT_PUBLIC_BASE_URL;
-  if (env && !env.includes("localhost") && !env.includes("127.0.0.1")) return env;
+  if (env && !env.includes("localhost") && !env.includes("127.0.0.1")) return env.replace(/\/+$/, "");
   return "https://blueeyeentertainment.in";
 }
 
@@ -42,13 +42,9 @@ export const siteConfig: SiteConfig = {
     "artist booking india",
     "book bollywood singers",
     "hire celebrity for wedding",
-    "indian artist booking agency",
     "wedding entertainment india",
     "book stand up comedians",
     "hire djs for corporate events",
-    "live music bands for hire",
-    "artist management agency india",
-    "book performers for private parties",
   ],
   links: {
     twitter: process.env.NEXT_PUBLIC_TWITTER_URL,

@@ -9,7 +9,7 @@ import {
   pageMetadata,
   resolveMediaUrl,
 } from "@/lib/seo/metadata";
-import { artistJsonLd, breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { artistJsonLd, breadcrumbJsonLd, personJsonLd } from "@/lib/seo/jsonld";
 import { siteConfig } from "@/lib/config/site";
 import AdminEditArtistButton from "@/components/ui/AdminEditArtistButton";
 
@@ -66,6 +66,7 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
       { name: artist.name, path: artistProfilePath(slug) },
     ]),
     artistJsonLd(artist),
+    personJsonLd(artist),
   ];
 
   // Helper to extract YouTube ID

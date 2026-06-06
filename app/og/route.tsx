@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     const text = "#f5f0eb";
     const muted = "#9ca3af";
 
-    const logoSrc = `${process.env.NEXT_PUBLIC_BASE_URL || "https://blueeyeentertainment.in"}/icon.png`;
+    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://blueeyeentertainment.in").replace(/\/+$/, "");
+    const logoSrc = `${baseUrl}/icon.png`;
 
     const showImage = imageUrl && type === "artist";
 

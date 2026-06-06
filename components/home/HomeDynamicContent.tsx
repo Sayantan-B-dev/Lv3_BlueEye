@@ -27,12 +27,18 @@ function progressFromReady(ready: Record<HomeSectionKey, boolean>) {
   return Math.round((done / keys.length) * 100);
 }
 
-export default function HomeDynamicContent() {
+export default function HomeDynamicContent({ initialData: _initialData }: { initialData?: HomePageData | null }) {
   const { data: session } = useSession();
-  const [data, setData] = useState<Partial<HomePageData>>({});
-  const [ready, setReady] = useState(INITIAL_READY);
-  const [progress, setProgress] = useState(0);
-  const [showProgress, setShowProgress] = useState(true);
+  const initialData = _initialData ?? null;
+  const hasServerData = !!initialData;
+  const [data, setData] = useState<Partial<HomePageData>>(initialData ?? {});
+  const [ready, setReady] = useState<Record<HomeSectionKey, boolean>>(
+    hasServerData
+      ? { ambient: true, hero: true, categories: true, featured: true }
+      : INITIAL_READY
+  );
+  const [progress, setProgress] = useState(hasServerData ? 100 : 0);
+  const [showProgress, setShowProgress] = useState(!hasServerData);
   const [favorites, setFavorites] = useState<string[]>([]);
 
   const markReady = useCallback((key: HomeSectionKey) => {
@@ -58,6 +64,8 @@ export default function HomeDynamicContent() {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (hasServerData) return;
 
     async function loadHomeData() {
       try {
@@ -135,7 +143,7 @@ export default function HomeDynamicContent() {
     return () => {
       cancelled = true;
     };
-  }, [finishLoading, markReady]);
+  }, [finishLoading, markReady, hasServerData]);
 
   useEffect(() => {
     if (!session) return;

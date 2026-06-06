@@ -9,6 +9,7 @@ import Artist from "@/lib/models/Artist";
 import Event from "@/lib/models/Event";
 import { categoryPath, cityPath } from "@/lib/seo/slugs";
 import { getDistinctCategories, getDistinctCities } from "@/lib/services/searchService";
+import { getHomePageData } from "@/lib/services/homeDataService";
 
 export const metadata = pageMetadata({
   title: "Book Celebrity Artists — Singers, DJs, Comedians & More in India",
@@ -60,11 +61,12 @@ const faqSchema = {
 export default async function HomePage() {
   await connectToDatabase();
   
-  const [totalArtists, totalEvents, topCategories, topCities] = await Promise.all([
+  const [totalArtists, totalEvents, topCategories, topCities, homeData] = await Promise.all([
     Artist.countDocuments().catch(() => 0),
     Event.countDocuments().catch(() => 0),
     getDistinctCategories().catch(() => [] as string[]),
     getDistinctCities().catch(() => [] as string[]),
+    getHomePageData().catch(() => null),
   ]);
 
   const artistsText = totalArtists > 0 ? `${totalArtists}+` : "20,000+";
@@ -81,8 +83,8 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <h1 className="sr-only">Book Celebrity Artists in India</h1>
-      {/* Client-Side Hydration Controller with Golden Pulsing skeletons */}
-      <HomeDynamicContent />
+      {/* Homepage dynamic sections with server-provided initial data */}
+      <HomeDynamicContent initialData={homeData} />
 
       {/* Infinite Scrolling Premium Gold Marquee Row */}
       <div className="marquee-wrap">
@@ -142,7 +144,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <StatsBar />
+      <StatsBar initialArtists={totalArtists} initialCities={topCities.length} />
 
       {/* Testimonials */}
       <section id="testimonials">

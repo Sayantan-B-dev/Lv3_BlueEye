@@ -48,7 +48,7 @@ export function websiteJsonLd() {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+        urlTemplate: siteUrl("/search?q={search_term_string}"),
       },
       "query-input": "required name=search_term_string",
     },
@@ -90,6 +90,40 @@ export function artistJsonLd(artist: {
         .join(", "),
     },
     parentOrganization: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+  };
+}
+
+export function personJsonLd(artist: {
+  name: string;
+  slug: string;
+  category?: string;
+  about?: string | string[];
+  location?: { city?: string; state?: string; country?: string };
+  media?: { images?: string[] };
+  performance?: { genres?: string[] };
+}) {
+  const url = siteUrl(artistProfilePath(artist.slug));
+  const image = resolveMediaUrl(artist.media?.images?.[0]);
+  const description = Array.isArray(artist.about)
+    ? artist.about.join(" ")
+    : typeof artist.about === "string"
+      ? artist.about
+      : `Book ${artist.name} for events across India.`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: artist.name,
+    url,
+    ...(image ? { image } : {}),
+    description,
+    ...(artist.performance?.genres?.length ? { knowsAbout: artist.performance.genres } : {}),
+    ...(artist.location?.city ? { homeLocation: { "@type": "Place", name: artist.location.city } } : {}),
+    affiliation: {
       "@type": "Organization",
       name: siteConfig.name,
       url: siteConfig.url,

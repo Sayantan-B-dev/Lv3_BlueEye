@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function StatsBar() {
+export default function StatsBar({ initialArtists = 0, initialCities = 0 }: { initialArtists?: number; initialCities?: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [stats, setStats] = useState({ totalArtists: 0, totalCities: 0 });
+  const [stats, setStats] = useState({ totalArtists: initialArtists, totalCities: initialCities });
 
   useEffect(() => {
+    if (initialArtists > 0 || initialCities > 0) return;
     const fetchStats = async () => {
       try {
         const res = await fetch('/api/stats');
@@ -22,7 +23,7 @@ export default function StatsBar() {
       }
     };
     fetchStats();
-  }, []);
+  }, [initialArtists, initialCities]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -71,11 +72,11 @@ export default function StatsBar() {
       <div className="section-inner">
         <div className="stats-grid reveal stats-grid-2">
           <div className="stat-cell">
-            <div className="stat-num" data-count={stats.totalArtists}>0</div>
+            <div className="stat-num" data-count={stats.totalArtists}>{stats.totalArtists > 0 ? (stats.totalArtists >= 1000 ? (stats.totalArtists / 1000).toFixed(0) + 'k+' : stats.totalArtists + '+') : '0'}</div>
             <div className="stat-label">Artists Listed</div>
           </div>
           <div className="stat-cell">
-            <div className="stat-num" data-count={stats.totalCities}>0</div>
+            <div className="stat-num" data-count={stats.totalCities}>{stats.totalCities > 0 ? (stats.totalCities >= 1000 ? (stats.totalCities / 1000).toFixed(0) + 'k+' : stats.totalCities + '+') : '0'}</div>
             <div className="stat-label">Cities Covered</div>
           </div>
         </div>

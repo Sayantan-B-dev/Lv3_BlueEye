@@ -105,6 +105,8 @@ const CITY_ALIASES: Record<string, string> = {
   "new delhi": "Delhi",
   "new delhi ncr": "Delhi",
   "delhi ncr": "Delhi",
+  "delhi": "Delhi",
+  "newdelhi": "Delhi",
   "bengaluru": "Bangalore",
   "kolkata": "Kolkata",
   "mumbai": "Mumbai",
@@ -127,9 +129,17 @@ const CITY_ALIASES: Record<string, string> = {
   "thiruvananthapuram": "Thiruvananthapuram",
 };
 
+const CITY_BLOCKLIST = new Set([
+  "lahore", "karachi", "islamabad", "rawalpindi", "faisalabad",
+]);
+
 function normalizeCity(city: string): string {
-  const normalized = city.trim().toLowerCase();
-  return CITY_ALIASES[normalized] || city.trim();
+  const trimmed = city.trim();
+  const lower = trimmed.toLowerCase();
+  if (CITY_BLOCKLIST.has(lower)) return "";
+  const aliased = CITY_ALIASES[lower];
+  if (aliased) return aliased;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
 export async function getDistinctCities() {
@@ -140,7 +150,7 @@ export async function getDistinctCities() {
       { "location.country": { $exists: false } },
     ],
   });
-  const normalized = [...new Set(cities.filter(Boolean).map(normalizeCity))];
+  const normalized = [...new Set(cities.filter(Boolean).map(normalizeCity).filter(Boolean))];
   return normalized.sort();
 }
 
