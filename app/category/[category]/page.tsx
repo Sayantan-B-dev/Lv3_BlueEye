@@ -61,11 +61,25 @@ export default async function CategoryArtistsPage({
 
 
 
-  const structuredData = breadcrumbJsonLd([
-    { name: "Home", path: "/" },
-    { name: "Artists", path: "/artists" },
-    { name: decodedCategory, path: canonicalPath },
-  ]);
+  const structuredData = [
+    breadcrumbJsonLd([
+      { name: "Home", path: "/" },
+      { name: "Artists", path: "/artists" },
+      { name: decodedCategory, path: canonicalPath },
+    ]),
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `${decodedCategory} Artists for Hire`,
+      description: `Book verified ${decodedCategory.toLowerCase()} performers for weddings, corporate events, and parties in India.`,
+      numberOfItems: total,
+      itemListElement: artists.slice(0, 20).map((a: any, i: number) => ({
+        "@type": "ListItem",
+        position: i + 1 + (currentPage - 1) * PAGE_SIZE,
+        url: `${siteConfig.url}/artists/${a.slug}`,
+      })),
+    },
+  ];
 
   return (
     <div
@@ -79,7 +93,7 @@ export default async function CategoryArtistsPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <div
+      <nav aria-label="Breadcrumb"
         style={{
           fontSize: "0.8rem",
           color: "var(--muted,#9ca3af)",
@@ -98,7 +112,7 @@ export default async function CategoryArtistsPage({
         </Link>
         <span>/</span>
         <span>{decodedCategory}</span>
-      </div>
+      </nav>
       <div className="artists-header">
         <div>
           <div className="section-label">Category</div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getEventBySlug } from "@/lib/services/eventService";
 import {
   getRegistrationCountByEvent,
@@ -63,11 +64,13 @@ export default async function EventDetailPage({
 
         {/* Top Header / Breadcrumbs & Admin shortcut */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
-          <div style={{ fontSize: "0.8rem", color: "var(--muted,#9ca3af)", display: "flex", gap: "0.4rem", alignItems: "center" }}>
+          <nav aria-label="Breadcrumb" style={{ fontSize: "0.8rem", color: "var(--muted,#9ca3af)", display: "flex", gap: "0.4rem", alignItems: "center" }}>
+            <Link href="/" style={{ color: "var(--gold,#d4a017)", textDecoration: "none" }}>Home</Link>
+            <span>/</span>
             <Link href="/events" style={{ color: "var(--gold,#d4a017)", textDecoration: "none" }}>Events</Link>
             <span>/</span>
             <span>{event.title}</span>
-          </div>
+          </nav>
           <AdminEditEventButton eventId={event._id.toString()} />
         </div>
 
@@ -112,7 +115,9 @@ export default async function EventDetailPage({
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
                     }}>
                       {a.media?.images?.[0] ? (
-                        <img src={a.media.images[0]} alt={a.name} style={{ width: "100%", aspectRatio: "1", borderRadius: "0.75rem", objectFit: "cover" }} />
+                        <div style={{ position: "relative", width: "100%", aspectRatio: "1" }}>
+                          <Image src={a.media.images[0]} alt={a.name} fill sizes="180px" className="object-cover" style={{ borderRadius: "0.75rem" }} />
+                        </div>
                       ) : (
                         <div style={{ width: "100%", aspectRatio: "1", borderRadius: "0.75rem", background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           🎤

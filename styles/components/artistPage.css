@@ -48,6 +48,7 @@
   }
 }
 .artist-main-img {
+  position: relative;
   border-radius: 24px;
   overflow: hidden;
   aspect-ratio: 4/5;
@@ -64,8 +65,15 @@
   width: 100%;
   border-radius: 20px;
   aspect-ratio: 1;
-  object-fit: cover;
   border: 1px solid var(--border);
+}
+
+.gallery-img-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  overflow: hidden;
 }
 .profile-meta {
   display: flex;

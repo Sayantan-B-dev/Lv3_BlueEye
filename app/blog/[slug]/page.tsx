@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getBlogPostBySlug } from "@/lib/services/blogService";
@@ -78,13 +79,13 @@ export default async function BlogPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      <div className="blog-breadcrumb">
+      <nav aria-label="Breadcrumb" className="blog-breadcrumb">
         <Link href="/">Home</Link>
         <span>/</span>
         <Link href="/blog">Blog</Link>
         <span>/</span>
         <span className="current">{post.title}</span>
-      </div>
+      </nav>
 
       <div className="blog-header">
         <div className="blog-meta">
@@ -106,7 +107,7 @@ export default async function BlogPostPage({
 
       {post.coverImage && (
         <div className="blog-cover">
-          <img src={post.coverImage} alt={post.title} />
+          <Image src={post.coverImage} alt={post.title} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" />
         </div>
       )}
 

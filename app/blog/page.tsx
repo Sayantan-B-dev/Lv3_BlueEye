@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { getBlogPosts, getDistinctBlogCategories } from "@/lib/services/blogService";
 import { siteConfig } from "@/lib/config/site";
@@ -139,16 +140,14 @@ export default async function BlogPage({
                 style={{ textDecoration: "none", color: "inherit" }}
               >
                 {post.coverImage && (
-                  <div style={{ width: "100%", height: "200px", overflow: "hidden" }}>
-                    <img
+                  <div style={{ position: "relative", width: "100%", height: "200px", overflow: "hidden" }}>
+                    <Image
                       src={post.coverImage}
                       alt={post.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        transition: "transform 0.3s ease",
-                      }}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 340px"
+                      className="object-cover"
+                      style={{ transition: "transform 0.3s ease" }}
                     />
                   </div>
                 )}

@@ -42,10 +42,24 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
 
 
-  const structuredData = breadcrumbJsonLd([
-    { name: "Home", path: "/" },
-    { name: "Artists", path: "/artists" },
-  ]);
+  const structuredData = [
+    breadcrumbJsonLd([
+      { name: "Home", path: "/" },
+      { name: "Artists", path: "/artists" },
+    ]),
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Browse Artists — Singers, DJs, Comedians",
+      description: `Discover and book verified performers across India on ${siteConfig.name}.`,
+      numberOfItems: total,
+      itemListElement: artists.slice(0, 20).map((a: any, i: number) => ({
+        "@type": "ListItem",
+        position: i + 1 + (page - 1) * artists.length,
+        url: `${siteConfig.url}/artists/${a.slug}`,
+      })),
+    },
+  ];
 
   return (
     <div className="section-inner" style={{ padding: 'clamp(4rem, 8vw, 7rem) clamp(1rem, 4vw, 2.5rem)', paddingTop: 'calc(var(--hdr-h) + 2rem)' }}>

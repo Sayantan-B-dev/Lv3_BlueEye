@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getArtistBySlug } from "@/lib/services/artistService";
 import { notFound } from "next/navigation";
 import { formatDuration, formatTeamSize } from "@/lib/utils/formatters";
@@ -92,21 +93,25 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
           gap: "1rem",
         }}
       >
-        <div
-          style={{
-            fontSize: "0.8rem",
-            color: "var(--muted,#9ca3af)",
-            display: "flex",
-            gap: "0.4rem",
-            alignItems: "center",
-          }}
-        >
-          <Link href="/artists" style={{ color: "var(--gold,#d4a017)", textDecoration: "none" }}>
-            Artists
-          </Link>
-          <span>/</span>
-          <span>{artist.name}</span>
-        </div>
+        <nav aria-label="Breadcrumb">
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: "var(--muted,#9ca3af)",
+              display: "flex",
+              gap: "0.4rem",
+              alignItems: "center",
+            }}
+          >
+            <Link href="/" style={{ color: "var(--gold,#d4a017)", textDecoration: "none" }}>Home</Link>
+            <span>/</span>
+            <Link href="/artists" style={{ color: "var(--gold,#d4a017)", textDecoration: "none" }}>
+              Artists
+            </Link>
+            <span>/</span>
+            <span>{artist.name}</span>
+          </div>
+        </nav>
         <AdminEditArtistButton artistId={artist._id.toString()} />
       </div>
 
@@ -115,23 +120,32 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
         {/* Left Col: Media */}
         <div>
           <div className="artist-main-img">
-            <img 
+            <Image 
               src={profileImage}
               alt={`${artist.name} — ${artist.category || "performer"} profile photo`}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 600px"
+              className="object-cover"
+              priority
             />
           </div>
           
           {artist.media?.images?.length > 1 && (
             <div className="artist-gallery-grid">
-              {artist.media.images.slice(1, 5).map((img: string, i: number) => (
-                <img 
-                  key={i} 
-                  src={img.startsWith('http') ? img : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${img.startsWith('/') ? img.slice(1) : img}`} 
-                  className="gallery-img"
-                  alt={`${artist.name} performance gallery image ${i + 2}`} 
-                />
-              ))}
+              {artist.media.images.slice(1, 5).map((img: string, i: number) => {
+                const src = img.startsWith('http') ? img : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${img.startsWith('/') ? img.slice(1) : img}`;
+                return (
+                  <div key={i} className="gallery-img-wrapper">
+                    <Image 
+                      src={src}
+                      alt={`${artist.name} performance gallery image ${i + 2}`}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 250px"
+                      className="object-cover"
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

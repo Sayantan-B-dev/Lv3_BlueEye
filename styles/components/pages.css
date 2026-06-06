@@ -139,6 +139,7 @@
   max-width: 650px;
 }
 .blog-cover {
+  position: relative;
   margin-bottom: 3rem;
   border-radius: 16px;
   overflow: hidden;
