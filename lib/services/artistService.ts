@@ -2,7 +2,7 @@ import Artist from "@/lib/models/Artist";
 import { connectToDatabase } from "@/lib/db/connect";
 import { slugify } from "@/lib/utils/slugify";
 
-export async function getArtists(params: { category?: string; city?: string; page?: number; limit?: number; featured?: boolean; q?: string }) {
+export async function getArtists(params: { category?: string; city?: string; page?: number; limit?: number; featured?: boolean; q?: string; missing?: string }) {
   await connectToDatabase();
   
   const conditions: any[] = [];
@@ -31,6 +31,35 @@ export async function getArtists(params: { category?: string; city?: string; pag
 
   if (params.featured !== undefined) {
     conditions.push({ featured: params.featured });
+  }
+
+  if (params.missing === "images") {
+    conditions.push({
+      $or: [
+        { "media.images": { $exists: false } },
+        { "media.images": { $size: 0 } }
+      ]
+    });
+  } else if (params.missing === "videos") {
+    conditions.push({
+      $or: [
+        { "media.videos": { $exists: false } },
+        { "media.videos": { $size: 0 } }
+      ]
+    });
+  } else if (params.missing === "both") {
+    conditions.push({
+      $or: [
+        { "media.images": { $exists: false } },
+        { "media.images": { $size: 0 } }
+      ]
+    });
+    conditions.push({
+      $or: [
+        { "media.videos": { $exists: false } },
+        { "media.videos": { $size: 0 } }
+      ]
+    });
   }
 
   const filter = conditions.length > 0 ? { $and: conditions } : {};

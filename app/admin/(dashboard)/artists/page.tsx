@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import BulkDeleteOtpModal from "@/components/ui/BulkDeleteOtpModal";
 
-// Custom Checkbox Component
 const Checkbox = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
   <div 
     onClick={onChange}
@@ -20,6 +19,7 @@ const Checkbox = ({ checked, onChange }: { checked: boolean, onChange: () => voi
 );
 
 export default function AdminArtistsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [artists, setArtists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -39,32 +39,83 @@ export default function AdminArtistsPage() {
   const [otpModal, setOtpModal] = useState(false);
   const [pendingBulkDeleteIds, setPendingBulkDeleteIds] = useState<string[]>([]);
 
-  const fetchArtists = async (query = "") => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/artists?limit=100${query ? `&q=${encodeURIComponent(query)}` : ""}`);
-      const data = await res.json();
-      if (data.success) {
-        setArtists(data.data.artists);
-        setStats({ 
-          total: data.data.total, 
-          withImages: data.data.artists.filter((a: any) => a.media?.images?.length > 0).length 
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [categories, setCategories] = useState<string[]>([]);
+  const [category, setCategory] = useState("");
+  const [missing, setMissing] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [query, setQuery] = useState("");
+  const [gotoPage, setGotoPage] = useState("");
+  const limit = 20;
+
+  const fetchId = useRef(0);
 
   useEffect(() => {
-    fetchArtists();
+    const loadCategories = async () => {
+      try {
+        const res = await fetch("/api/filters");
+        const data = await res.json();
+        if (data.success) {
+          setCategories(data.data.categories);
+        }
+      } catch {
+        console.error("Failed to fetch categories");
+      }
+    };
+    loadCategories();
   }, []);
+
+  useEffect(() => {
+    const id = ++fetchId.current;
+    const loadArtists = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set("limit", String(limit));
+        if (query) params.set("q", query);
+        if (category) params.set("category", category);
+        if (missing) params.set("missing", missing);
+        params.set("page", String(page));
+
+        const res = await fetch(`/api/artists?${params.toString()}`);
+        const data = await res.json();
+        if (id !== fetchId.current) return;
+        if (data.success) {
+          setArtists(data.data.artists);
+          setStats({ 
+            total: data.data.total, 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            withImages: data.data.artists.filter((a: any) => a.media?.images?.length > 0).length 
+          });
+          setTotalPages(data.data.totalPages || 1);
+        }
+      } catch {
+        if (id === fetchId.current) {
+          console.error("Failed to fetch artists");
+        }
+      } finally {
+        if (id === fetchId.current) {
+          setLoading(false);
+        }
+      }
+    };
+    loadArtists();
+  }, [query, category, missing, page]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchArtists(search);
+    setPage(1);
+    setQuery(search);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    setPage(1);
+  };
+
+  const handleMissingChange = (value: string) => {
+    setMissing(value);
+    setPage(1);
   };
 
   const toggleSelect = (id: string) => {
@@ -82,13 +133,11 @@ export default function AdminArtistsPage() {
   };
 
   const handleDelete = (id: string) => {
-    // First confirmation
     setModal({
       isOpen: true,
       title: "Delete Artist",
       message: "Are you sure you want to delete this artist? This action cannot be undone.",
       onConfirm: () => {
-        // Second confirmation
         setModal({
           isOpen: true,
           title: "⚠️ Final Confirmation",
@@ -100,7 +149,7 @@ export default function AdminArtistsPage() {
               if (data.success) {
                 setArtists(prev => prev.filter(a => a._id !== id));
               }
-            } catch (err) {
+            } catch {
               console.error("Failed to delete artist");
             }
           }
@@ -126,13 +175,17 @@ export default function AdminArtistsPage() {
         setArtists(prev => prev.filter(a => !pendingBulkDeleteIds.includes(a._id)));
         setSelectedIds([]);
       }
-    } catch (err) {
+    } catch {
       console.error("Failed to delete artists");
     } finally {
       setOtpModal(false);
       setPendingBulkDeleteIds([]);
     }
   };
+
+  const missingLabel = missing
+    ? `Missing ${missing === "both" ? "Images & Videos" : missing.charAt(0).toUpperCase() + missing.slice(1)}`
+    : null;
 
   return (
     <div className="fade-in">
@@ -155,23 +208,72 @@ export default function AdminArtistsPage() {
             + Create New Artist
           </Link>
         </div>
-        </div>
-      <div className="admin-table-container" style={{ marginTop: "1rem" }}>
-        <form onSubmit={handleSearch} className="flex gap-4 my-6">
-          <div className="flex-1 relative">
+      </div>
+
+      <div className="admin-table-container" style={{ marginTop: "1rem", maxWidth: "100%" }}>
+        <form onSubmit={handleSearch} className="flex gap-3 my-6 flex-wrap" style={{ alignItems: "center" }}>
+          <div className="relative" style={{ flex: "1 1 180px", minWidth: "160px" }}>
             <input 
               type="text" 
-              placeholder="Search by name, category or city..." 
+              placeholder="Search..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="filter-input"
             />
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </span>
           </div>
-          <button type="submit" className="btn-outline px-8 rounded-xl">Search</button>
+          <button type="submit" className="btn-outline rounded-xl" style={{ padding: "0.6rem 1rem", fontSize: "0.85rem", flex: "0 0 auto" }}>Search</button>
+
+          <select
+            value={category}
+            onChange={(e) => handleCategoryChange(e.target.value)}
+            style={{
+              flex: "0 0 auto",
+              minWidth: "140px",
+              width: "auto",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "12px",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+              fontSize: "0.85rem",
+            }}
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          <select
+            value={missing}
+            onChange={(e) => handleMissingChange(e.target.value)}
+            style={{
+              flex: "0 0 auto",
+              minWidth: "150px",
+              width: "auto",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "12px",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+              fontSize: "0.85rem",
+            }}
+          >
+            <option value="">All Media</option>
+            <option value="images">Missing Images</option>
+            <option value="videos">Missing Videos</option>
+            <option value="both">Missing Images & Videos</option>
+          </select>
         </form>
+
+        {missingLabel && (
+          <div className="text-sm text-gold mb-4" style={{ opacity: 0.8 }}>
+            Showing artists with: <strong>{missingLabel}</strong>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="admin-table">
@@ -204,7 +306,6 @@ export default function AdminArtistsPage() {
                           src={artist.media?.images?.[0] ? (artist.media.images[0].startsWith('http') ? artist.media.images[0] : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${artist.media.images[0]}`) : "https://placehold.co/100x100/1a1a1a/d4a017?text=Artist"} 
                           alt={artist.name ? `${artist.name} profile picture` : "Artist profile picture"}
                         />
-                  
                       </div>
                       <div>
                         <div className="font-bold text-lg">{artist.name}</div>
@@ -224,11 +325,11 @@ export default function AdminArtistsPage() {
                   </td>
                   <td>
                     <div className="flex gap-3">
-                      <div title="Images" className="flex items-center gap-1 text-sm text-text2">
+                      <div title="Images" className={`flex items-center gap-1 text-sm ${!artist.media?.images?.length ? 'text-crimson' : 'text-text2'}`}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         <span className="font-bold">{artist.media?.images?.length || 0}</span>
                       </div>
-                      <div title="Videos" className="flex items-center gap-1 text-sm text-text2">
+                      <div title="Videos" className={`flex items-center gap-1 text-sm ${!artist.media?.videos?.length ? 'text-crimson' : 'text-text2'}`}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
                         <span className="font-bold">{artist.media?.videos?.length || 0}</span>
                       </div>
@@ -249,6 +350,74 @@ export default function AdminArtistsPage() {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap" style={{ marginTop: "1.5rem" }}>
+            <button onClick={() => setPage(1)} disabled={page === 1}
+              className="btn-outline" style={{ padding: "0.35rem 0.5rem", fontSize: "0.8rem", opacity: page === 1 ? 0.4 : 1, cursor: page === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "2px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+            </button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="btn-outline" style={{ padding: "0.35rem 0.5rem", fontSize: "0.8rem", opacity: page === 1 ? 0.4 : 1, cursor: page === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <div className="flex items-center gap-1 sm:gap-1.5" style={{ display: "flex", alignItems: "center" }}>
+              {(() => {
+                const pages: (number | "...")[] = [];
+                const range = 2;
+                pages.push(1);
+                if (page - range > 2) pages.push("...");
+                for (let i = Math.max(2, page - range); i <= Math.min(totalPages - 1, page + range); i++) {
+                  pages.push(i);
+                }
+                if (page + range < totalPages - 1) pages.push("...");
+                if (totalPages > 1) pages.push(totalPages);
+                return pages.map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`ellipsis-${idx}`} className="hidden sm:inline" style={{ padding: "0.35rem 0.3rem", fontSize: "0.8rem", color: "var(--text3)" }}>...</span>
+                  ) : (
+                    <button key={p} onClick={() => setPage(p)}
+                      className="hidden sm:inline-flex"
+                      style={{
+                        padding: "0.35rem 0.6rem", fontSize: "0.82rem", borderRadius: "6px", cursor: "pointer",
+                        border: `1px solid ${p === page ? "var(--gold)" : "var(--border)"}`,
+                        background: p === page ? "var(--gold)" : "transparent",
+                        color: p === page ? "#000" : "var(--text)",
+                        fontWeight: p === page ? 800 : 500,
+                        minWidth: "30px",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {p}
+                    </button>
+                  )
+                );
+              })()}
+
+              <span className="sm:hidden text-xs" style={{ color: "var(--text2)", padding: "0 0.3rem", whiteSpace: "nowrap" }}>
+                {page} / {totalPages}
+              </span>
+            </div>
+
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="btn-outline" style={{ padding: "0.35rem 0.5rem", fontSize: "0.8rem", opacity: page === totalPages ? 0.4 : 1, cursor: page === totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button onClick={() => setPage(totalPages)} disabled={page === totalPages}
+              className="btn-outline" style={{ padding: "0.35rem 0.5rem", fontSize: "0.8rem", opacity: page === totalPages ? 0.4 : 1, cursor: page === totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "2px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+            </button>
+
+            <form onSubmit={(e) => { e.preventDefault(); const p = parseInt(gotoPage); if (p >= 1 && p <= totalPages) { setPage(p); setGotoPage(""); } }} className="flex items-center gap-1" style={{ marginLeft: "0.5rem" }}>
+              <input type="number" min={1} max={totalPages} value={gotoPage} onChange={(e) => setGotoPage(e.target.value)} placeholder="Page"
+                style={{ width: "52px", padding: "0.35rem 0.4rem", fontSize: "0.8rem", borderRadius: "6px", background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)", textAlign: "center" }} />
+              <button type="submit"
+                className="btn-outline" style={{ padding: "0.35rem 0.5rem", fontSize: "0.78rem", cursor: "pointer" }}>Go</button>
+            </form>
+          </div>
+        )}
       </div>
 
       <ConfirmModal 
