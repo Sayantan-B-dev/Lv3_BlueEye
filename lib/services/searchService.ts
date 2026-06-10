@@ -1,10 +1,19 @@
 import Artist from "@/lib/models/Artist";
 import { connectToDatabase } from "@/lib/db/connect";
 
+const SORT_MAP: Record<string, Record<string, 1 | -1>> = {
+  name_asc: { name: 1 },
+  name_desc: { name: -1 },
+  updated_desc: { updatedAt: -1 },
+  updated_asc: { updatedAt: 1 },
+  created_desc: { createdAt: -1 },
+  created_asc: { createdAt: 1 },
+};
+
 export async function searchArtists(
   q: string,
   filters?: { category?: string; city?: string },
-  pagination?: { page?: number; limit?: number }
+  pagination?: { page?: number; limit?: number; sort?: string }
 ) {
   await connectToDatabase();
   const query: any = { $text: { $search: q } };
@@ -14,10 +23,11 @@ export async function searchArtists(
   const page = Math.max(1, pagination?.page || 1);
   const limit = Math.max(1, Math.min(100, pagination?.limit || 12));
   const skip = (page - 1) * limit;
+  const sort = SORT_MAP[pagination?.sort || ""] || { score: { $meta: "textScore" } };
 
   const [artists, total] = await Promise.all([
     Artist.find(query, { score: { $meta: "textScore" } })
-      .sort({ score: { $meta: "textScore" } })
+      .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean(),

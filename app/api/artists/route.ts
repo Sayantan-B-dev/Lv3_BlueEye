@@ -39,9 +39,10 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "12", 10);
     const featured = searchParams.has("featured") ? searchParams.get("featured") === "true" : undefined;
     const missing = searchParams.get("missing") || undefined;
+    const sort = searchParams.get("sort") || undefined;
 
     if (q) {
-      const { artists, pagination } = await searchArtists(q, { category, city }, { page, limit });
+      const { artists, pagination } = await searchArtists(q, { category, city }, { page, limit, sort });
       return apiSuccess({
         artists,
         total: pagination.total,
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const data = await getArtists({ category, city, page, limit, featured, missing });
+    const data = await getArtists({ category, city, page, limit, featured, missing, sort });
     return apiSuccess(data);
   } catch (error: any) {
     return apiError(error.message || "Failed to fetch artists", 500);

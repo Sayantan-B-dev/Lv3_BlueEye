@@ -2,7 +2,16 @@ import Artist from "@/lib/models/Artist";
 import { connectToDatabase } from "@/lib/db/connect";
 import { slugify } from "@/lib/utils/slugify";
 
-export async function getArtists(params: { category?: string; city?: string; page?: number; limit?: number; featured?: boolean; q?: string; missing?: string }) {
+const SORT_MAP: Record<string, Record<string, 1 | -1>> = {
+  name_asc: { name: 1 },
+  name_desc: { name: -1 },
+  updated_desc: { updatedAt: -1 },
+  updated_asc: { updatedAt: 1 },
+  created_desc: { createdAt: -1 },
+  created_asc: { createdAt: 1 },
+};
+
+export async function getArtists(params: { category?: string; city?: string; page?: number; limit?: number; featured?: boolean; q?: string; missing?: string; sort?: string }) {
   await connectToDatabase();
   
   const conditions: any[] = [];
@@ -67,17 +76,19 @@ export async function getArtists(params: { category?: string; city?: string; pag
   const page = Math.max(1, params.page || 1);
   const limit = Math.min(24, params.limit || 12);
   const skip = (page - 1) * limit;
+  const sort = SORT_MAP[params.sort || "default"];
 
   let artists;
   if (params.q) {
+    const sortObj = sort || { score: { $meta: "textScore" } };
     artists = await Artist.find(filter)
       .select({ score: { $meta: "textScore" } })
-      .sort({ score: { $meta: "textScore" } })
+      .sort(sortObj)
       .skip(skip)
       .limit(limit)
       .lean();
   } else {
-    artists = await Artist.aggregate([
+    const pipeline: Record<string, unknown>[] = [
       { $match: filter },
       {
         $addFields: {
@@ -90,10 +101,17 @@ export async function getArtists(params: { category?: string; city?: string; pag
           }
         }
       },
-      { $sort: { hasImage: -1, createdAt: -1 } },
-      { $skip: skip },
-      { $limit: limit }
-    ]);
+    ];
+
+    if (sort) {
+      pipeline.push({ $sort: sort });
+    } else {
+      pipeline.push({ $sort: { hasImage: -1, createdAt: -1 } });
+    }
+
+    pipeline.push({ $skip: skip }, { $limit: limit });
+
+    artists = await Artist.aggregate(pipeline);
   }
 
   const total = await Artist.countDocuments(filter);

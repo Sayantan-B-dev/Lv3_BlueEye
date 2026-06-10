@@ -42,6 +42,7 @@ export default function AdminArtistsPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [missing, setMissing] = useState("");
+  const [sort, setSort] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [query, setQuery] = useState("");
@@ -49,6 +50,15 @@ export default function AdminArtistsPage() {
   const limit = 20;
 
   const fetchId = useRef(0);
+
+  // Debounce search input — update query after 300ms of no typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -75,6 +85,7 @@ export default function AdminArtistsPage() {
         if (query) params.set("q", query);
         if (category) params.set("category", category);
         if (missing) params.set("missing", missing);
+        if (sort) params.set("sort", sort);
         params.set("page", String(page));
 
         const res = await fetch(`/api/artists?${params.toString()}`);
@@ -100,13 +111,7 @@ export default function AdminArtistsPage() {
       }
     };
     loadArtists();
-  }, [query, category, missing, page]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    setQuery(search);
-  };
+  }, [query, category, missing, sort, page]);
 
   const handleCategoryChange = (value: string) => {
     setCategory(value);
@@ -115,6 +120,11 @@ export default function AdminArtistsPage() {
 
   const handleMissingChange = (value: string) => {
     setMissing(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: string) => {
+    setSort(value);
     setPage(1);
   };
 
@@ -211,7 +221,7 @@ export default function AdminArtistsPage() {
       </div>
 
       <div className="admin-table-container" style={{ marginTop: "1rem", maxWidth: "100%" }}>
-        <form onSubmit={handleSearch} className="flex gap-3 my-6 flex-wrap" style={{ alignItems: "center" }}>
+        <div className="flex gap-3 my-6 flex-wrap" style={{ alignItems: "center" }}>
           <div className="relative" style={{ flex: "1 1 180px", minWidth: "160px" }}>
             <input 
               type="text" 
@@ -224,7 +234,6 @@ export default function AdminArtistsPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </span>
           </div>
-          <button type="submit" className="btn-outline rounded-xl" style={{ padding: "0.6rem 1rem", fontSize: "0.85rem", flex: "0 0 auto" }}>Search</button>
 
           <select
             value={category}
@@ -263,11 +272,35 @@ export default function AdminArtistsPage() {
             }}
           >
             <option value="">All Media</option>
-            <option value="images">Missing Images</option>
-            <option value="videos">Missing Videos</option>
-            <option value="both">Missing Images & Videos</option>
+            <option value="images">Missing Only Image</option>
+            <option value="videos">Missing Only Video</option>
+            <option value="both">Missing Both</option>
           </select>
-        </form>
+
+          <select
+            value={sort}
+            onChange={(e) => handleSortChange(e.target.value)}
+            style={{
+              flex: "0 0 auto",
+              minWidth: "160px",
+              width: "auto",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "12px",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+              fontSize: "0.85rem",
+            }}
+          >
+            <option value="">Default Sort</option>
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+            <option value="updated_desc">Last Updated (newest)</option>
+            <option value="updated_asc">Last Updated (oldest)</option>
+            <option value="created_desc">Created (newest)</option>
+            <option value="created_asc">Created (oldest)</option>
+          </select>
+        </div>
 
         {missingLabel && (
           <div className="text-sm text-gold mb-4" style={{ opacity: 0.8 }}>
@@ -411,7 +444,7 @@ export default function AdminArtistsPage() {
             </button>
 
             <form onSubmit={(e) => { e.preventDefault(); const p = parseInt(gotoPage); if (p >= 1 && p <= totalPages) { setPage(p); setGotoPage(""); } }} className="flex items-center gap-1" style={{ marginLeft: "0.5rem" }}>
-              <input type="number" min={1} max={totalPages} value={gotoPage} onChange={(e) => setGotoPage(e.target.value)} placeholder="Page"
+              <input type="number" min={1} max={totalPages} value={gotoPage} onChange={(e) => setGotoPage(e.target.value)} placeholder="Page" className="no-spinner"
                 style={{ width: "52px", padding: "0.35rem 0.4rem", fontSize: "0.8rem", borderRadius: "6px", background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)", textAlign: "center" }} />
               <button type="submit"
                 className="btn-outline" style={{ padding: "0.35rem 0.5rem", fontSize: "0.78rem", cursor: "pointer" }}>Go</button>
