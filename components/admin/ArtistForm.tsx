@@ -410,7 +410,7 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
                 {formData.media.videos.map((vid: string, i: number) => {
-                  const id = vid.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/)?.[1];
+                  const id = vid.match(/(?:v\/|v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})/)?.[1];
                   const thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
                   return (
                     <div key={i} style={{
