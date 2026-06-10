@@ -1,3 +1,4 @@
+import type { PipelineStage } from "mongoose";
 import Artist from "@/lib/models/Artist";
 import { connectToDatabase } from "@/lib/db/connect";
 import { slugify } from "@/lib/utils/slugify";
@@ -88,7 +89,7 @@ export async function getArtists(params: { category?: string; city?: string; pag
       .limit(limit)
       .lean();
   } else {
-    const pipeline: Record<string, unknown>[] = [
+    const pipeline: PipelineStage[] = [
       { $match: filter },
       {
         $addFields: {

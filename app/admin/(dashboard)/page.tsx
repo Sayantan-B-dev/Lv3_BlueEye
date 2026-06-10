@@ -25,6 +25,14 @@ const renderActiveShape = (props: any) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderInactiveShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  return (
+    <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius} startAngle={startAngle} endAngle={endAngle} fill={fill} opacity={0.6} />
+  );
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload?.length) {
     const d = payload[0];
@@ -41,8 +49,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function PieCard({ title, data, dataKey, colors }: { title: string; data: any[]; dataKey: string; colors?: string[] }) {
-  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const total = data.reduce((sum: number, d: { value: number }) => sum + d.value, 0);
   return (
     <div className="admin-card" style={{ padding: "1.5rem" }}>
@@ -58,10 +66,8 @@ function PieCard({ title, data, dataKey, colors }: { title: string; data: any[];
               innerRadius={60}
               outerRadius={100}
               paddingAngle={2}
-              activeIndex={activeIndex}
-              activeShape={renderActiveShape}
-              onMouseEnter={(_, index) => setActiveIndex(index)}
-              onMouseLeave={() => setActiveIndex(undefined)}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              shape={(props: any) => props.isActive ? renderActiveShape(props) : renderInactiveShape(props)}
             >
               {data.map((_, idx) => (
                 <Cell key={idx} fill={colors?.[idx % colors.length] || PIE_COLORS[idx % PIE_COLORS.length]} />
