@@ -27,12 +27,17 @@ export const authOptions: NextAuthOptions = {
         
         const adminEmail = process.env.ADMIN_EMAIL?.trim();
         const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH?.trim();
+        const adminPassword = process.env.ADMIN_PASSWORD?.trim();
         
         // 1. Check if it's the predefined admin from env
-        if (adminEmail && adminPasswordHash && credentials.email.toLowerCase() === adminEmail.toLowerCase()) {
-          const matches = await bcrypt.compare(credentials.password, adminPasswordHash);
+        if (adminEmail && credentials.email.toLowerCase() === adminEmail.toLowerCase()) {
+          let matches = false;
+          if (adminPasswordHash) {
+            matches = await bcrypt.compare(credentials.password, adminPasswordHash);
+          } else if (adminPassword) {
+            matches = credentials.password === adminPassword;
+          }
           if (matches) {
-            // console.log("Predefined Admin logged in:", adminEmail);
             return { id: "admin-static", email: adminEmail, name: "Admin", role: "admin" };
           }
         }
