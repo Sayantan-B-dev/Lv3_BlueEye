@@ -11,16 +11,19 @@ export default function MissingMediaPage() {
   const [filterType, setFilterType] = useState("images");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedArtist, setSelectedArtist] = useState<any | null>(null);
-  const [imageLink, setImageLink] = useState("");
-  const [videoLink, setVideoLink] = useState("");
+  const [imageLinksText, setImageLinksText] = useState("");
+  const [videoLinksText, setVideoLinksText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [previewFailed, setPreviewFailed] = useState(false);
   const [imagePreviewFailed, setImagePreviewFailed] = useState(false);
   const [failedVideoIds, setFailedVideoIds] = useState<Set<string>>(new Set());
-  const imageRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLTextAreaElement>(null);
+  const videoRef = useRef<HTMLTextAreaElement>(null);
+
+  const imageLinks = imageLinksText.split("\n").map(s => s.trim()).filter(Boolean);
+  const videoLinks = videoLinksText.split("\n").map(s => s.trim()).filter(Boolean);
 
   const hasImages = (selectedArtist?.media?.images?.length ?? 0) > 0;
   const hasVideos = (selectedArtist?.media?.videos?.length ?? 0) > 0;
@@ -50,8 +53,8 @@ export default function MissingMediaPage() {
   const handleArtistSelect = (id: string) => {
     const artist = artists.find((a) => a._id === id);
     setSelectedArtist(artist || null);
-    setImageLink("");
-    setVideoLink("");
+    setImageLinksText("");
+    setVideoLinksText("");
     setMessage(null);
   };
 
@@ -66,12 +69,11 @@ export default function MissingMediaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedArtist]);
 
-  const imagePreview = imageLink.trim() && (imageLink.trim().startsWith("http") || imageLink.trim().startsWith("data:image")) ? imageLink.trim() : null;
-  const videoId = videoLink.match(YT_REGEX)?.[1];
-  const videoPreview = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+  const imagePreviews = imageLinks.filter(u => u.startsWith("http") || u.startsWith("data:image"));
+  const videoPreviews = videoLinks.map(u => ({ url: u, id: u.match(YT_REGEX)?.[1] })).filter(v => v.id);
 
-  useEffect(() => { setPreviewFailed(false); }, [videoPreview]);
-  useEffect(() => { setImagePreviewFailed(false); }, [imagePreview]);
+  useEffect(() => { setPreviewFailed(false); }, [videoLinksText]);
+  useEffect(() => { setImagePreviewFailed(false); }, [imageLinksText]);
 
   const handleSubmit = async () => {
     if (!selectedArtist) return;
@@ -84,17 +86,13 @@ export default function MissingMediaPage() {
 
       const promises: Promise<Response>[] = [];
 
-      if (imageLink) {
-        const imageUrl = imageLink.startsWith("data:image")
-          ? imageLink
-          : imageLink;
-
+      for (const url of imageLinks) {
         promises.push(
           fetch("/api/admin/upload-from-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              url: imageUrl,
+              url,
               folder,
               artistId: selectedArtist._id,
               isVideo: false,
@@ -103,13 +101,13 @@ export default function MissingMediaPage() {
         );
       }
 
-      if (videoLink) {
+      for (const url of videoLinks) {
         promises.push(
           fetch("/api/admin/upload-from-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              url: videoLink,
+              url,
               folder: "",
               artistId: selectedArtist._id,
               isVideo: true,
@@ -131,9 +129,9 @@ export default function MissingMediaPage() {
         throw new Error(errors.map((e) => e.error).join("; "));
       }
 
-      setMessage({ type: "success", text: "Media added successfully!" });
-      setImageLink("");
-      setVideoLink("");
+      setMessage({ type: "success", text: `Added ${imageLinks.length} image${imageLinks.length !== 1 ? "s" : ""}${videoLinks.length ? ` and ${videoLinks.length} video${videoLinks.length !== 1 ? "s" : ""}` : ""} successfully!` });
+      setImageLinksText("");
+      setVideoLinksText("");
       setRefreshKey(k => k + 1);
     } catch (err: unknown) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Something went wrong" });
@@ -235,73 +233,87 @@ export default function MissingMediaPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
               <div>
                 <label className="admin-field-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  Paste Image Link
+                  Paste Image Links
                   {selectedArtist && (
                     needsImages
                       ? <span className="admin-badge" style={{ background: "rgba(255,71,87,0.15)", color: "#ff4757", fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>Missing</span>
                       : <span className="admin-badge" style={{ background: "rgba(0,200,80,0.12)", color: "#00c850", fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>{existingImageCount} image{existingImageCount !== 1 ? "s" : ""}</span>
                   )}
                 </label>
-                <input
+                <textarea
                   ref={imageRef}
-                  type="text"
                   className="admin-input-base"
-                  placeholder="Paste image URL or data:image/... base64..."
-                  value={imageLink}
-                  onChange={(e) => setImageLink(e.target.value)}
-                  style={needsImages ? {} : { opacity: 0.6 }}
+                  rows={4}
+                  placeholder="Paste image URLs, one per line&#10;e.g. https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+                  value={imageLinksText}
+                  onChange={(e) => setImageLinksText(e.target.value)}
+                  style={{ ...needsImages ? {} : { opacity: 0.6 }, resize: "vertical", fontFamily: "monospace", fontSize: "0.8rem" }}
                 />
-                {imagePreview && !imagePreviewFailed && (
-                  <div style={{ marginTop: "0.75rem", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--border)", maxWidth: "300px" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imagePreview} alt="Preview" style={{ width: "100%", maxHeight: "200px", objectFit: "contain", background: "var(--bg)" }} onError={() => setImagePreviewFailed(true)} />
+                {imagePreviews.length > 0 && !imagePreviewFailed && (
+                  <div style={{ marginTop: "0.75rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {imagePreviews.slice(0, 6).map((url, i) => (
+                      <div key={i} style={{ width: "80px", height: "80px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border)", background: "var(--bg3)" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      </div>
+                    ))}
+                    {imagePreviews.length > 6 && <span style={{ fontSize: "0.75rem", color: "var(--text3)", alignSelf: "center" }}>+{imagePreviews.length - 6} more</span>}
                   </div>
                 )}
-                {imagePreview && imagePreviewFailed && (
-                  <div style={{ marginTop: "0.75rem", borderRadius: "12px", border: "1px solid var(--border)", maxWidth: "300px", padding: "2rem 1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", background: "var(--bg)", color: "var(--text3)", fontSize: "0.8rem" }}>
+                {imagePreviews.length > 0 && imagePreviewFailed && (
+                  <div style={{ marginTop: "0.75rem", borderRadius: "12px", border: "1px solid var(--border)", padding: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", background: "var(--bg)", color: "var(--text3)", fontSize: "0.8rem" }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Image preview unavailable
+                    Some previews failed to load
                   </div>
                 )}
               </div>
 
               <div>
                 <label className="admin-field-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  Paste YouTube Link
+                  Paste YouTube Links
                   {selectedArtist && (
                     needsVideos
                       ? <span className="admin-badge" style={{ background: "rgba(255,71,87,0.15)", color: "#ff4757", fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>Missing</span>
                       : <span className="admin-badge" style={{ background: "rgba(0,200,80,0.12)", color: "#00c850", fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>{existingVideoCount} video{existingVideoCount !== 1 ? "s" : ""}</span>
                   )}
                 </label>
-                <input
+                <textarea
                   ref={videoRef}
-                  type="text"
                   className="admin-input-base"
-                  placeholder="Paste YouTube URL..."
-                  value={videoLink}
-                  onChange={(e) => setVideoLink(e.target.value)}
-                  style={needsVideos ? {} : { opacity: 0.6 }}
+                  rows={4}
+                  placeholder="Paste YouTube URLs, one per line&#10;e.g. https://youtube.com/watch?v=xxx&#10;https://youtu.be/xxx"
+                  value={videoLinksText}
+                  onChange={(e) => setVideoLinksText(e.target.value)}
+                  style={{ ...needsVideos ? {} : { opacity: 0.6 }, resize: "vertical", fontFamily: "monospace", fontSize: "0.8rem" }}
                 />
-                {videoPreview && !previewFailed && (
-                  <div style={{ marginTop: "0.75rem", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--border)", maxWidth: "200px", position: "relative" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={videoPreview} alt="YouTube preview" style={{ width: "100%", display: "block" }} onError={() => setPreviewFailed(true)} />
-                    <div style={{ position: "absolute", bottom: "6px", right: "6px", background: "#ff0000", borderRadius: "4px", padding: "2px 6px" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                    </div>
+                {videoPreviews.length > 0 && !previewFailed && (
+                  <div style={{ marginTop: "0.75rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {videoPreviews.slice(0, 6).map((v, i) => (
+                      <div key={i} style={{ width: "96px", height: "72px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border)", background: "var(--bg3)", position: "relative" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setPreviewFailed(true)} />
+                        <div style={{ position: "absolute", bottom: "3px", right: "3px", background: "#ff0000", borderRadius: "3px", padding: "1px 4px" }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        </div>
+                      </div>
+                    ))}
+                    {videoPreviews.slice(6).map((v, i) => (
+                      <a key={i + 6} href={`https://youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer" style={{ width: "96px", height: "72px", borderRadius: "8px", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.2rem", color: "var(--text2)", textDecoration: "none", fontSize: "0.6rem", background: "var(--bg)" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff0000"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        See on YouTube
+                      </a>
+                    ))}
                   </div>
                 )}
-                {videoPreview && previewFailed && (
-                  <a
-                    href={`https://youtube.com/watch?v=${videoId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ marginTop: "0.75rem", borderRadius: "12px", border: "1px solid var(--border)", maxWidth: "200px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "2rem 1rem", background: "var(--bg)", color: "var(--text2)", textDecoration: "none", fontSize: "0.85rem" }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff0000"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                    See on YouTube
-                  </a>
+                {videoPreviews.length > 0 && previewFailed && (
+                  <div style={{ marginTop: "0.75rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {videoPreviews.map((v, i) => (
+                      <a key={i} href={`https://youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer" style={{ width: "96px", height: "72px", borderRadius: "8px", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.2rem", color: "var(--text2)", textDecoration: "none", fontSize: "0.6rem", background: "var(--bg)" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff0000"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        See on YouTube
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -368,9 +380,9 @@ export default function MissingMediaPage() {
             <div style={{ marginTop: "1.5rem", display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
               <button
                 onClick={handleSubmit}
-                disabled={submitting || (!imageLink && !videoLink)}
+                disabled={submitting || (imageLinks.length === 0 && videoLinks.length === 0)}
                 className="btn-primary"
-                style={{ padding: "0.7rem 2rem", borderRadius: "12px", opacity: (!imageLink && !videoLink) ? 0.5 : 1, cursor: (!imageLink && !videoLink) ? "not-allowed" : "pointer" }}
+                style={{ padding: "0.7rem 2rem", borderRadius: "12px", opacity: (imageLinks.length === 0 && videoLinks.length === 0) ? 0.5 : 1, cursor: (imageLinks.length === 0 && videoLinks.length === 0) ? "not-allowed" : "pointer" }}
               >
                 {submitting ? "Uploading..." : "Save Media"}
               </button>
