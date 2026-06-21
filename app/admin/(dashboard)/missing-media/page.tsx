@@ -73,7 +73,8 @@ export default function MissingMediaPage() {
     setMessage(null);
 
     try {
-      const folder = `/${selectedArtist.category || "misc"}/${selectedArtist.name.replace(/\s+/g, "_")}`;
+      const safeSegment = (s: string) => s.replace(/[^a-zA-Z0-9_\-\s]/g, "").replace(/\s+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "") || "unknown";
+      const folder = `${safeSegment(selectedArtist.category || "misc")}/${safeSegment(selectedArtist.name).toLowerCase()}`;
 
       const promises: Promise<Response>[] = [];
 
