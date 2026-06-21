@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
           // Enforce HTTPS (HSTS) — 2 years, include subdomains, preload
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           // Content Security Policy — restrict script/image sources
-          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://ik.imagekit.io https://i0.wp.com https://images.unsplash.com https://placehold.co; font-src 'self'; connect-src 'self' https://ik.imagekit.io https://*.upstash.io; frame-src https://www.youtube.com; media-src 'self';" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://ik.imagekit.io https://i0.wp.com https://images.unsplash.com https://placehold.co https://www.gstatic.com; font-src 'self'; connect-src 'self' https://ik.imagekit.io https://*.upstash.io; frame-src https://www.youtube.com; media-src 'self';" },
         ],
       },
       {
