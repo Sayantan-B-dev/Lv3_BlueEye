@@ -129,10 +129,37 @@ export default function MissingMediaPage() {
         throw new Error(errors.map((e) => e.error).join("; "));
       }
 
-      setMessage({ type: "success", text: `Added ${imageLinks.length} image${imageLinks.length !== 1 ? "s" : ""}${videoLinks.length ? ` and ${videoLinks.length} video${videoLinks.length !== 1 ? "s" : ""}` : ""} successfully!` });
+      const bodies = await Promise.all(results.map(r => r.json()));
+      const newImages: string[] = [];
+      const newVideos: string[] = [];
+
+      for (let i = 0; i < imageLinks.length; i++) {
+        const body = bodies[i];
+        if (body.filePath) newImages.push(body.filePath);
+      }
+      for (let i = 0; i < videoLinks.length; i++) {
+        const body = bodies[imageLinks.length + i];
+        newVideos.push(videoLinks[i]);
+      }
+
+      setSelectedArtist((prev: any) => prev ? {
+        ...prev,
+        media: {
+          images: [...(prev.media?.images || []), ...newImages],
+          videos: [...(prev.media?.videos || []), ...newVideos],
+        },
+      } : prev);
+      setArtists((prev: any[]) => prev.map(a => a._id === selectedArtist._id ? {
+        ...a,
+        media: {
+          images: [...(a.media?.images || []), ...newImages],
+          videos: [...(a.media?.videos || []), ...newVideos],
+        },
+      } : a));
+
+      setMessage({ type: "success", text: `Added ${newImages.length} image${newImages.length !== 1 ? "s" : ""}${newVideos.length ? ` and ${newVideos.length} video${newVideos.length !== 1 ? "s" : ""}` : ""} successfully!` });
       setImageLinksText("");
       setVideoLinksText("");
-      setRefreshKey(k => k + 1);
     } catch (err: unknown) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Something went wrong" });
     } finally {
