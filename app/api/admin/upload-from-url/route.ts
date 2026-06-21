@@ -37,13 +37,22 @@ export async function POST(req: Request) {
     }
 
     // Download the image
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; BlueEyeBot/1.0)" },
+    });
     if (!response.ok) {
-      return NextResponse.json({ success: false, error: "Failed to download image" }, { status: 502 });
+      return NextResponse.json({ success: false, error: "Failed to download image — the server returned " + response.status }, { status: 502 });
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) {
+      return NextResponse.json({
+        success: false,
+        error: "URL does not point directly to an image (got " + contentType + "). Right-click the image and select 'Copy image address' for a direct link.",
+      }, { status: 400 });
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    const contentType = response.headers.get("content-type") || "image/jpeg";
     const ext = contentType.split("/").pop() || "jpg";
     const fileName = `${Date.now()}.${ext}`;
 

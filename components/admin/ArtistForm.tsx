@@ -17,6 +17,7 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
   const { setIsLoading } = useLoading();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [failedThumbs, setFailedThumbs] = useState<Set<string>>(new Set());
   const [modal, setModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -412,6 +413,7 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
                 {formData.media.videos.map((vid: string, i: number) => {
                   const id = vid.match(/(?:v\/|v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})/)?.[1];
                   const thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
+                  const thumbFailed = id ? failedThumbs.has(id) : true;
                   return (
                     <div key={i} style={{
                       display: 'flex', alignItems: 'center', gap: '1rem',
@@ -420,12 +422,18 @@ export default function ArtistForm({ initialData, mode, artistId }: ArtistFormPr
                     }}>
                       {/* Thumbnail */}
                       <div style={{ width: '96px', height: '60px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: 'var(--bg3)', position: 'relative' }}>
-                        {thumb ? (
-                          <img src={thumb} alt={`YouTube video thumbnail for ${vid}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {thumb && !thumbFailed ? (
+                          <img src={thumb} alt={`YouTube video thumbnail for ${vid}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => { if (id) setFailedThumbs(prev => new Set(prev).add(id)); }} />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', opacity: 0.3 }}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                          </div>
+                          <a
+                            href={`https://youtube.com/watch?v=${id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', color: 'var(--text2)', textDecoration: 'none', fontSize: '0.55rem', lineHeight: 1.2 }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff0000"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                            See on YouTube
+                          </a>
                         )}
                         {/* YT badge */}
                         <div style={{ position: 'absolute', bottom: '4px', right: '4px', background: '#ff0000', borderRadius: '4px', padding: '1px 4px', display: 'flex', alignItems: 'center' }}>

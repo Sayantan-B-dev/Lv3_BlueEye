@@ -16,6 +16,9 @@ export default function MissingMediaPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [previewFailed, setPreviewFailed] = useState(false);
+  const [imagePreviewFailed, setImagePreviewFailed] = useState(false);
+  const [failedVideoIds, setFailedVideoIds] = useState<Set<string>>(new Set());
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +69,9 @@ export default function MissingMediaPage() {
   const imagePreview = imageLink.trim() && (imageLink.trim().startsWith("http") || imageLink.trim().startsWith("data:image")) ? imageLink.trim() : null;
   const videoId = videoLink.match(YT_REGEX)?.[1];
   const videoPreview = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+
+  useEffect(() => { setPreviewFailed(false); }, [videoPreview]);
+  useEffect(() => { setImagePreviewFailed(false); }, [imagePreview]);
 
   const handleSubmit = async () => {
     if (!selectedArtist) return;
@@ -245,10 +251,16 @@ export default function MissingMediaPage() {
                   onChange={(e) => setImageLink(e.target.value)}
                   style={needsImages ? {} : { opacity: 0.6 }}
                 />
-                {imagePreview && (
+                {imagePreview && !imagePreviewFailed && (
                   <div style={{ marginTop: "0.75rem", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--border)", maxWidth: "300px" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imagePreview} alt="Preview" style={{ width: "100%", maxHeight: "200px", objectFit: "contain", background: "var(--bg)" }} />
+                    <img src={imagePreview} alt="Preview" style={{ width: "100%", maxHeight: "200px", objectFit: "contain", background: "var(--bg)" }} onError={() => setImagePreviewFailed(true)} />
+                  </div>
+                )}
+                {imagePreview && imagePreviewFailed && (
+                  <div style={{ marginTop: "0.75rem", borderRadius: "12px", border: "1px solid var(--border)", maxWidth: "300px", padding: "2rem 1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", background: "var(--bg)", color: "var(--text3)", fontSize: "0.8rem" }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Image preview unavailable
                   </div>
                 )}
               </div>
@@ -271,14 +283,25 @@ export default function MissingMediaPage() {
                   onChange={(e) => setVideoLink(e.target.value)}
                   style={needsVideos ? {} : { opacity: 0.6 }}
                 />
-                {videoPreview && (
+                {videoPreview && !previewFailed && (
                   <div style={{ marginTop: "0.75rem", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--border)", maxWidth: "200px", position: "relative" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={videoPreview} alt="YouTube preview" style={{ width: "100%", display: "block" }} />
+                    <img src={videoPreview} alt="YouTube preview" style={{ width: "100%", display: "block" }} onError={() => setPreviewFailed(true)} />
                     <div style={{ position: "absolute", bottom: "6px", right: "6px", background: "#ff0000", borderRadius: "4px", padding: "2px 6px" }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                     </div>
                   </div>
+                )}
+                {videoPreview && previewFailed && (
+                  <a
+                    href={`https://youtube.com/watch?v=${videoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ marginTop: "0.75rem", borderRadius: "12px", border: "1px solid var(--border)", maxWidth: "200px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "2rem 1rem", background: "var(--bg)", color: "var(--text2)", textDecoration: "none", fontSize: "0.85rem" }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff0000"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                    See on YouTube
+                  </a>
                 )}
               </div>
             </div>
@@ -302,13 +325,28 @@ export default function MissingMediaPage() {
                   })}
                   {selectedArtist?.media?.videos?.slice(0, 3).map((vid: string, i: number) => {
                     const id = vid.match(YT_REGEX)?.[1];
+                    const failed = id ? failedVideoIds.has(id) : true;
                     return id ? (
                       <div key={i} style={{ width: "96px", height: "72px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border)", background: "var(--bg3)", position: "relative" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={`https://img.youtube.com/vi/${id}/mqdefault.jpg`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        <div style={{ position: "absolute", bottom: "3px", right: "3px", background: "#ff0000", borderRadius: "3px", padding: "1px 4px" }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        </div>
+                        {failed ? (
+                          <a
+                            href={`https://youtube.com/watch?v=${id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.25rem", color: "var(--text2)", textDecoration: "none", fontSize: "0.6rem", lineHeight: 1.2 }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff0000"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                            See on YouTube
+                          </a>
+                        ) : (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`https://img.youtube.com/vi/${id}/mqdefault.jpg`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setFailedVideoIds(prev => new Set(prev).add(id))} />
+                            <div style={{ position: "absolute", bottom: "3px", right: "3px", background: "#ff0000", borderRadius: "3px", padding: "1px 4px" }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : null;
                   })}
