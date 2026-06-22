@@ -350,3 +350,14 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── RESPONSIVE ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .mm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mm-artist-card {
+    padding: 1rem;
+  }
+}
