@@ -1,0 +1,352 @@
+/* ── MISSING MEDIA PAGE ────────────────────────────────── */
+
+/* Input fields */
+.mm-field-wrapper {
+  margin-bottom: 0.75rem;
+}
+
+.mm-input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.82rem;
+  outline: none;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.mm-input.is-valid {
+  background: rgba(0, 200, 80, 0.12);
+  border: 1.5px solid rgba(0, 200, 80, 0.7);
+  box-shadow: 0 0 0 1px rgba(0, 200, 80, 0.15);
+}
+
+.mm-input.is-invalid {
+  background: rgba(255, 71, 87, 0.12);
+  border: 1.5px solid rgba(255, 71, 87, 0.7);
+  box-shadow: 0 0 0 1px rgba(255, 71, 87, 0.15);
+}
+
+.mm-input.is-validating {
+  background: linear-gradient(90deg, var(--bg), rgba(255, 165, 2, 0.2), var(--bg));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+  border: 1.5px solid rgba(255, 165, 2, 0.5);
+  box-shadow: 0 0 14px rgba(255, 165, 2, 0.2), inset 0 0 6px rgba(255, 165, 2, 0.04);
+}
+
+.mm-input.is-focused {
+  border: 1px solid var(--gold);
+  box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
+}
+
+/* Error text */
+.mm-error {
+  font-size: 0.72rem;
+  color: #ff4757;
+  margin-top: 0.25rem;
+  padding-left: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Preview row */
+.mm-preview-row {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mm-preview-image {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 200, 80, 0.3);
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mm-preview-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mm-preview-video {
+  width: 128px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 200, 80, 0.3);
+  background: var(--bg3);
+  position: relative;
+}
+
+.mm-preview-video img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mm-preview-video-badge {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  background: #ff0000;
+  border-radius: 3px;
+  padding: 1px 5px;
+  line-height: 1;
+}
+
+/* Select controls */
+.mm-select {
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.mm-select--filter {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
+.mm-select--artist {
+  flex: 1 1 250px;
+  min-width: 200px;
+}
+
+/* Top bar */
+.mm-header-row {
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.mm-loading-text {
+  color: var(--text3);
+  font-size: 0.85rem;
+}
+
+.mm-count-text {
+  color: var(--text3);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+/* Artist card */
+.mm-artist-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.mm-card-header {
+  margin-bottom: 1.5rem;
+}
+
+.mm-artist-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.mm-category-badge {
+  margin-left: 0.75rem;
+}
+
+.mm-actions-group {
+  margin-left: auto;
+}
+
+.mm-action-link {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+/* Section grid */
+.mm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.mm-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mm-badge-missing {
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff4757;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.mm-badge-present {
+  background: rgba(0, 200, 80, 0.12);
+  color: #00c850;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.mm-empty-text {
+  font-size: 0.8rem;
+  color: var(--text3);
+  padding: 0.5rem 0;
+}
+
+/* Add button */
+.mm-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text2);
+  width: 100%;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+/* Existing media section */
+.mm-existing {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.mm-existing-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+  margin-bottom: 0.75rem;
+}
+
+.mm-existing-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mm-existing-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+.mm-existing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mm-existing-video-thumb {
+  width: 96px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  position: relative;
+}
+
+.mm-existing-video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mm-existing-video-link {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 0.6rem;
+  line-height: 1.2;
+}
+
+.mm-existing-video-badge {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  background: #ff0000;
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* Message */
+.mm-message {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.mm-message.is-success {
+  background: rgba(0, 200, 80, 0.1);
+  color: #00c850;
+  border: 1px solid rgba(0, 200, 80, 0.2);
+}
+
+.mm-message.is-error {
+  background: rgba(255, 71, 87, 0.1);
+  color: #ff4757;
+  border: 1px solid rgba(255, 71, 87, 0.2);
+}
+
+/* Footer actions */
+.mm-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.mm-validate-note {
+  font-size: 0.78rem;
+  color: var(--text3);
+}
+
+/* Submit button */
+.mm-submit-btn {
+  padding: 0.7rem 2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.mm-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
