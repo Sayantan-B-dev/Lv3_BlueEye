@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { getArtistBySlug } from "@/lib/services/artistService";
+import { getArtistBySlug, getArtistsForSitemap } from "@/lib/services/artistService";
 import { notFound } from "next/navigation";
 import { formatDuration, formatTeamSize } from "@/lib/utils/formatters";
 import Link from "next/link";
@@ -15,6 +15,11 @@ import { siteConfig } from "@/lib/config/site";
 import AdminEditArtistButton from "@/components/ui/AdminEditArtistButton";
 
 export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const artists = await getArtistsForSitemap();
+  return artists.map((a) => ({ slug: a.slug }));
+}
 
 export async function generateMetadata({
   params,
