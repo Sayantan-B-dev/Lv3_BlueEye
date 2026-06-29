@@ -64,6 +64,17 @@ export function resolveMediaUrl(path?: string): string | undefined {
   return `${endpoint}/${normalized}`;
 }
 
+const IK_TRANSFORM = "tr:w-600,h-800,f-webp,q-80";
+
+export function imageKitUrl(path: string, transform?: string): string {
+  const endpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+  if (!endpoint) return path;
+  if (path.startsWith("http") && !path.includes(endpoint)) return path;
+  const cleanPath = path.replace(endpoint, "").replace(/^\/+/, "");
+  const tx = transform || IK_TRANSFORM;
+  return `${endpoint}/${tx}/${cleanPath}`;
+}
+
 export function artistSummary(artist: {
   name: string;
   category?: string;

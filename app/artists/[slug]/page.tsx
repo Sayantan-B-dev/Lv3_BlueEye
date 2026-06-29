@@ -9,6 +9,7 @@ import {
   artistSummary,
   pageMetadata,
   resolveMediaUrl,
+  imageKitUrl,
 } from "@/lib/seo/metadata";
 import { artistJsonLd, breadcrumbJsonLd, personJsonLd } from "@/lib/seo/jsonld";
 import { siteConfig } from "@/lib/config/site";
@@ -57,13 +58,12 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
 
 
 
-  const profileImage =
-    artist.media?.images?.[0]
-      ? resolveMediaUrl(artist.media.images[0]) ??
-        (artist.media.images[0].startsWith("http")
-          ? artist.media.images[0]
-          : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${artist.media.images[0].startsWith("/") ? artist.media.images[0].slice(1) : artist.media.images[0]}`)
-      : "https://placehold.co/600x800/1a1a1a/d4a017?text=No+Image";
+  const rawImage = artist.media?.images?.[0];
+  const profileImage = rawImage
+    ? (rawImage.startsWith("http")
+        ? imageKitUrl(rawImage, "tr:w-600,h-800,f-webp,q-80")
+        : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/tr:w-600,h-800,f-webp,q-80/${rawImage.startsWith("/") ? rawImage.slice(1) : rawImage}`)
+    : "https://placehold.co/600x800/1a1a1a/d4a017?text=No+Image";
 
   const structuredData = [
     breadcrumbJsonLd([
@@ -158,7 +158,9 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
           {artist.media?.images?.length > 1 && (
             <div className="artist-gallery-grid">
               {artist.media.images.slice(1, 5).map((img: string, i: number) => {
-                const src = img.startsWith('http') ? img : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${img.startsWith('/') ? img.slice(1) : img}`;
+                const src = img.startsWith('http')
+                  ? imageKitUrl(img, "tr:w-250,h-250,f-webp,q-70")
+                  : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/tr:w-250,h-250,f-webp,q-70/${img.startsWith('/') ? img.slice(1) : img}`;
                 return (
                   <div key={i} className="gallery-img-wrapper">
                     <Image 

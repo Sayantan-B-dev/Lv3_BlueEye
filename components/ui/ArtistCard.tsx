@@ -33,7 +33,7 @@ export default function ArtistCard({ artist, index }: { artist: any, index?: num
             artist.media?.images?.[0] 
               ? (artist.media.images[0].startsWith('http') 
                   ? artist.media.images[0] 
-                  : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${artist.media.images[0].startsWith('/') ? artist.media.images[0].slice(1) : artist.media.images[0]}`)
+                  : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/tr:w-400,h-300,f-webp,q-70/${artist.media.images[0].startsWith('/') ? artist.media.images[0].slice(1) : artist.media.images[0]}`)
               : "https://placehold.co/600x400/1a1a1a/d4a017?text=No+Image"
           } 
           alt={`${artist.name} — ${artist.category || "performer"} — ${artist.location?.city || "India"} based artist`} 
