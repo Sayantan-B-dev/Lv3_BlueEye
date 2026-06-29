@@ -11,6 +11,12 @@ import { categoryPath, resolveCategorySlug } from "@/lib/seo/slugs";
 import Link from "next/link";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { categorySeoContent, categoryMetaDescription } from "@/lib/seo/content";
+import { slugify } from "@/lib/utils/slugify";
+
+export async function generateStaticParams() {
+  const categories = await getDistinctCategories();
+  return categories.map((c) => ({ category: slugify(c) }));
+}
 
 export async function generateMetadata({
   params,

@@ -10,6 +10,12 @@ import { cityPath, resolveCitySlug } from "@/lib/seo/slugs";
 import Link from "next/link";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { citySeoContent, cityMetaDescription } from "@/lib/seo/content";
+import { slugify } from "@/lib/utils/slugify";
+
+export async function generateStaticParams() {
+  const cities = await getDistinctCities();
+  return cities.map((c) => ({ city: slugify(c) }));
+}
 
 export async function generateMetadata({
   params,
