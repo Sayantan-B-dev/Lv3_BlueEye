@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { getEventBySlug } from "@/lib/services/eventService";
+import { getEventBySlug, getEventsForSitemap } from "@/lib/services/eventService";
 import {
   getRegistrationCountByEvent,
   getRegistrationForUser,
@@ -15,6 +15,11 @@ import { pageMetadata } from "@/lib/seo/metadata";
 import { eventJsonLd } from "@/lib/seo/jsonld";
 
 export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const events = await getEventsForSitemap();
+  return events.map((e) => ({ slug: e.slug }));
+}
 
 export async function generateMetadata({
   params,

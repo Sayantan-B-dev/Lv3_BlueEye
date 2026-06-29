@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getBlogPostBySlug } from "@/lib/services/blogService";
+import { getBlogPostBySlug, getBlogPostsForSitemap } from "@/lib/services/blogService";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata, siteUrl } from "@/lib/seo/metadata";
 import { breadcrumbJsonLd, articleJsonLd } from "@/lib/seo/jsonld";
 
-
 export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const posts = await getBlogPostsForSitemap();
+  return posts.map((p) => ({ slug: p.slug }));
+}
 
 export async function generateMetadata({
   params,
