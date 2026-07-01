@@ -8,26 +8,22 @@ Before making any change, read the project documents in the exact order below.
 
 # Required Reading Order
 
-1. `ProjectDemo.html`
-   - Primary UI and visual source of truth.
-   - Follow layout, spacing, responsiveness, component structure, and interaction patterns.
+1. `ProjectSRS.md`
+   - Highest source of truth for architecture, routes, schemas, APIs, rendering strategy, and product scope.
+   - Never invent features outside the SRS.
 
 2. `ProjectPlan.md`
    - Contains current progress, completed tasks, and remaining work.
    - Continue from the next unfinished task whenever possible.
 
-3. `ProjectSRS.md`
-   - Highest source of truth for architecture, routes, schemas, APIs, rendering strategy, and product scope.
-   - Never invent features outside the SRS.
-
-4. `ProjectTree.md`
+3. `ProjectTree.md`
    - Contains latest known project structure.
    - Check before creating, moving, renaming, or deleting files.
 
-5. `ProjectLog.md`
+4. `ProjectLog.md`
    - Contains latest project state, major decisions, current priorities, and architecture notes.
 
-6. `logs/YYYY-MM.md`
+5. `logs/YYYY-MM.md`
    - Contains detailed chronological development logs and file-level changes.
 
 ---
@@ -73,7 +69,7 @@ Avoid loading unnecessary context.
 
 # Core Development Rules
 
-- Follow `ProjectDemo.html` strictly for frontend implementation.
+- Follow `DESIGN.md` for UI architecture and conventions.
 - Keep UI clean, responsive, reusable, and visually consistent.
 - Prefer reusable components over duplicated code.
 - Keep components modular and isolated.
@@ -281,7 +277,7 @@ Avoid changing stable APIs unnecessarily.
 
 # UI Rules
 
-- Match `ProjectDemo.html` as closely as possible.
+- Follow styling conventions defined in `DESIGN.md`.
 - **Styling Architecture**: Use modular CSS files in `styles/components/` (e.g., `pages.css`, `base.css`) instead of Tailwind utility classes that rely on missing theme config (like `bg-surface/30` or `border-border/40`).
 - **CSS Variables**: Rely heavily on the project's predefined CSS variables (`var(--surface)`, `var(--gold)`, `var(--border)`, `var(--text)`) via inline styles or custom class names.
 - **Icons**: NEVER use emojis. Always use high-quality SVG icons to maintain a premium look.
