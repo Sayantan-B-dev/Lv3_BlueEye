@@ -293,10 +293,13 @@ function LoginPageContent() {
               <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
             </div>
 
-            <button type="button" onClick={() => signIn('google', { callbackUrl })} className="btn-outline" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', display: 'flex', gap: '0.5rem' }}>
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google" />
-              Continue with Google
-            </button>
+            <div style={{ position: 'relative', marginTop: '0.25rem' }}>
+              <span style={{ position: 'absolute', top: '-11px', right: '14px', zIndex: 1, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#0a0807', background: 'linear-gradient(135deg, var(--gold), var(--saffron))', padding: '0.15rem 0.6rem', borderRadius: '999px', transform: 'rotate(4deg)', boxShadow: '0 4px 12px rgba(0,0,0,0.35)' }}>Recommended</span>
+              <button type="button" onClick={() => signIn('google', { callbackUrl })} className="btn-outline" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', display: 'flex', gap: '0.5rem' }}>
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google" />
+                Continue with Google
+              </button>
+            </div>
 
             <p style={{ textAlign: 'center', fontSize: '0.9rem', marginTop: '1rem', color: 'var(--text2)' }}>
               Don't have an account? <button type="button" onClick={() => setView('register')} style={{ color: 'var(--gold)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Create one</button>
@@ -346,6 +349,23 @@ function LoginPageContent() {
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', marginTop: '0.5rem' }}>
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1rem 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text3)' }}>OR</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
+            </div>
+
+            <div style={{ position: 'relative', marginTop: '0.25rem' }}>
+              <span style={{ position: 'absolute', top: '-11px', right: '14px', zIndex: 1, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#0a0807', background: 'linear-gradient(135deg, var(--gold), var(--saffron))', padding: '0.15rem 0.6rem', borderRadius: '999px', transform: 'rotate(4deg)', boxShadow: '0 4px 12px rgba(0,0,0,0.35)' }}>Recommended</span>
+              <button type="button" onClick={() => signIn('google', { callbackUrl })} className="btn-outline" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', display: 'flex', gap: '0.5rem' }}>
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google" />
+                Continue with Google
+              </button>
+            </div>
+            <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text3)' }}>
+              No email verification needed — Google already verifies your address.
+            </p>
+
             <p style={{ textAlign: 'center', fontSize: '0.9rem', marginTop: '1rem', color: 'var(--text2)' }}>
               Already have an account? <button type="button" onClick={() => setView('login')} style={{ color: 'var(--gold)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign In</button>
             </p>

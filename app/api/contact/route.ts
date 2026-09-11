@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const toEmail = process.env.EMAIL_TO || "theblueeyeentertainment@gmail.com";
 
     const { error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM || "BlueEyeEntertainment <onboarding@resend.dev>",
       to: [toEmail],
       subject: `✦ Privacy Inquiry from ${name}`,
       html: `

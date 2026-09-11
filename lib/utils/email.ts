@@ -1,16 +1,32 @@
 import { Resend } from "resend";
+import { isSmtpConfigured, sendViaSmtp } from "./smtp";
 
 const resend = new Resend(process.env.RESEND_API);
 
-// Helper to prevent 403 sandbox error when using Resend's free/onboarding tier
+// Sender address. Resend's shared sandbox sender (onboarding@resend.dev) can
+// ONLY deliver to the email address that owns the Resend account, so every
+// recipient is redirected to EMAIL_TO below as a fallback. Set RESEND_FROM to
+// an address on a domain you have verified in Resend to deliver to real users.
+const RESEND_FROM =
+  process.env.RESEND_FROM || "BlueEyeEntertainment <onboarding@resend.dev>";
+
+const IS_SANDBOX_SENDER = /@resend\.dev>?$/i.test(RESEND_FROM.trim());
+
+// In sandbox mode all mail funnels to the Resend account owner's inbox.
+// Once a verified domain is configured we deliver to the actual recipient.
 function getRecipientEmail(originalEmail: string): string {
-  const allowedEmail = process.env.EMAIL_TO || "sayantanbharati611@gmail.com";
+  if (!IS_SANDBOX_SENDER) return originalEmail;
+
+  const allowedEmail = process.env.EMAIL_TO;
+  if (!allowedEmail) {
+    console.warn(
+      "[Email] RESEND_FROM still uses the sandbox sender but EMAIL_TO is not set. " +
+        "Resend will reject delivery to real recipients (403)."
+    );
+    return originalEmail;
+  }
+
   if (originalEmail.toLowerCase().trim() !== allowedEmail.toLowerCase().trim()) {
-    // console.log(`\n==================================================`);
-    // console.log(`[Resend Sandbox Bypass] Redirecting email:`);
-    // console.log(`- Original Recipient: ${originalEmail}`);
-    // console.log(`- Redirected To: ${allowedEmail}`);
-    // console.log(`==================================================\n`);
     return allowedEmail;
   }
   return originalEmail;
@@ -97,7 +113,7 @@ export async function sendInquiryEmail(data: {
     );
 
     const { data: resData, error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [toEmail],
       subject: `✦ New Artist Inquiry: ${data.artistName} from ${data.clientName}`,
       html: htmlContent,
@@ -132,15 +148,24 @@ export async function sendVerificationEmail(email: string, code: string) {
       `
     );
 
-    const recipient = getRecipientEmail(email);
-    // console.log(`\n🔑 [Verification Code Bypass]`);
-    // console.log(`- Original Email: ${email}`);
-    // console.log(`- Code: ${code}\n`);
+    const subject = "✦ Verify your BlueEye Account";
 
+    // Free zero-domain path: Gmail SMTP delivers DIRECTLY to the real user,
+    // bypassing the Resend sandbox EMAIL_TO redirect below.
+    if (isSmtpConfigured()) {
+      try {
+        await sendViaSmtp(email, subject, htmlContent);
+        return { success: true, via: "smtp" as const };
+      } catch (smtpErr) {
+        console.error("SMTP verification email failed, falling back to Resend:", smtpErr);
+      }
+    }
+
+    const recipient = getRecipientEmail(email);
     const { data: resData, error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [recipient],
-      subject: "✦ Verify your BlueEye Account",
+      subject,
       html: htmlContent,
     });
     if (error) throw error;
@@ -168,15 +193,23 @@ export async function sendResetPasswordEmail(email: string, otp: string) {
       `
     );
 
-    const recipient = getRecipientEmail(email);
-    // console.log(`\n🔑 [Password Reset OTP Bypass]`);
-    // console.log(`- Original Email: ${email}`);
-    // console.log(`- OTP: ${otp}\n`);
+    const subject = "✦ Your Password Reset OTP";
 
+    // Free zero-domain path: Gmail SMTP delivers DIRECTLY to the real user.
+    if (isSmtpConfigured()) {
+      try {
+        await sendViaSmtp(email, subject, htmlContent);
+        return { success: true, via: "smtp" as const };
+      } catch (smtpErr) {
+        console.error("SMTP reset-password email failed, falling back to Resend:", smtpErr);
+      }
+    }
+
+    const recipient = getRecipientEmail(email);
     const { data: resData, error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [recipient],
-      subject: "✦ Your Password Reset OTP",
+      subject,
       html: htmlContent,
     });
     if (error) throw error;
@@ -233,7 +266,7 @@ export async function sendEventRegistrationConfirmation(data: {
 
     const recipient = getRecipientEmail(data.guestEmail);
     const { error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [recipient],
       subject: `✦ RSVP Received: ${data.eventTitle}`,
       html: htmlContent,
@@ -296,7 +329,7 @@ export async function sendEventRegistrationApproved(data: {
 
     const recipient = getRecipientEmail(data.guestEmail);
     const { error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [recipient],
       subject: `🎉 Ticket Confirmed: ${data.eventTitle}!`,
       html: htmlContent,
@@ -331,7 +364,7 @@ export async function sendBulkDeleteOtpEmail(otp: string, count: number, resourc
     const recipient = getRecipientEmail(adminEmail);
 
     const { error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [recipient],
       subject: `🔐 Admin OTP: Authorize bulk delete of ${count} ${resource}`,
       html: htmlContent,
@@ -366,7 +399,7 @@ export async function sendEventRegistrationRejected(data: {
 
     const recipient = getRecipientEmail(data.guestEmail);
     const { error } = await resend.emails.send({
-      from: "BlueEyeEntertainment <onboarding@resend.dev>",
+      from: RESEND_FROM,
       to: [recipient],
       subject: `Update on your RSVP for ${data.eventTitle}`,
       html: htmlContent,

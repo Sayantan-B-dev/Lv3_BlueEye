@@ -23,6 +23,7 @@
     "next": "16.2.4",
     "next-auth": "^4.24.14",
     "next-sitemap": "^4.2.3",
+    "nodemailer": "^10.0.8",
     "ogl": "^1.0.11",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
