@@ -1,10 +1,11 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ArtistCard from "@/components/ui/ArtistCard";
 import ApplicantForm from "@/components/for-artists/ApplicantForm";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import Link from "next/link";
 
 export default function ProfilePage() {
@@ -23,6 +24,11 @@ export default function ProfilePage() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
+
+  // Account deletion: 0 = closed, 1 = first confirmation, 2 = final confirmation
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [deletingProfile, setDeletingProfile] = useState(false);
+  const [deleteProfileError, setDeleteProfileError] = useState("");
 
   // Application states
   const [applications, setApplications] = useState<any[]>([]);
@@ -138,6 +144,32 @@ export default function ProfilePage() {
       setProfileError("An error occurred. Please try again.");
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    if (deletingProfile) return;
+    setDeletingProfile(true);
+    setDeleteProfileError("");
+
+    try {
+      const res = await fetch("/api/users/profile", { method: "DELETE" });
+      const data = await res.json();
+
+      if (!data.success) {
+        setDeleteProfileError(data.message || "Failed to delete your profile.");
+        setDeleteStep(0);
+        return;
+      }
+
+      // Sessions are JWT-based, so the deleted record does not invalidate the
+      // live session. Sign out to avoid landing on a ghost profile.
+      await signOut({ callbackUrl: "/" });
+    } catch {
+      setDeleteProfileError("An error occurred. Please try again.");
+      setDeleteStep(0);
+    } finally {
+      setDeletingProfile(false);
     }
   };
 
@@ -271,6 +303,7 @@ export default function ProfilePage() {
   const displayName = profile?.name || user?.name || "Member";
   const displayEmail = profile?.email || user?.email;
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+  const isAdmin = (profile?.role || user?.role) === "admin";
 
   return (
     <div className="section-inner" style={{ padding: 'calc(var(--hdr-h) + 4rem) 1rem 6rem' }}>
@@ -625,6 +658,73 @@ export default function ProfilePage() {
           ))}
         </div>
       )}
+
+      {/* Danger Zone — hidden for admins, who are removed from the database directly */}
+      {!isAdmin && (
+        <div style={{ marginTop: '4rem', background: 'rgba(255,107,107,0.04)', border: '1px solid rgba(255,107,107,0.25)', borderRadius: '24px', padding: '2rem' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ff6b6b', fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>
+            Danger Zone
+          </h3>
+          <p style={{ color: 'var(--text3)', fontSize: '0.85rem', lineHeight: 1.7, marginBottom: '1.5rem' }}>
+            Deleting your profile permanently removes your account details, saved favorites, address and
+            contact information. This cannot be undone. You may register again with the same email, but
+            nothing will be restored.
+          </p>
+
+          {deleteProfileError && (
+            <div style={{ background: 'rgba(255,107,107,0.1)', color: '#ff6b6b', padding: '0.75rem', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '1.25rem', border: '1px solid rgba(255,107,107,0.2)' }}>
+              {deleteProfileError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => { setDeleteProfileError(""); setDeleteStep(1); }}
+            disabled={deletingProfile}
+            style={{
+              width: '100%',
+              padding: '0.9rem 1.5rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,107,107,0.4)',
+              background: 'linear-gradient(135deg, #e63946, #b81f2c)',
+              color: '#fff',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              letterSpacing: '0.03em',
+              cursor: deletingProfile ? 'not-allowed' : 'pointer',
+              opacity: deletingProfile ? 0.6 : 1
+            }}
+          >
+            {deletingProfile ? 'Deleting...' : 'Delete My Profile'}
+          </button>
+        </div>
+      )}
+
+      {/* Step 1 — intent check. ConfirmModal always calls onCancel() after
+          onConfirm(), so the functional guard keeps the flow open at step 2
+          while still letting the Cancel button close it. */}
+      <ConfirmModal
+        isOpen={deleteStep === 1}
+        variant="warning"
+        title="Delete your profile?"
+        message="This will permanently remove your account details, saved favorites, address and contact information. This action cannot be undone."
+        confirmText="Continue"
+        cancelText="Cancel"
+        onConfirm={() => setDeleteStep(2)}
+        onCancel={() => setDeleteStep(prev => (prev === 2 ? prev : 0))}
+      />
+
+      {/* Step 2 — final confirmation */}
+      <ConfirmModal
+        isOpen={deleteStep === 2}
+        variant="danger"
+        title="Are you absolutely sure?"
+        message="This is your last chance — there is no undo and no backup. Your profile will be deleted immediately and you will be signed out."
+        confirmText={deletingProfile ? "Deleting..." : "Yes, delete permanently"}
+        cancelText="Keep my profile"
+        onConfirm={handleDeleteProfile}
+        onCancel={() => setDeleteStep(0)}
+      />
     </div>
   );
 }
