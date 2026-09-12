@@ -12,6 +12,7 @@ type FormStatus = "idle" | "loading" | "success" | "error" | "cooldown";
 interface BookingForm {
   artistName: string;
   clientPhone: string;
+  clientAddress: string;
   eventDate: string;
   eventType: string;
   message: string;
@@ -53,6 +54,7 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     artistName: searchParams?.get("artist")?.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "",
     clientPhone: "",
+    clientAddress: "",
     eventDate: "",
     eventType: "Wedding",
     message: "",
@@ -175,7 +177,7 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
     setStatus("loading");
     setStatusMsg("");
 
-    const { artistName, clientPhone, eventDate, eventType, message } = bookingForm;
+    const { artistName, clientPhone, clientAddress, eventDate, eventType, message } = bookingForm;
 
     if (!artistName.trim()) {
       setStatus("error");
@@ -187,6 +189,11 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
       setStatusMsg("Please enter a valid phone number (at least 10 digits).");
       return;
     }
+    if (clientAddress && clientAddress.length > 300) {
+      setStatus("error");
+      setStatusMsg("Address must be under 300 characters.");
+      return;
+    }
 
     const payload = {
       artistId: "5f8f8c44b54764421b7156e9",
@@ -194,6 +201,7 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
       clientName: sessionName,
       clientEmail: sessionEmail,
       clientPhone,
+      clientAddress: clientAddress.trim() || undefined,
       eventDate: eventDate || undefined,
       eventType,
       message: message.trim() || undefined,
@@ -214,7 +222,7 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
         setStatus("success");
         setStatusMsg("Inquiry submitted! Our team will contact you shortly.");
         setShowSuccessModal(true);
-        setBookingForm({ artistName: "", clientPhone: "", eventDate: "", eventType: "Wedding", message: "" });
+        setBookingForm({ artistName: "", clientPhone: "", clientAddress: "", eventDate: "", eventType: "Wedding", message: "" });
       } else {
         handleCommonError(result);
       }
@@ -381,6 +389,22 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
                 <option value="College">College</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            <div>
+              <label className="form-label">Event / Venue Address</label>
+              <textarea
+                rows={2}
+                maxLength={300}
+                className="filter-input min-h-[72px]"
+                value={bookingForm.clientAddress}
+                onChange={(e) => setBookingForm((f) => ({ ...f, clientAddress: e.target.value }))}
+                placeholder="Flat / House no., Street, Area, City, State — PIN"
+                disabled={isCooldown}
+              />
+              <div className="text-xs text-text3 text-right mt-1">
+                {bookingForm.clientAddress.length}/300
+              </div>
             </div>
 
             <div>

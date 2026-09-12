@@ -6,6 +6,7 @@ const InquiryBackupSchema = new mongoose.Schema({
   clientName: { type: String },
   clientEmail: { type: String },
   clientPhone: { type: String },
+  clientAddress: { type: String },
   eventDate: Date,
   eventType: { type: String },
   message: String,

@@ -6,6 +6,7 @@ const InquirySchema = new mongoose.Schema({
   clientName: { type: String, required: true },
   clientEmail: { type: String, required: true },
   clientPhone: { type: String, required: true },
+  clientAddress: { type: String, trim: true, maxlength: 300 },
   eventDate: Date,
   eventType: { type: String, enum: ["Wedding", "Corporate", "Private Party", "College", "Other"] },
   message: String,

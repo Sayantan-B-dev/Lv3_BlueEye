@@ -64,6 +64,7 @@ export async function sendInquiryEmail(data: {
   clientName: string;
   clientEmail: string;
   clientPhone: string;
+  clientAddress?: string;
   eventDate?: string;
   eventType: string;
   message?: string;
@@ -93,6 +94,10 @@ export async function sendInquiryEmail(data: {
           <tr>
             <td style="padding: 8px 0; color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-top: 1px solid rgba(255,255,255,0.05);">Contact Number</td>
             <td style="padding: 8px 0; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.05);">${data.clientPhone}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-top: 1px solid rgba(255,255,255,0.05);">Event Address</td>
+            <td style="padding: 8px 0; color: #ffffff; border-top: 1px solid rgba(255,255,255,0.05);">${data.clientAddress || "Not provided"}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-top: 1px solid rgba(255,255,255,0.05);">Event Type</td>

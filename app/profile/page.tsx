@@ -630,6 +630,7 @@ export default function ProfilePage() {
                   {inq.eventType} • {inq.eventDate ? new Date(inq.eventDate).toLocaleDateString() : 'Date TBD'}
                 </p>
                 {inq.message && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.5rem', fontStyle: 'italic' }}>"{inq.message}"</p>}
+                {inq.clientAddress && <p style={{ fontSize: '0.8rem', color: 'var(--text3)', marginTop: '0.25rem' }}>{inq.clientAddress}</p>}
               </div>
               <div>
                 <span style={{ padding: '0.4rem 0.75rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', background: inq.status === 'New' ? 'rgba(76,201,240,0.1)' : inq.status === 'Contacted' ? 'rgba(212,160,23,0.1)' : 'rgba(255,107,107,0.1)', color: inq.status === 'New' ? '#4cc9f0' : inq.status === 'Contacted' ? 'var(--gold)' : '#ff6b6b' }}>

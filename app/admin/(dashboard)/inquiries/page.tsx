@@ -367,6 +367,11 @@ export default function AdminInquiriesPage() {
                     <div className="font-bold text-lg">{iq.clientName}</div>
                     <div className="text-xs text-text3">{iq.clientEmail}</div>
                     <div className="text-xs text-text3">{iq.clientPhone}</div>
+                    {iq.clientAddress && (
+                      <div className="text-xs text-text3" style={{ marginTop: 4, maxWidth: 220 }}>
+                        {iq.clientAddress}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="font-semibold text-gold">{iq.artistName}</div>

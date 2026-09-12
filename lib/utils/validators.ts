@@ -68,6 +68,7 @@ export const inquirySchemaValidation = z.object({
   clientName: z.string().min(1, "Your name is required"),
   clientEmail: z.string().email("Valid email is required"),
   clientPhone: z.string().min(10, "Valid phone number is required"),
+  clientAddress: z.string().max(300, "Address must be under 300 characters").optional(),
   eventDate: z.string().optional(),
   eventType: z.enum(["Wedding", "Corporate", "Private Party", "College", "Other"]),
   message: z.string().optional()
