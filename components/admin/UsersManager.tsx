@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface Row {
   _id: string;
@@ -23,6 +24,9 @@ export default function UsersManager() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pending, setPending] = useState<
+    { kind: "staff" | "user" | "ban" | "unban"; id: string; email: string } | null
+  >(null);
 
   async function load() {
     setLoading(true);
@@ -51,7 +55,6 @@ export default function UsersManager() {
   }, [filter]);
 
   async function setBanned(userId: string, email: string, banned: boolean) {
-    if (!confirm(`${banned ? "BAN" : "UNBAN"} ${email}?${banned ? " They will not be able to log in." : ""}`)) return;
     setBusyId(userId);
     try {
       const res = await fetch("/api/admin/users", {
@@ -74,8 +77,6 @@ export default function UsersManager() {
   }
 
   async function setRole(userId: string, email: string, role: "user" | "staff") {
-    const verb = role === "staff" ? "promote to STAFF" : "demote to user";
-    if (!confirm(`${verb}: ${email}? They must log in again for it to take effect.`)) return;
     setBusyId(userId);
     try {
       const res = await fetch("/api/admin/users", {
@@ -96,6 +97,39 @@ export default function UsersManager() {
       setBusyId(null);
     }
   }
+
+  const pendingConfig = pending
+    ? {
+        staff: {
+          title: "Promote to staff?",
+          message: `Make ${pending.email} event staff? They must log in again for it to take effect.`,
+          confirmText: "Promote",
+          variant: "info" as const,
+          run: () => setRole(pending.id, pending.email, "staff"),
+        },
+        user: {
+          title: "Demote to user?",
+          message: `Remove staff access from ${pending.email}? They must log in again for it to take effect.`,
+          confirmText: "Demote",
+          variant: "warning" as const,
+          run: () => setRole(pending.id, pending.email, "user"),
+        },
+        ban: {
+          title: "Ban user?",
+          message: `Ban ${pending.email}? They will not be able to log in.`,
+          confirmText: "Ban",
+          variant: "danger" as const,
+          run: () => setBanned(pending.id, pending.email, true),
+        },
+        unban: {
+          title: "Unban user?",
+          message: `Restore login access for ${pending.email}?`,
+          confirmText: "Unban",
+          variant: "success" as const,
+          run: () => setBanned(pending.id, pending.email, false),
+        },
+      }[pending.kind]
+    : null;
 
   const tabs: { key: Filter; label: string }[] = [
     { key: "", label: `All` },
@@ -182,7 +216,7 @@ export default function UsersManager() {
                         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
                           {r.role === "staff" ? (
                             <button
-                              onClick={() => setRole(r._id, r.email, "user")}
+                              onClick={() => setPending({ kind: "user", id: r._id, email: r.email })}
                               disabled={busyId === r._id}
                               className="btn-outline"
                               style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
@@ -191,7 +225,7 @@ export default function UsersManager() {
                             </button>
                           ) : (
                             <button
-                              onClick={() => setRole(r._id, r.email, "staff")}
+                              onClick={() => setPending({ kind: "staff", id: r._id, email: r.email })}
                               disabled={busyId === r._id}
                               className="btn-primary"
                               style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
@@ -201,7 +235,7 @@ export default function UsersManager() {
                           )}
                           {r.isBanned ? (
                             <button
-                              onClick={() => setBanned(r._id, r.email, false)}
+                              onClick={() => setPending({ kind: "unban", id: r._id, email: r.email })}
                               disabled={busyId === r._id}
                               className="btn-outline"
                               style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
@@ -210,7 +244,7 @@ export default function UsersManager() {
                             </button>
                           ) : (
                             <button
-                              onClick={() => setBanned(r._id, r.email, true)}
+                              onClick={() => setPending({ kind: "ban", id: r._id, email: r.email })}
                               disabled={busyId === r._id}
                               className="btn-outline"
                               style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap", borderColor: "rgba(255,107,107,0.4)", color: "#ff6b6b" }}
@@ -228,6 +262,18 @@ export default function UsersManager() {
           </div>
         )}
       </div>
+
+      {pendingConfig && (
+        <ConfirmModal
+          isOpen={true}
+          title={pendingConfig.title}
+          message={pendingConfig.message}
+          confirmText={busyId ? "Working…" : pendingConfig.confirmText}
+          variant={pendingConfig.variant}
+          onConfirm={pendingConfig.run}
+          onCancel={() => setPending(null)}
+        />
+      )}
     </div>
   );
 }
