@@ -9,6 +9,7 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import AuthProvider from "@/components/auth/AuthProvider";
 import FavoritesProvider from "@/components/providers/FavoritesProvider";
 import { WebVitals } from "@/components/analytics/WebVitals";
+import MetaPixel from "@/components/analytics/MetaPixel";
 
 import AppChrome from "@/components/layout/AppChrome";
 import { LoadingProvider } from "@/lib/context/LoadingContext";
@@ -149,6 +150,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <WebVitals />
+        <MetaPixel />
         <LoadingProvider>
           <AppChrome />
           <Suspense fallback={null}>

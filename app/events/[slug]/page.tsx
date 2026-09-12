@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import EventHero from "@/components/events/EventHero";
 import EventTimeline from "@/components/events/EventTimeline";
 import EventRegistrationForm from "@/components/events/EventRegistrationForm";
+import TicketWidget from "@/components/ticketing/TicketWidget";
 import Link from "next/link";
 import AdminEditEventButton from "@/components/ui/AdminEditEventButton";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -154,6 +155,52 @@ export default async function EventDetailPage({
               <EventTimeline updates={event.updates || []} />
             </div>
 
+            {/* Ticketing content (only when set by admin) */}
+            {event.highlights && event.highlights.length > 0 && (
+              <div>
+                <h2 style={{ margin: "0 0 1rem", fontSize: "1.25rem", fontWeight: 800, color: "var(--text)" }}>
+                  Event Highlights
+                </h2>
+                <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.95rem", color: "var(--text2)", lineHeight: 1.8 }}>
+                  {event.highlights.map((h: string, i: number) => (
+                    <li key={i}>{h}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {event.termsConditions && (
+              <div>
+                <h2 style={{ margin: "0 0 1rem", fontSize: "1.25rem", fontWeight: 800, color: "var(--text)" }}>
+                  Terms & Conditions
+                </h2>
+                <div style={{ fontSize: "0.9rem", color: "var(--text2)", lineHeight: 1.75, whiteSpace: "pre-line" }}>
+                  {event.termsConditions}
+                </div>
+              </div>
+            )}
+            {event.refundPolicy && (
+              <div>
+                <h2 style={{ margin: "0 0 1rem", fontSize: "1.25rem", fontWeight: 800, color: "var(--text)" }}>
+                  Cancellation & Refund Policy
+                </h2>
+                <div style={{ fontSize: "0.9rem", color: "var(--text2)", lineHeight: 1.75, whiteSpace: "pre-line" }}>
+                  {event.refundPolicy}
+                </div>
+              </div>
+            )}
+            {(event.contactInfo?.phone || event.contactInfo?.email) && (
+              <div>
+                <h2 style={{ margin: "0 0 1rem", fontSize: "1.25rem", fontWeight: 800, color: "var(--text)" }}>
+                  Contact
+                </h2>
+                <div style={{ fontSize: "0.9rem", color: "var(--text2)", lineHeight: 1.75 }}>
+                  {event.contactInfo.name && <div style={{ fontWeight: 700, color: "var(--text)" }}>{event.contactInfo.name}</div>}
+                  {event.contactInfo.phone && <div>{event.contactInfo.phone}</div>}
+                  {event.contactInfo.email && <div>{event.contactInfo.email}</div>}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* RIGHT — Booking & Seating Sidebar */}
@@ -191,6 +238,14 @@ export default async function EventDetailPage({
                 </div>
               </div>
             </div>
+
+            {/* Paid ticketing (only when enabled by admin) */}
+            {event.ticketing?.enabled && (
+              <div style={{ background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(212,160,23,0.4)", borderRadius: "1rem", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+                <TicketWidget slug={event.slug} />
+              </div>
+            )}
 
             {/* Registration Form Card */}
             <div style={{ padding: "1.5rem", background: "rgba(255,255,255,0.02)",
