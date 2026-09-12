@@ -1,5 +1,8 @@
 import Event from "@/lib/models/Event";
 import EventUpdate from "@/lib/models/EventUpdate";
+// Side-effect: registers the "Artist" schema so populate("artists") works
+// in isolated server chunks (MissingSchemaError otherwise).
+import "@/lib/models/Artist";
 import { connectToDatabase } from "@/lib/db/connect";
 import { slugify } from "@/lib/utils/slugify";
 
