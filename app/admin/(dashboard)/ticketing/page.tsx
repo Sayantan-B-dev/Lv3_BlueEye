@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Tier {
   _id?: string;
@@ -59,6 +60,7 @@ export default function TicketingDashboardPage() {
   const [eventId, setEventId] = useState("");
   const [stats, setStats] = useState<Dashboard | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -97,6 +99,7 @@ export default function TicketingDashboardPage() {
         }
         if (o.success) {
           const all = o.data as Order[];
+          setAllOrders(all);
           setOrders((eid ? all.filter((x) => String(x.eventId) === String(eid)) : all).slice(0, 10));
         }
         setUpdatedAt(new Date());
@@ -247,6 +250,25 @@ export default function TicketingDashboardPage() {
       ]
     : [];
 
+  // Revenue momentum — last 14 days, scoped to selected event when set.
+  const salesData = (() => {
+    const inScope = eventId ? allOrders.filter((o) => String(o.eventId) === String(eventId)) : allOrders;
+    const byDay = new Map<string, number>();
+    for (const o of inScope) {
+      if (o.status !== "PAID") continue;
+      const day = new Date(o.createdAt).toISOString().slice(0, 10);
+      byDay.set(day, (byDay.get(day) || 0) + o.totalPaise / 100);
+    }
+    const out: { day: string; revenue: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const key = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      out.push({ day: key.slice(5), revenue: Math.round(byDay.get(key) || 0) });
+    }
+    return out;
+  })();
+
+  const checkinPct = stats && stats.sold > 0 ? Math.round((stats.checkedIn / stats.sold) * 100) : 0;
+
   return (
     <div className="fade-in">
       <div className="flex justify-between items-end mb-10" style={{ flexWrap: "wrap", gap: "1rem" }}>
@@ -306,6 +328,40 @@ export default function TicketingDashboardPage() {
                 <div className="admin-subtitle" style={{ margin: 0 }}>{c.label}</div>
               </div>
             ))}
+          </div>
+
+          <div className="admin-card" style={{ marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text)", marginBottom: "0.25rem" }}>
+              <span className="admin-live-dot" aria-hidden="true" />Revenue momentum — last 14 days
+            </h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={salesData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="tixRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#d4a017" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#d4a017" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                <XAxis dataKey="day" tick={{ fill: "var(--text3)", fontSize: 11 }} tickLine={false} axisLine={false} interval={2} />
+                <YAxis tick={{ fill: "var(--text3)", fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: "0.82rem", color: "var(--text)" }}
+                  labelStyle={{ color: "var(--text3)" }}
+                  formatter={(v: any) => [`₹${Number(v).toLocaleString("en-IN")}`, "Revenue"]}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#d4a017" strokeWidth={2} fill="url(#tixRev)" />
+              </AreaChart>
+            </ResponsiveContainer>
+            <div style={{ marginTop: "1rem" }}>
+              <div className="flex justify-between items-center" style={{ fontSize: "0.82rem", color: "var(--text2)", marginBottom: "0.4rem" }}>
+                <span>Check-in progress</span>
+                <span style={{ fontWeight: 700, color: "var(--text)" }}>{stats.checkedIn}/{stats.sold} ({checkinPct}%)</span>
+              </div>
+              <div className="admin-progress-track">
+                <div className="admin-progress-fill" style={{ width: `${checkinPct}%` }} />
+              </div>
+            </div>
           </div>
 
           <div className="admin-table-container">

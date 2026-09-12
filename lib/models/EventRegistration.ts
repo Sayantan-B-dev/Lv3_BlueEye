@@ -27,5 +27,10 @@ const eventRegistrationSchema = new mongoose.Schema({
   adminNotes: { type: String },
 }, { timestamps: true, versionKey: false });
 
+// Hot paths: per-event lists, duplicate checks, user lookups.
+eventRegistrationSchema.index({ eventId: 1, status: 1 });
+eventRegistrationSchema.index({ eventId: 1, guestEmail: 1 });
+eventRegistrationSchema.index({ eventId: 1, userId: 1 });
+
 export default mongoose.models.EventRegistration ||
   mongoose.model("EventRegistration", eventRegistrationSchema);

@@ -2,6 +2,8 @@ import { connectToDatabase } from "@/lib/db/connect";
 import TicketTier from "@/lib/models/TicketTier";
 import { ticketTierUpsertValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { invalidateCache } from "@/lib/db/redis";
+import { cacheConfig } from "@/lib/config/cache";
 import { requireTicketingAdmin } from "../../../_guard";
 
 // ADMIN: list tiers for an event.
@@ -44,8 +46,10 @@ export async function POST(
     const tier = await TicketTier.findOneAndUpdate(
       { eventId: id, code },
       { $set: { ...parsed.data, code, eventId: id } },
-      { new: true, upsert: true }
+      { returnDocument: "after", upsert: true }
     );
+    invalidateCache(`${cacheConfig.admin.ticketingKey}:${id}`).catch(() => {});
+    invalidateCache(`${cacheConfig.admin.ticketingKey}:all`).catch(() => {});
     return apiSuccess(tier, "Tier saved");
   } catch (err: any) {
     return apiError(err.message || "Failed to save tier", 500);

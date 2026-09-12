@@ -38,6 +38,13 @@ export const cacheConfig = {
     allMarqueeTtlSeconds: envInt("REVIEWS_ALL_MARQUEE_CACHE_TTL_SECONDS", 300),
     mineTtlSeconds: envInt("REVIEWS_MINE_CACHE_TTL_SECONDS", 300),
   },
+
+  admin: {
+    statsKey: redisKey("admin", "stats"),
+    statsTtlSeconds: envInt("ADMIN_STATS_CACHE_TTL_SECONDS", 60),
+    ticketingKey: redisKey("admin", "ticketing"),
+    ticketingTtlSeconds: envInt("ADMIN_TICKETING_CACHE_TTL_SECONDS", 30),
+  },
 } as const;
 
 export function pendingUserCacheKey(email: string) {

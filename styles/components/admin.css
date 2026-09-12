@@ -663,3 +663,153 @@
 .no-spinner {
   -moz-appearance: textfield;
 }
+
+/* ── ADMIN PRO REVAMP (scoped: admin shell only, public untouched) ── */
+.admin-main,
+.admin-sidebar {
+  --admin-radius: 8px;
+  --admin-flat: rgba(255, 255, 255, 0.03);
+  --admin-flat-hover: rgba(255, 255, 255, 0.06);
+  --admin-line: rgba(255, 255, 255, 0.09);
+}
+/* Sharper boxes */
+.admin-main .admin-card,
+.admin-main .admin-section,
+.admin-main .admin-table-container,
+.admin-main .admin-form-main-card,
+.admin-main .admin-form-section {
+  border-radius: var(--admin-radius);
+}
+.admin-main .admin-table td:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.admin-main .admin-table td:last-child {
+  border-radius: 0 6px 6px 0;
+}
+.admin-main .admin-action-card,
+.admin-main .admin-upload-item,
+.admin-main .admin-upload-btn,
+.admin-main .admin-tag,
+.admin-main .admin-nav-item,
+.admin-sidebar .admin-nav-item {
+  border-radius: var(--admin-radius);
+}
+.admin-main .modal-content {
+  border-radius: 14px;
+}
+.admin-main .filter-input,
+.admin-main .filter-select,
+.admin-main .admin-input-base {
+  border-radius: var(--admin-radius);
+}
+/* Flat dark + white: kill project-blue accents, keep gold brand */
+.admin-main .admin-nav-item.active,
+.admin-sidebar .admin-nav-item.active {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  border-color: var(--admin-line);
+}
+.admin-main .admin-tag,
+.admin-sidebar .admin-tag {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--admin-line);
+  color: var(--text);
+}
+.admin-main .admin-badge {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  border-radius: 6px;
+}
+.admin-main .admin-input-base:focus {
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18) !important;
+}
+.admin-main .admin-upload-btn:hover {
+  background: var(--admin-flat-hover);
+}
+.admin-main .modal-icon-wrap.info {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+/* Slick sharp animated buttons (admin scope) */
+.admin-main .btn-primary,
+.admin-main .btn-outline,
+.admin-main .btn-modal-cancel,
+.admin-main .btn-modal-confirm {
+  border-radius: var(--admin-radius);
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease, filter 0.16s ease;
+}
+.admin-main .btn-primary:hover,
+.admin-main .btn-outline:hover,
+.admin-main .btn-modal-confirm:hover {
+  transform: translateY(-2px);
+}
+.admin-main .btn-primary:active,
+.admin-main .btn-outline:active,
+.admin-main .btn-modal-cancel:active,
+.admin-main .btn-modal-confirm:active {
+  transform: translateY(0) scale(0.98);
+}
+.admin-main .btn-outline:hover {
+  border-color: #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.08);
+}
+.admin-main .admin-action-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--admin-line);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+/* Varied stat grid: hero + wide cards, 12-col fit */
+.admin-main .admin-stats-grid--varied {
+  grid-template-columns: repeat(12, 1fr);
+}
+.admin-main .admin-stats-grid--varied .admin-card {
+  grid-column: span 3;
+}
+.admin-main .admin-stats-grid--varied .admin-card--hero {
+  grid-column: span 6;
+}
+.admin-main .admin-stats-grid--varied .admin-card--wide {
+  grid-column: span 4;
+}
+@media (max-width: 1100px) {
+  .admin-main .admin-stats-grid--varied .admin-card,
+  .admin-main .admin-stats-grid--varied .admin-card--hero,
+  .admin-main .admin-stats-grid--varied .admin-card--wide {
+    grid-column: span 6;
+  }
+}
+@media (max-width: 640px) {
+  .admin-main .admin-stats-grid--varied .admin-card,
+  .admin-main .admin-stats-grid--varied .admin-card--hero,
+  .admin-main .admin-stats-grid--varied .admin-card--wide {
+    grid-column: span 12;
+  }
+}
+/* Live pulse dot for real-time panels */
+.admin-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 0.45rem;
+  animation: adminLivePulse 1.6s ease-in-out infinite;
+}
+@keyframes adminLivePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+}
+.admin-progress-track {
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.admin-progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--gold), var(--saffron));
+  transition: width 0.6s ease;
+}

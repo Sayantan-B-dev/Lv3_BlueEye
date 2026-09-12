@@ -31,4 +31,8 @@ const TicketSchema = new mongoose.Schema({
   }],
 }, { timestamps: true, versionKey: false });
 
+// Hot paths: per-event scans, order lookups, profile newest-first.
+TicketSchema.index({ eventId: 1, status: 1 });
+TicketSchema.index({ orderId: 1, createdAt: -1 });
+
 export default mongoose.models.Ticket || mongoose.model("Ticket", TicketSchema);

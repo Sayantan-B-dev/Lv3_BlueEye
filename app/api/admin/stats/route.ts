@@ -2,6 +2,8 @@ import { connectToDatabase } from "@/lib/db/connect";
 import Artist from "@/lib/models/Artist";
 import Inquiry from "@/lib/models/Inquiry";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { getCache, setCache } from "@/lib/db/redis";
+import { cacheConfig } from "@/lib/config/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 
@@ -13,6 +15,10 @@ export async function GET() {
       return apiError("Unauthorized", 401);
     }
 
+    // 7 aggregations over the whole artist catalogue — cache 60s.
+    const cached = await getCache<any>(cacheConfig.admin.statsKey);
+    if (cached) return apiSuccess(cached);
+
     await connectToDatabase();
 
     const [
@@ -21,7 +27,8 @@ export async function GET() {
       missingStats,
       categoryBreakdown,
       totalInquiries,
-      inquiryStatusStats
+      inquiryStatusStats,
+      inquirySeries
     ] = await Promise.all([
       Artist.countDocuments(),
       Artist.aggregate([
@@ -130,10 +137,24 @@ export async function GET() {
       Inquiry.countDocuments(),
       Inquiry.aggregate([
         { $group: { _id: "$status", count: { $sum: 1 } } }
+      ]),
+      Inquiry.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
       ])
     ]);
 
-    return apiSuccess({
+    const payload = {
       totalArtists,
       totalImages: mediaStats[0]?.totalImages || 0,
       totalVideos: mediaStats[0]?.totalVideos || 0,
@@ -154,8 +175,13 @@ export async function GET() {
       inquiryStatuses: inquiryStatusStats.reduce((acc: any, s: any) => {
         acc[s._id] = s.count;
         return acc;
-      }, {} as Record<string, number>)
-    });
+      }, {} as Record<string, number>),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      inquirySeries: (inquirySeries as any[]).map((d) => ({ day: d._id, count: d.count })),
+    };
+    // Fire-and-forget: never let cache failure break the response.
+    setCache(cacheConfig.admin.statsKey, payload, cacheConfig.admin.statsTtlSeconds).catch(() => {});
+    return apiSuccess(payload);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return apiError(error.message, 500);

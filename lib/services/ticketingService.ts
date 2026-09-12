@@ -7,6 +7,8 @@ import TicketOrder from "@/lib/models/TicketOrder";
 import Ticket from "@/lib/models/Ticket";
 import { nextSequence } from "@/lib/models/Counter";
 import { sendTicketConfirmation } from "@/lib/utils/email";
+import { invalidateCache } from "@/lib/db/redis";
+import { cacheConfig } from "@/lib/config/cache";
 
 let razorpay: Razorpay | null = null;
 
@@ -263,6 +265,7 @@ export async function fulfillPaidOrder(
   order.paidAt = new Date();
   order.webhookEvents.push({ paymentId: gatewayPaymentId, at: new Date() });
   await order.save();
+  bustTicketingCache(order.eventId);
 
   return { orderCode: order.orderCode, tickets: minted, alreadyProcessed: false };
 }
@@ -373,6 +376,10 @@ export async function getTicketingDashboard(eventId?: string) {
 
 export async function searchTicketOrders(q: string, limit = 50) {
   await connectToDatabase();
+  // Blank query = recent-orders fast path (no match-all regex scan).
+  if (!q.trim()) {
+    return TicketOrder.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+  }
   const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
   const ticketMatch: any = await Ticket.findOne({
     $or: [{ ticketCode: rx }, { secureToken: q }],
@@ -398,6 +405,7 @@ export async function refundTicketOrder(orderId: string) {
   if (order.status !== "PAID") throw new Error("Only PAID orders can be refunded");
   order.status = "REFUNDED";
   await order.save();
+  bustTicketingCache(order.eventId);
   await Ticket.updateMany(
     { orderId: order._id, status: { $in: ["ACTIVE", "CHECKED_IN"] } },
     { $set: { status: "REFUNDED" } }
@@ -407,6 +415,15 @@ export async function refundTicketOrder(orderId: string) {
     await TicketTier.findByIdAndUpdate(item.tierId, { $inc: { soldQty: -item.qty } });
   }
   return order;
+}
+
+/** Drop cached ticketing aggregates after any inventory/order mutation. */
+function bustTicketingCache(eventId: any) {
+  const keys = [
+    `${cacheConfig.admin.ticketingKey}:${eventId}`,
+    `${cacheConfig.admin.ticketingKey}:all`,
+  ];
+  for (const k of keys) invalidateCache(k).catch(() => {});
 }
 
 /** Display state: ACTIVE tickets for past events read as EXPIRED. */
@@ -532,6 +549,7 @@ export async function createCompOrder(
   order.status = "PAID";
   order.paidAt = new Date();
   await order.save();
+  bustTicketingCache(order.eventId);
   return { orderCode, tickets: minted };
 }
 

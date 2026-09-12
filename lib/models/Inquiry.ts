@@ -14,4 +14,8 @@ const InquirySchema = new mongoose.Schema({
   notes: String
 }, { timestamps: true });
 
+// Hot paths: profile-by-email, admin newest-first lists.
+InquirySchema.index({ clientEmail: 1 });
+InquirySchema.index({ createdAt: -1 });
+
 export default mongoose.models.Inquiry || mongoose.model("Inquiry", InquirySchema);

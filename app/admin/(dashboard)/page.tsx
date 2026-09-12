@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid
 } from "recharts";
 
 const PIE_COLORS = ["#00d2ff", "#ff4757", "#ffa502", "#20bf6b", "#45aaf2", "#a55eea", "#fd79a8", "#fdcb6e", "#00b894", "#6c5ce7", "#e17055", "#0984e3"];
@@ -96,16 +97,29 @@ export default function AdminDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/stats")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setStats(data.data);
-        }
-        setLoading(false);
-      });
+    let alive = true;
+    const load = () => {
+      fetch("/api/admin/stats")
+        .then(res => res.json())
+        .then(data => {
+          if (!alive) return;
+          if (data.success) {
+            setStats(data.data);
+            setUpdatedAt(new Date());
+          }
+          setLoading(false);
+        })
+        .catch(() => alive && setLoading(false));
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
   }, []);
 
   const s = stats;
@@ -134,6 +148,19 @@ export default function AdminDashboard() {
     { name: "Missing Both", value: s.missingBoth },
   ] : [];
 
+  // Last-14-days inquiry velocity (zero-filled).
+  const velocityData = (() => {
+    const map = new Map<string, number>();
+    for (const d of s?.inquirySeries || []) map.set(d.day, d.count);
+    const out: { day: string; count: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const dt = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const key = dt.toISOString().slice(0, 10);
+      out.push({ day: key.slice(5), count: map.get(key) || 0 });
+    }
+    return out;
+  })();
+
   if (loading) return (
     <div className="fade-in">
       <div className="admin-header">
@@ -149,11 +176,15 @@ export default function AdminDashboard() {
         <h1 className="admin-title">
           Platform <span className="text-gold">Overview</span>
         </h1>
-        <p className="admin-subtitle">Real-time statistics from your database.</p>
+        <p className="admin-subtitle">
+          <span className="admin-live-dot" aria-hidden="true" />
+          Live statistics from your database
+          {updatedAt && ` · updated ${updatedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`}
+        </p>
       </div>
 
-      <div className="admin-stats-grid">
-        <div className="admin-card">
+      <div className="admin-stats-grid admin-stats-grid--varied">
+        <div className="admin-card admin-card--hero">
           <div className="admin-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div><div className="admin-card-label">Total Artists</div><div className="admin-card-value">{s.totalArtists?.toLocaleString()}</div></div>
           <div className="admin-card-bg-icon" style={{ color: "var(--gold)" }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
@@ -193,6 +224,30 @@ export default function AdminDashboard() {
           <div><div className="admin-card-label">Categories</div><div className="admin-card-value">{s.totalCategories}</div></div>
           <div className="admin-card-bg-icon" style={{ color: "#a55eea" }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
         </div>
+      </div>
+
+      <div className="admin-card" style={{ marginBottom: "1.5rem" }}>
+        <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text)", marginBottom: "0.25rem" }}>
+          <span className="admin-live-dot" aria-hidden="true" />Inquiry velocity — last 14 days
+        </h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={velocityData} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}>
+            <defs>
+              <linearGradient id="inqVel" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#d4a017" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#d4a017" stopOpacity={0.03} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="day" tick={{ fill: "var(--text3)", fontSize: 11 }} tickLine={false} axisLine={false} interval={2} />
+            <YAxis tick={{ fill: "var(--text3)", fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: "0.82rem", color: "var(--text)" }}
+              labelStyle={{ color: "var(--text3)" }}
+            />
+            <Area type="monotone" dataKey="count" stroke="#d4a017" strokeWidth={2} fill="url(#inqVel)" />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem", marginTop: "2rem" }}>

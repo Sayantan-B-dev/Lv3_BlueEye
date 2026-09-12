@@ -93,6 +93,20 @@ export async function getArtists(params: { category?: string; city?: string; pag
   } else {
     const pipeline: PipelineStage[] = [
       { $match: filter },
+      // Card/table fields only — drops about/faq/videos/full-image blobs
+      // before sort/skip/limit (same rows, far less transfer).
+      {
+        $project: {
+          name: 1,
+          slug: 1,
+          category: 1,
+          location: 1,
+          "media.images": { $slice: ["$media.images", 1] },
+          "performance.genres": { $slice: ["$performance.genres", 2] },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
       {
         $addFields: {
           hasImage: {

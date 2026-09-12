@@ -20,6 +20,8 @@ const createField = (url = ""): LinkField => ({
 export default function MissingMediaPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [artists, setArtists] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [artistQuery, setArtistQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("images");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,18 +82,25 @@ export default function MissingMediaPage() {
     const doFetch = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/admin/artists/missing?type=${filterType}`);
+        const res = await fetch(`/api/admin/artists/missing?type=${filterType}&q=${encodeURIComponent(artistQuery)}&limit=20`);
         const data = await res.json();
-        if (!cancelled && data.success) setArtists(data.data);
+        if (!cancelled && data.success) {
+          const list = Array.isArray(data.data) ? data.data : data.data.artists || [];
+          setArtists(list);
+          setTotalCount(Array.isArray(data.data) ? list.length : data.data.total || 0);
+        }
       } catch {
         if (!cancelled) console.error("Failed to fetch artists");
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    doFetch();
-    return () => { cancelled = true; };
-  }, [filterType, refreshKey]);
+    const id = setTimeout(doFetch, artistQuery ? 350 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [filterType, refreshKey, artistQuery]);
 
   const handleArtistSelect = (id: string) => {
     const artist = artists.find((a) => a._id === id);
@@ -406,6 +415,15 @@ export default function MissingMediaPage() {
             <option value="both">Missing Both</option>
           </select>
 
+          <input
+            type="text"
+            placeholder="Type to search artists…"
+            value={artistQuery}
+            onChange={(e) => setArtistQuery(e.target.value)}
+            className="filter-input mm-select--artist"
+            style={{ maxWidth: 260 }}
+          />
+
           <select
             value={selectedArtist?._id || ""}
             onChange={(e) => handleArtistSelect(e.target.value)}
@@ -421,7 +439,7 @@ export default function MissingMediaPage() {
 
           {loading && <span className="mm-loading-text">Loading...</span>}
           <span className="mm-count-text">
-            {artists.length} artist{artists.length !== 1 ? "s" : ""}
+            {artists.length} shown · {totalCount} total
           </span>
         </div>
 

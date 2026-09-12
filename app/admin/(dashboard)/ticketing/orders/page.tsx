@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface Order {
   _id: string;
@@ -13,13 +15,56 @@ interface Order {
   createdAt: string;
 }
 
+interface EvtOpt {
+  _id: string;
+  title: string;
+  slug: string;
+  ticketing?: { enabled?: boolean };
+}
+
+interface TierOpt {
+  code: string;
+  name: string;
+  pricePaise: number;
+  totalQty: number;
+  soldQty: number;
+  status: string;
+}
+
 export default function TicketingOrdersPage() {
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.role === "admin";
   const [q, setQ] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [msg, setMsg] = useState("");
-  const [comp, setComp] = useState({ slug: "", tierCode: "", qty: "1", name: "", email: "", phone: "" });
+  const [pendingRefund, setPendingRefund] = useState<{ id: string; code: string } | null>(null);
+  const [events, setEvents] = useState<EvtOpt[]>([]);
+  const [tiers, setTiers] = useState<TierOpt[]>([]);
+  const [comp, setComp] = useState({ eventId: "", tierCode: "", qty: "1", name: "", email: "", phone: "" });
+
+  useEffect(() => {
+    fetch("/api/events?limit=50")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.events)) setEvents(d.events);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!comp.eventId || !isAdmin) {
+      setTiers([]);
+      return;
+    }
+    fetch(`/api/admin/ticketing/events/${comp.eventId}/tiers`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setTiers(d.data);
+      })
+      .catch(() => {});
+  }, [comp.eventId, isAdmin]);
 
   async function search(e?: React.FormEvent) {
     e?.preventDefault();
@@ -38,17 +83,18 @@ export default function TicketingOrdersPage() {
     }
   }
 
-  async function refund(orderId: string, orderCode: string) {
-    if (!confirm(`Mark order ${orderCode} as REFUNDED? Its tickets stop working. (Gateway refund is manual.)`)) return;
+  async function refund() {
+    if (!pendingRefund) return;
+    const { id, code } = pendingRefund;
     const res = await fetch("/api/admin/ticketing/orders", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId }),
+      body: JSON.stringify({ orderId: id }),
     });
     const d = await res.json();
     if (d.success) {
-      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: "REFUNDED" } : o)));
-      setMsg(`Order ${orderCode} refunded.`);
+      setOrders((prev) => prev.map((o) => (o._id === id ? { ...o, status: "REFUNDED" } : o)));
+      setMsg(`Order ${code} refunded.`);
     } else {
       setMsg(d.message || "Refund failed");
     }
@@ -57,12 +103,17 @@ export default function TicketingOrdersPage() {
   async function createComp(e: React.FormEvent) {
     e.preventDefault();
     setMsg("");
+    const ev = events.find((x) => x._id === comp.eventId);
+    if (!ev) {
+      setMsg("Select an event first.");
+      return;
+    }
     const res = await fetch("/api/admin/ticketing/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        slug: comp.slug.trim(),
-        tierCode: comp.tierCode.trim(),
+        slug: ev.slug,
+        tierCode: comp.tierCode,
         qty: Number(comp.qty) || 1,
         buyer: { name: comp.name, email: comp.email, phone: comp.phone },
       }),
@@ -70,7 +121,7 @@ export default function TicketingOrdersPage() {
     const d = await res.json();
     if (d.success) {
       setMsg(`Complimentary tickets created: ${d.data.orderCode}`);
-      setComp({ slug: "", tierCode: "", qty: "1", name: "", email: "", phone: "" });
+      setComp({ eventId: "", tierCode: "", qty: "1", name: "", email: "", phone: "" });
     } else {
       setMsg(d.message || "Failed to create tickets");
     }
@@ -130,8 +181,8 @@ export default function TicketingOrdersPage() {
                       <td>₹{(o.totalPaise / 100).toLocaleString("en-IN")}</td>
                       <td><span className="admin-badge">{o.status}</span></td>
                       <td className="text-right">
-                        {o.status === "PAID" && (
-                          <button onClick={() => refund(o._id, o.orderCode)} className="btn-outline" style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem" }}>
+                        {isAdmin && o.status === "PAID" && (
+                          <button onClick={() => setPendingRefund({ id: o._id, code: o.orderCode })} className="btn-outline" style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}>
                             Refund
                           </button>
                         )}
@@ -145,12 +196,38 @@ export default function TicketingOrdersPage() {
         )}
       </div>
 
+      {isAdmin && (
       <div className="admin-table-container" style={{ marginTop: "1.5rem" }}>
         <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text)", marginBottom: "0.5rem" }}>Manual complimentary ticket</h2>
         <p className="admin-subtitle">Requires a ₹0 tier. Generates real ticket ID + QR.</p>
         <form onSubmit={createComp} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "0.8rem", marginTop: "1rem" }}>
-          <input className="filter-input" required placeholder="Event slug" value={comp.slug} onChange={(e) => setComp({ ...comp, slug: e.target.value })} />
-          <input className="filter-input" required placeholder="Tier code (e.g. GEN)" value={comp.tierCode} onChange={(e) => setComp({ ...comp, tierCode: e.target.value })} />
+          <select
+            className="filter-select"
+            required
+            value={comp.eventId}
+            onChange={(e) => setComp({ ...comp, eventId: e.target.value, tierCode: "" })}
+          >
+            <option value="">Select event…</option>
+            {events.map((e) => (
+              <option key={e._id} value={e._id}>
+                {e.title}{e.ticketing?.enabled ? " ●" : ""}
+              </option>
+            ))}
+          </select>
+          <select
+            className="filter-select"
+            required
+            value={comp.tierCode}
+            onChange={(e) => setComp({ ...comp, tierCode: e.target.value })}
+            disabled={!comp.eventId}
+          >
+            <option value="">{comp.eventId ? "Select tier…" : "Pick event first"}</option>
+            {tiers.map((t) => (
+              <option key={t.code} value={t.code} disabled={t.status !== "Active"}>
+                {t.name} — ₹{(t.pricePaise / 100).toLocaleString("en-IN")} ({Math.max(0, t.totalQty - t.soldQty)} left)
+              </option>
+            ))}
+          </select>
           <input className="filter-input" type="number" min={1} max={20} placeholder="Qty" value={comp.qty} onChange={(e) => setComp({ ...comp, qty: e.target.value })} />
           <input className="filter-input" required placeholder="Guest name" value={comp.name} onChange={(e) => setComp({ ...comp, name: e.target.value })} />
           <input className="filter-input" required type="email" placeholder="Guest email" value={comp.email} onChange={(e) => setComp({ ...comp, email: e.target.value })} />
@@ -158,6 +235,19 @@ export default function TicketingOrdersPage() {
           <button type="submit" className="btn-primary" style={{ justifyContent: "center" }}>Create comp tickets</button>
         </form>
       </div>
+      )}
+
+      {pendingRefund && (
+        <ConfirmModal
+          isOpen={true}
+          title="Refund order?"
+          message={`Mark ${pendingRefund.code} as REFUNDED? Its tickets stop working immediately. The gateway refund itself is manual.`}
+          confirmText="Refund"
+          variant="danger"
+          onConfirm={refund}
+          onCancel={() => setPendingRefund(null)}
+        />
+      )}
     </div>
   );
 }

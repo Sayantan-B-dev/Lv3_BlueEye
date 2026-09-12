@@ -15,6 +15,8 @@ export async function GET(request: Request) {
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "images";
+    const q = (searchParams.get("q") || "").trim();
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const conditions: Record<string, any>[] = [];
@@ -53,12 +55,19 @@ export async function GET(request: Request) {
       });
     }
 
-    const filter = conditions.length > 0 ? { $and: conditions } : {};
-    const artists = await Artist.find(filter, { name: 1, category: 1, slug: 1, _id: 1, "media.images": 1, "media.videos": 1 })
-      .sort({ name: 1 })
-      .lean();
+    if (q) {
+      conditions.push({ name: { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } });
+    }
+    const finalFilter = conditions.length > 0 ? { $and: conditions } : {};
+    const [artists, total] = await Promise.all([
+      Artist.find(finalFilter, { name: 1, category: 1, slug: 1, _id: 1, "media.images": 1, "media.videos": 1 })
+        .sort({ name: 1 })
+        .limit(limit)
+        .lean(),
+      Artist.countDocuments(finalFilter),
+    ]);
 
-    return apiSuccess(artists);
+    return apiSuccess({ artists, total });
   } catch (error: unknown) {
     return apiError(error instanceof Error ? error.message : "Failed to fetch artists", 500);
   }

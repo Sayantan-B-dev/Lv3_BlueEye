@@ -45,4 +45,8 @@ const TicketOrderSchema = new mongoose.Schema({
   paidAt: { type: Date },
 }, { timestamps: true, versionKey: false });
 
+// Hot paths: profile/mine by buyer email, per-event newest-first, dashboard scans.
+TicketOrderSchema.index({ "buyer.email": 1 });
+TicketOrderSchema.index({ eventId: 1, createdAt: -1 });
+
 export default mongoose.models.TicketOrder || mongoose.model("TicketOrder", TicketOrderSchema);
