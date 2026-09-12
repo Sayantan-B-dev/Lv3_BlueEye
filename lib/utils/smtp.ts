@@ -35,7 +35,13 @@ function getTransporter(): Transporter {
  * - Keep subjects plain (no decorative symbols) and the From name constant.
  * - nodemailer sets Message-ID + Date automatically; Gmail signs DKIM as gmail.com.
  */
-export async function sendViaSmtp(to: string, subject: string, html: string, text?: string) {
+export async function sendViaSmtp(
+  to: string,
+  subject: string,
+  html: string,
+  text?: string,
+  attachments?: { filename: string; content: Buffer; cid: string }[]
+) {
   const tx = getTransporter();
   const from = getSmtpFrom();
   await tx.sendMail({
@@ -45,5 +51,11 @@ export async function sendViaSmtp(to: string, subject: string, html: string, tex
     subject,
     text: text ?? subject,
     html,
+    attachments: attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      cid: a.cid,
+      contentDisposition: "inline" as const,
+    })),
   });
 }

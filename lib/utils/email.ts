@@ -233,6 +233,92 @@ export async function sendResetPasswordEmail(email: string, otp: string) {
   }
 }
 
+export interface TicketMailTicket {
+  ticketCode: string;
+  tierName: string;
+  attendeeName: string;
+  secureToken: string;
+}
+
+/**
+ * Post-payment ticket confirmation. Called ONLY from the payment webhook
+ * after the order is marked PAID — never from a success URL.
+ */
+export async function sendTicketConfirmation(data: {
+  toEmail: string;
+  buyerName: string;
+  orderCode: string;
+  totalPaise: number;
+  eventTitle: string;
+  eventDate: string;
+  venue: string;
+  supportContact: string;
+  tickets: TicketMailTicket[];
+}) {
+  try {
+    const QRCode = (await import("qrcode")).default;
+    const base =
+      process.env.TICKETING_QR_BASE_URL?.trim() ||
+      process.env.NEXT_PUBLIC_BASE_URL?.trim() ||
+      "";
+    const attachments: { filename: string; content: Buffer; cid: string }[] = [];
+    const rows = await Promise.all(
+      data.tickets.map(async (t, i) => {
+        const url = `${base}/my-ticket/${t.secureToken}`;
+        const png = await QRCode.toBuffer(url, { margin: 2, width: 280 });
+        const cid = `ticket-qr-${i}@blueeye`;
+        attachments.push({ filename: `${t.ticketCode}.png`, content: png, cid });
+        return `
+        <div style="border: 1px solid rgba(212,160,23,0.25); border-radius: 12px; padding: 20px; margin-bottom: 16px; text-align: center;">
+          <div style="font-weight: 800; color: #d4a017; letter-spacing: 0.06em;">${t.tierName.toUpperCase()} TICKET</div>
+          <div style="font-weight: 700; color: #ffffff; margin-top: 4px;">${t.attendeeName}</div>
+          <div style="font-size: 0.8rem; color: #9ca3af;">Ticket ID: ${t.ticketCode}</div>
+          <img src="cid:${cid}" alt="Entry QR for ${t.ticketCode}" width="200" height="200" style="margin-top: 12px; border-radius: 8px;" />
+          <div style="margin-top: 8px;"><a href="${url}" style="color: #d4a017; font-size: 0.85rem;">Open digital ticket</a></div>
+        </div>`;
+      })
+    );
+
+    const dateStr = new Date(data.eventDate).toLocaleString("en-IN", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+    const htmlContent = getLuxuryTemplate(
+      "Booking Confirmed",
+      `
+      <p style="margin: 0 0 8px 0;">Dear <strong>${data.buyerName}</strong>,</p>
+      <p style="margin: 0 0 20px 0; color: #d1d5db;">Your payment of <strong style="color: #fff;">₹${(data.totalPaise / 100).toLocaleString("en-IN")}</strong> is confirmed. Order ID: <strong style="color: #fff;">${data.orderCode}</strong></p>
+      <p style="margin: 0 0 20px 0; color: #d1d5db;"><strong>${data.eventTitle}</strong><br/>${dateStr}<br/>${data.venue}</p>
+      ${rows.join("\n")}
+      <p style="margin: 20px 0 0 0; color: #9ca3af; font-size: 0.85rem;">Show the QR at the venue gate. Each QR admits one person and cannot be reused.</p>
+      <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 0.85rem;">Support: ${data.supportContact}</p>
+      `
+    );
+    const textBody =
+      `Blue Eye Entertainment — booking confirmed.\nOrder: ${data.orderCode}\n` +
+      `Event: ${data.eventTitle}, ${dateStr}, ${data.venue}\n` +
+      data.tickets.map((t) => `${t.tierName}: ${t.ticketCode} — ${base}/my-ticket/${t.secureToken}`).join("\n") +
+      `\nSupport: ${data.supportContact}`;
+
+    const subject = `Your tickets: ${data.eventTitle} (${data.orderCode})`;
+    if (isSmtpConfigured()) {
+      await sendViaSmtp(data.toEmail, subject, htmlContent, textBody, attachments);
+      return { success: true, via: "smtp" as const };
+    }
+    const { data: resData, error } = await resend.emails.send({
+      from: RESEND_FROM,
+      to: [getRecipientEmail(data.toEmail)],
+      subject,
+      html: htmlContent,
+    });
+    if (error) throw error;
+    return { success: true, data: resData };
+  } catch (err) {
+    console.error("[Email] Ticket confirmation failed:", err);
+    return { success: false, error: err };
+  }
+}
+
 export async function sendEventRegistrationConfirmation(data: {
   guestName: string;
   guestEmail: string;
