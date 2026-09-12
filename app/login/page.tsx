@@ -90,7 +90,7 @@ function LoginPageContent() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
 
-      setSuccess("Verification code sent to your email!");
+      setSuccess("Verification code sent! Can't find it? Check your spam or promotions folder.");
       setView("verify");
       setIsLoading(false);
     } catch (err: any) {
@@ -144,7 +144,7 @@ function LoginPageContent() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
 
-      setSuccess("OTP sent to your email!");
+      setSuccess("OTP sent! Can't find it? Check your spam or promotions folder.");
       setView("reset-password");
       setIsLoading(false);
     } catch (err: any) {
@@ -421,6 +421,9 @@ function LoginPageContent() {
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', marginTop: '0.5rem' }}>
               {loading ? 'Updating...' : 'Reset Password'}
             </button>
+            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text3)' }}>
+              No OTP yet? Check your spam or promotions folder.
+            </p>
             <p style={{ textAlign: 'center', fontSize: '0.9rem', marginTop: '1rem', color: 'var(--text2)' }}>
               Back to <button type="button" onClick={() => setView('login')} style={{ color: 'var(--gold)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign In</button>
             </p>
@@ -436,6 +439,9 @@ function LoginPageContent() {
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', marginTop: '0.5rem' }}>
               {loading ? 'Verifying...' : 'Verify Email'}
             </button>
+            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text3)' }}>
+              No code yet? Check your spam or promotions folder, then tap Resend.
+            </p>
             <p style={{ textAlign: 'center', fontSize: '0.9rem', marginTop: '1rem', color: 'var(--text2)' }}>
               Didn't receive code? <button type="button" onClick={handleRegister} style={{ color: 'var(--gold)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend</button>
             </p>

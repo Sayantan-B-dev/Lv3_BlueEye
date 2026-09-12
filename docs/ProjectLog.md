@@ -10,6 +10,9 @@ MVP is functionally complete pending final polish and deployment (Phase 5).
 - Added Gmail SMTP fallback for user OTP emails (verification + password reset): sends directly to the real user inbox, bypassing the Resend sandbox `EMAIL_TO` redirect. TODO: fill real `SMTP_USER` + `SMTP_APP_PASSWORD` in `.env.local`.
 - Added tilted `Recommended` badge on Google buttons (login + register views).
 - Added optional `clientAddress` (300 chars) to booking inquiries: model, validation, form, admin + profile display, notification email.
+- OTP spam mitigation: multipart SMTP mail, plain subjects, check-spam UI hints.
+- MongoDB M0 fix: per-process pool capped at 10 (build workers spiked Atlas to ~440/500).
+- Added `docs/plan_event.md` (ticketing plan, all 29 spec points).
 
 - Implemented Auto-Backup feature for Business Inquiries and Event Management with dedicated admin triggers and duplicate backup database tables.
 - Added dedicated /about and /book-artist pages, separating artist booking from the general /contact directory.

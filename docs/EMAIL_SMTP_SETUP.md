@@ -42,7 +42,10 @@ menu is hidden. Same generation flow after that.
 
 - Gmail free limit ~500 mails/day — fine for MVP OTP volume.
 - `from` must be `SMTP_USER` (Gmail forbids arbitrary spoofing).
-- First OTPs often land in Spam — add sender to contacts, use consistent subject.
+- New @gmail.com senders often land in Spam/Promotions at first. Mitigations in code:
+  multipart text+HTML, plain subjects, constant From. The login/verify UI also tells
+  users to check spam. Full fix = custom domain mail (Workspace/Resend verified
+  domain with SPF+DKIM) — paid path, not needed for MVP.
 - Admin mails (`sendInquiryEmail`, bulk-delete OTP) still use Resend + `EMAIL_TO`.
 - Without `SMTP_*` set, code falls back to existing Resend behavior (redirect to
   `EMAIL_TO`) so `npm run build` passes with no creds.

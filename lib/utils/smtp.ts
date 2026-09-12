@@ -29,13 +29,21 @@ function getTransporter(): Transporter {
  * Send a user-facing email DIRECTLY to the real recipient via Gmail SMTP.
  * No EMAIL_TO redirect — unlike Resend sandbox. Throws on failure so callers
  * can fall back to Resend.
+ *
+ * Deliverability notes (free @gmail.com sender):
+ * - Always send a plain-text part alongside HTML (spam filters penalize HTML-only).
+ * - Keep subjects plain (no decorative symbols) and the From name constant.
+ * - nodemailer sets Message-ID + Date automatically; Gmail signs DKIM as gmail.com.
  */
-export async function sendViaSmtp(to: string, subject: string, html: string) {
+export async function sendViaSmtp(to: string, subject: string, html: string, text?: string) {
   const tx = getTransporter();
+  const from = getSmtpFrom();
   await tx.sendMail({
-    from: getSmtpFrom(),
+    from,
+    replyTo: from,
     to,
     subject,
+    text: text ?? subject,
     html,
   });
 }

@@ -153,13 +153,17 @@ export async function sendVerificationEmail(email: string, code: string) {
       `
     );
 
-    const subject = "✦ Verify your BlueEye Account";
+    const subject = "Your BlueEye verification code";
+    const textBody =
+      `Thank you for registering on BlueEye.\n\n` +
+      `Your verification code is: ${code}\n\n` +
+      `It is valid for 10 minutes. If you did not request this, please ignore this email.`;
 
     // Free zero-domain path: Gmail SMTP delivers DIRECTLY to the real user,
     // bypassing the Resend sandbox EMAIL_TO redirect below.
     if (isSmtpConfigured()) {
       try {
-        await sendViaSmtp(email, subject, htmlContent);
+        await sendViaSmtp(email, subject, htmlContent, textBody);
         return { success: true, via: "smtp" as const };
       } catch (smtpErr) {
         console.error("SMTP verification email failed, falling back to Resend:", smtpErr);
@@ -198,12 +202,16 @@ export async function sendResetPasswordEmail(email: string, otp: string) {
       `
     );
 
-    const subject = "✦ Your Password Reset OTP";
+    const subject = "Your BlueEye password reset code";
+    const textBody =
+      `We received a request to reset your BlueEye password.\n\n` +
+      `Your reset code is: ${otp}\n\n` +
+      `It expires in 15 minutes. If you did not request this, please ignore this email.`;
 
     // Free zero-domain path: Gmail SMTP delivers DIRECTLY to the real user.
     if (isSmtpConfigured()) {
       try {
-        await sendViaSmtp(email, subject, htmlContent);
+        await sendViaSmtp(email, subject, htmlContent, textBody);
         return { success: true, via: "smtp" as const };
       } catch (smtpErr) {
         console.error("SMTP reset-password email failed, falling back to Resend:", smtpErr);
