@@ -15,7 +15,7 @@ Paid ticketing for events (built for **Rang De Bhakti**, 800 capacity). Guest ch
 - Mis-scan undo with mandatory reason note; full check-in history per ticket.
 
 ## Admin (`/admin/ticketing`)
-- Dashboard: capacity/sold/remaining, revenue, order statuses, checked-in, per-tier inventory.
+- Dashboard: event switcher, auto-refreshing capacity/sold/remaining, revenue, order statuses, checked-in, per-tier inventory with live price/qty editing, ticketing settings + page-content editor, recent orders with buyers, links to public page and Manage in Events.
 - Orders: search (name/phone/email/order/ticket), manual refund (tickets die, stock returns; gateway refund manual), comp ₹0 tickets with real QRs, CSV export.
 - Tiers + fees/GST/limits + page content (highlights/terms/refund/contact) via API; event create stays in `/admin/events`.
 

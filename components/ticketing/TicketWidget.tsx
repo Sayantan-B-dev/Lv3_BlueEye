@@ -132,7 +132,7 @@ export default function TicketWidget({ slug }: { slug: string }) {
         if (d.success && d.data.status === "PAID") {
           setPaidTickets(d.data.tickets);
           setPhase("done");
-          trackPixel("Purchase", { value: d.data.totalPaise / 100, currency: "INR", order_id: code });
+          trackPixel("Purchase", { content_ids: [slug], content_type: "event", value: d.data.totalPaise / 100, currency: "INR", order_id: code });
           return;
         }
         if (d.success && ["FAILED", "CANCELLED", "REFUNDED"].includes(d.data.status)) {
