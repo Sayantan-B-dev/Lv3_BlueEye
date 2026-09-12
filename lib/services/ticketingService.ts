@@ -229,7 +229,7 @@ export async function fulfillPaidOrder(
         $expr: { $gte: [{ $subtract: ["$totalQty", "$soldQty"] }, item.qty] },
       },
       { $inc: { soldQty: item.qty } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!tier) {
       order.status = "FAILED";
@@ -424,7 +424,7 @@ export async function refundTicketOrder(orderId: string) {
       $expr: { $gte: [{ $subtract: ["$totalQty", "$soldQty"] }, qty] },
     },
     { $inc: { soldQty: qty } },
-    { new: true }
+    { returnDocument: "after" }
   );
   if (!reserved) {
     order.status = "FAILED";
