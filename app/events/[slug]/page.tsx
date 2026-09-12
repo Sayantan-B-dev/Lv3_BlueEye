@@ -10,6 +10,7 @@ import EventHero from "@/components/events/EventHero";
 import EventTimeline from "@/components/events/EventTimeline";
 import EventRegistrationForm from "@/components/events/EventRegistrationForm";
 import TicketWidget from "@/components/ticketing/TicketWidget";
+import MyEventTickets from "@/components/ticketing/MyEventTickets";
 import Link from "next/link";
 import AdminEditEventButton from "@/components/ui/AdminEditEventButton";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -246,6 +247,7 @@ export default async function EventDetailPage({
                 <TicketWidget slug={event.slug} />
               </div>
             )}
+            <MyEventTickets slug={event.slug} />
 
             {/* Registration Form Card */}
             <div style={{ padding: "1.5rem", background: "rgba(255,255,255,0.02)",

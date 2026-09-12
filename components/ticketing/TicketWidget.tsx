@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { trackPixel } from "@/components/analytics/MetaPixel";
 
 interface Tier {
@@ -61,6 +62,19 @@ export default function TicketWidget({ slug }: { slug: string }) {
   const [buyer, setBuyer] = useState({ name: "", email: "", phone: "", dob: "", city: "" });
   const [paidTickets, setPaidTickets] = useState<{ ticketCode: string; tierName: string; attendeeName: string; secureToken: string }[]>([]);
   const [orderCode, setOrderCode] = useState("");
+  const { data: session } = useSession();
+
+  // Prefill from account so tickets link to the profile (still editable for gifting).
+  useEffect(() => {
+    const u = session?.user as { name?: string; email?: string } | undefined;
+    if (u) {
+      setBuyer((b) => ({
+        ...b,
+        name: b.name || u.name || "",
+        email: b.email || u.email || "",
+      }));
+    }
+  }, [session]);
 
   useEffect(() => {
     fetch(`/api/ticketing/events/${slug}`)

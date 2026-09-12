@@ -379,7 +379,56 @@ export async function refundTicketOrder(orderId: string) {
   return order;
 }
 
-/** Complimentary / guest ticket: Rs 0 order auto-PAID with real QR. */export async function createCompOrder(
+/** Display state: ACTIVE tickets for past events read as EXPIRED. */
+export function ticketDisplayStatus(ticketStatus: string, eventEnd: Date | null): string {
+  if (ticketStatus !== "ACTIVE") return ticketStatus;
+  if (eventEnd && Date.now() > eventEnd.getTime()) return "EXPIRED";
+  return "ACTIVE";
+}
+
+/** All tickets booked with an email, newest first, with event + order info. */
+export async function userTicketsFor(email: string, eventId?: string) {
+  await connectToDatabase();
+  const orders: any[] = await TicketOrder.find({ "buyer.email": email.toLowerCase() })
+    .sort({ createdAt: -1 })
+    .lean();
+  const orderIds = orders.map((o) => o._id);
+  if (orderIds.length === 0) return [];
+  const ticketFilter: any = { orderId: { $in: orderIds } };
+  if (eventId) ticketFilter.eventId = eventId;
+  const tickets: any[] = await Ticket.find(ticketFilter).sort({ createdAt: -1 }).lean();
+  const eventIds = [...new Set(tickets.map((t) => String(t.eventId)))];
+  const events: any[] = await Event.find({ _id: { $in: eventIds } }).lean();
+  const eventById = new Map(events.map((e: any) => [String(e._id), e]));
+  const orderById = new Map(orders.map((o: any) => [String(o._id), o]));
+  return tickets.map((t: any) => {
+    const ev: any = eventById.get(String(t.eventId));
+    const end = ev ? new Date(ev.endDate || ev.startDate) : null;
+    return {
+      ticketCode: t.ticketCode,
+      tierName: t.tierName,
+      attendeeName: t.attendeeName,
+      secureToken: t.secureToken,
+      status: t.status,
+      displayStatus: ticketDisplayStatus(t.status, end),
+      checkedInAt: t.checkedInAt || null,
+      orderCode: (orderById.get(String(t.orderId)) as any)?.orderCode || "",
+      event: ev
+        ? {
+            title: ev.title,
+            slug: ev.slug,
+            startDate: ev.startDate,
+            endDate: ev.endDate || null,
+            venue: ev.venue || null,
+            coverImage: ev.coverImage || null,
+          }
+        : null,
+    };
+  });
+}
+
+/** Complimentary / guest ticket: Rs 0 order auto-PAID with real QR. */
+export async function createCompOrder(
   slug: string,
   tierCode: string,
   qty: number,

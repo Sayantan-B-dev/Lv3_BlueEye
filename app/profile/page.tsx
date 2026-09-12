@@ -13,6 +13,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // User Profile States (for live DB data)
@@ -95,6 +96,15 @@ export default function ProfilePage() {
         .then(data => {
           if (data.success) {
             setInquiries(data.data);
+          }
+        });
+
+      // 6. Fetch user's booked tickets
+      fetch("/api/users/tickets")
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setTickets(data.data);
           }
         });
 
@@ -610,6 +620,56 @@ export default function ProfilePage() {
         onSuccess={handleAppFormSuccess}
         initialData={editingApp || undefined}
       />
+
+      <div className="section-header" style={{ marginTop: '1rem' }}>
+        <h2 className="section-title">Your <span>Tickets</span></h2>
+        <p className="section-desc">Event tickets booked with your account email ({(session?.user?.email as string) || ""}). Booked with a different email? Those tickets arrive by email instead.</p>
+      </div>
+
+      {tickets.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2.5rem 2rem', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px dashed var(--border)', marginBottom: '4rem' }}>
+          <p style={{ color: 'var(--text3)' }}>No tickets booked yet.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: '1rem', marginBottom: '4rem' }}>
+          {tickets.map((t) => {
+            const badge =
+              t.displayStatus === 'ACTIVE'
+                ? { bg: 'rgba(34,197,94,0.1)', color: '#22c55e' }
+                : t.displayStatus === 'CHECKED_IN'
+                  ? { bg: 'rgba(76,201,240,0.1)', color: '#4cc9f0' }
+                  : t.displayStatus === 'EXPIRED'
+                    ? { bg: 'rgba(255,255,255,0.06)', color: 'var(--text3)' }
+                    : { bg: 'rgba(255,107,107,0.1)', color: '#ff6b6b' };
+            return (
+              <div key={t.secureToken} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <Link href={t.event ? `/events/${t.event.slug}` : '#'} style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                    {t.event?.title || 'Event ticket'}
+                  </Link>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text3)', marginTop: '0.25rem' }}>
+                    {t.tierName} · {t.ticketCode} · {t.orderCode}
+                  </p>
+                  {t.event?.startDate && (
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.25rem' }}>
+                      {new Date(t.event.startDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                      {t.event.venue?.city ? ` · ${t.event.venue.city}` : ''}
+                    </p>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <span style={{ padding: '0.4rem 0.75rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', background: badge.bg, color: badge.color }}>
+                    {t.displayStatus.replace('_', ' ')}
+                  </span>
+                  <Link href={`/my-ticket/${t.secureToken}`} className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem', textDecoration: 'none' }}>
+                    View QR
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="section-header" style={{ marginTop: '1rem' }}>
         <h2 className="section-title">Your <span>Inquiries</span></h2>
