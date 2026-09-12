@@ -282,7 +282,7 @@ export default function TicketWidget({ slug }: { slug: string }) {
         ))}
       </select>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem", margin: "1rem 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", margin: "1rem 0" }}>
         <label className="form-label" style={{ margin: 0 }}>Quantity</label>
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
           <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="btn-outline" style={{ width: 36, height: 36, padding: 0 }}>-</button>

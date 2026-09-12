@@ -69,7 +69,7 @@ export default function TicketingDashboardPage() {
           <div className="admin-table-container">
             <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text)", marginBottom: "1rem" }}>Inventory by category</h2>
             <div className="overflow-x-auto">
-              <table className="admin-table">
+              <table className="admin-table admin-table--flow">
                 <thead>
                   <tr><th>Category</th><th>Price</th><th>Total</th><th>Sold</th><th>Remaining</th><th>Status</th></tr>
                 </thead>

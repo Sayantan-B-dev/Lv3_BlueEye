@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String }, // Not required for OAuth users
   image: { type: String },
   role: { type: String, enum: ["admin", "staff", "user"], default: "user" },
+  isBanned: { type: Boolean, default: false }, // admin-only ban; enforced at login
   isVerified: { type: Boolean, default: false },
   verificationCode: { type: String },
   verificationCodeExpires: { type: Date },

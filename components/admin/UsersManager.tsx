@@ -8,6 +8,7 @@ interface Row {
   username?: string;
   email: string;
   role: string;
+  isBanned?: boolean;
   isVerified?: boolean;
   createdAt: string;
 }
@@ -48,6 +49,29 @@ export default function UsersManager() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
+
+  async function setBanned(userId: string, email: string, banned: boolean) {
+    if (!confirm(`${banned ? "BAN" : "UNBAN"} ${email}?${banned ? " They will not be able to log in." : ""}`)) return;
+    setBusyId(userId);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, banned }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        setRows((prev) => prev.map((r) => (r._id === userId ? { ...r, isBanned: banned } : r)));
+        setMsg(d.message || "Updated");
+      } else {
+        setMsg(d.message || "Update failed");
+      }
+    } catch {
+      setMsg("Network error");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function setRole(userId: string, email: string, role: "user" | "staff") {
     const verb = role === "staff" ? "promote to STAFF" : "demote to user";
@@ -133,40 +157,68 @@ export default function UsersManager() {
           <p style={{ color: "var(--text3)" }}>No users found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="admin-table">
+            <table className="admin-table admin-table--flow">
               <thead>
                 <tr><th>User</th><th>Role</th><th>Joined</th><th className="text-right">Actions</th></tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r._id}>
+                  <tr key={r._id} style={r.isBanned ? { opacity: 0.65 } : undefined}>
                     <td>
                       <div className="font-bold">{r.name || r.username || "—"}</div>
                       <div className="text-xs text-text3">{r.email}</div>
+                      {r.isBanned && (
+                        <span className="admin-badge" style={{ background: "rgba(255,107,107,0.12)", color: "#ff6b6b", fontSize: "0.7rem", marginTop: "0.3rem", display: "inline-block" }}>
+                          BANNED
+                        </span>
+                      )}
                     </td>
                     <td><span className="admin-badge">{r.role}</span></td>
-                    <td className="text-sm text-text3">{new Date(r.createdAt).toLocaleDateString("en-IN")}</td>
+                    <td className="text-sm text-text3" style={{ whiteSpace: "nowrap" }}>{new Date(r.createdAt).toLocaleDateString("en-IN")}</td>
                     <td className="text-right">
                       {r.role === "admin" ? (
                         <span style={{ fontSize: "0.75rem", color: "var(--text3)" }}>Locked</span>
-                      ) : r.role === "staff" ? (
-                        <button
-                          onClick={() => setRole(r._id, r.email, "user")}
-                          disabled={busyId === r._id}
-                          className="btn-outline"
-                          style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem" }}
-                        >
-                          Demote to user
-                        </button>
                       ) : (
-                        <button
-                          onClick={() => setRole(r._id, r.email, "staff")}
-                          disabled={busyId === r._id}
-                          className="btn-primary"
-                          style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem" }}
-                        >
-                          Make staff
-                        </button>
+                        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
+                          {r.role === "staff" ? (
+                            <button
+                              onClick={() => setRole(r._id, r.email, "user")}
+                              disabled={busyId === r._id}
+                              className="btn-outline"
+                              style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
+                            >
+                              Demote
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setRole(r._id, r.email, "staff")}
+                              disabled={busyId === r._id}
+                              className="btn-primary"
+                              style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
+                            >
+                              Make staff
+                            </button>
+                          )}
+                          {r.isBanned ? (
+                            <button
+                              onClick={() => setBanned(r._id, r.email, false)}
+                              disabled={busyId === r._id}
+                              className="btn-outline"
+                              style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
+                            >
+                              Unban
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setBanned(r._id, r.email, true)}
+                              disabled={busyId === r._id}
+                              className="btn-outline"
+                              style={{ fontSize: "0.78rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap", borderColor: "rgba(255,107,107,0.4)", color: "#ff6b6b" }}
+                            >
+                              Ban
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>

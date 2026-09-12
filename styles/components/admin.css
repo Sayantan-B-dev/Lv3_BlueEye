@@ -245,6 +245,13 @@
   min-width: 48px;
   max-width: 48px;
 }
+/* Tables WITHOUT a leading checkbox column (users, ticketing): let it flow. */
+.admin-table--flow th:first-child,
+.admin-table--flow td:first-child {
+  width: auto;
+  min-width: 160px;
+  max-width: none;
+}
 .admin-table th {
   padding: 1rem;
   text-align: left;

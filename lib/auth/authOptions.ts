@@ -48,6 +48,10 @@ export const authOptions: NextAuthOptions = {
         
         if (!user || !user.password) return null;
 
+        if (user.isBanned) {
+          throw new Error("Account banned. Contact support.");
+        }
+
         if (!user.isVerified) {
           throw new Error("Email not verified");
         }
@@ -70,6 +74,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google") {
         await connectToDatabase();
         const existingUser = await User.findOne({ email: user.email });
+        if (existingUser?.isBanned) return false;
         if (!existingUser) {
           // Create new user for Google login
           await User.create({

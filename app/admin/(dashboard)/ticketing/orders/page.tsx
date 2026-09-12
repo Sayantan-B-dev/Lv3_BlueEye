@@ -110,7 +110,7 @@ export default function TicketingOrdersPage() {
         ) : (
           orders.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="admin-table">
+              <table className="admin-table admin-table--flow">
                 <thead>
                   <tr><th>Order</th><th>Buyer</th><th>Items</th><th>Amount</th><th>Status</th><th className="text-right">Actions</th></tr>
                 </thead>

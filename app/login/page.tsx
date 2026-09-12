@@ -62,6 +62,8 @@ function LoginPageContent() {
       if (result.error === "Email not verified") {
         setView("verify");
         setError("Please verify your email first.");
+      } else if (/banned/i.test(result.error)) {
+        setError("This account is banned. Contact support.");
       } else {
         setError("Invalid credentials.");
       }

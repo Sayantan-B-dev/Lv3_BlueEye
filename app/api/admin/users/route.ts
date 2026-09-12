@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     }
     await connectToDatabase();
     const users = await User.find(filter)
-      .select("name username email role isVerified createdAt")
+      .select("name username email role isBanned isVerified createdAt")
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   }
 }
 
-// ADMIN ONLY: promote/demote between user <-> staff.
+// ADMIN ONLY: promote/demote between user <-> staff, or ban/unban.
 // Admin accounts are untouchable here — only the DB owner can grant admin.
 export async function PATCH(request: Request) {
   try {
@@ -44,15 +44,24 @@ export async function PATCH(request: Request) {
     if (!session || (session.user as any).role !== "admin") {
       return apiError("Unauthorized", 401);
     }
-    const { userId, role } = await request.json();
-    if (!userId || !["user", "staff"].includes(role)) {
-      return apiError("Only user <-> staff transitions are allowed here", 400);
-    }
+    const { userId, role, banned } = await request.json();
+    if (!userId) return apiError("userId is required", 400);
     await connectToDatabase();
     const target: any = await User.findById(userId);
     if (!target) return apiError("User not found", 404);
     if (target.role === "admin") {
       return apiError("Admin accounts cannot be changed from the panel", 403);
+    }
+    if (typeof banned === "boolean") {
+      target.isBanned = banned;
+      await target.save();
+      return apiSuccess(
+        { _id: target._id, email: target.email, isBanned: target.isBanned },
+        banned ? "User banned (takes effect on next login)" : "User unbanned"
+      );
+    }
+    if (!["user", "staff"].includes(role)) {
+      return apiError("Only user <-> staff transitions are allowed here", 400);
     }
     if (target.role === role) return apiSuccess(target, "No change needed");
     target.role = role;
@@ -62,6 +71,6 @@ export async function PATCH(request: Request) {
       role === "staff" ? "Promoted to staff" : "Demoted to user"
     );
   } catch (error: any) {
-    return apiError(error.message || "Failed to update role", 500);
+    return apiError(error.message || "Failed to update user", 500);
   }
 }
