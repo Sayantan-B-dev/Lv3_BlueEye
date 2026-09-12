@@ -7,6 +7,20 @@ const venueSchema = new mongoose.Schema({
   address: { type: String, trim: true },
 }, { _id: false });
 
+const ticketingSchema = new mongoose.Schema({
+  enabled: { type: Boolean, default: false },
+  feePct: { type: Number, default: 0, min: 0 }, // platform fee %
+  feeFlatPaise: { type: Number, default: 0, min: 0 }, // flat fee per order (paise)
+  gstPct: { type: Number, default: 0, min: 0 }, // GST %
+  maxPerOrder: { type: Number, default: 6, min: 1 },
+}, { _id: false });
+
+const contactInfoSchema = new mongoose.Schema({
+  name: { type: String, trim: true },
+  phone: { type: String, trim: true },
+  email: { type: String, trim: true },
+}, { _id: false });
+
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   slug: { type: String, required: true, unique: true, trim: true, index: true },
@@ -32,6 +46,12 @@ const eventSchema = new mongoose.Schema({
   capacity: { type: Number, default: 0 }, // 0 = unlimited
   registrationOpen: { type: Boolean, default: true },
   tags: [String],
+  // Ticketing (additive — existing events/RSVP flows unaffected)
+  ticketing: { type: ticketingSchema, default: undefined },
+  highlights: [String],
+  termsConditions: { type: String },
+  refundPolicy: { type: String },
+  contactInfo: { type: contactInfoSchema, default: undefined },
 }, { timestamps: true, versionKey: false });
 
 eventSchema.index({ title: "text", description: "text", category: "text" });

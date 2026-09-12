@@ -1,5 +1,7 @@
 # BlueEye Event Ticketing — Implementation Plan
 
+> Progress: Phase 1 DB ✅ (branch `feat/event-ticketing`, commit 1) · Phase 2+ pending.
+
 Event: **Rang De Bhakti** · Target capacity: **800 tickets** · Gateway: **Razorpay**
 Decisions (2026-09-12): guest checkout · one buyer + auto ticket IDs · fees configurable (defaults 0%).
 

@@ -73,3 +73,38 @@ export const inquirySchemaValidation = z.object({
   eventType: z.enum(["Wedding", "Corporate", "Private Party", "College", "Other"]),
   message: z.string().optional()
 });
+
+// ---- Event ticketing ----
+
+export const ticketBuyerValidation = z.object({
+  name: z.string().min(1, "Full name is required").max(120),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().min(10, "Valid mobile number is required").max(20),
+  dob: z.string().optional(),
+  city: z.string().max(120).optional(),
+});
+
+export const ticketQuoteValidation = z.object({
+  tierCode: z.string().min(1, "Ticket category is required"),
+  qty: z.number().int().min(1).max(20),
+});
+
+export const ticketOrderCreateValidation = ticketQuoteValidation.extend({
+  buyer: ticketBuyerValidation,
+});
+
+export const ticketTierUpsertValidation = z.object({
+  code: z.string().min(1).max(12),
+  name: z.string().min(1).max(60),
+  pricePaise: z.number().int().min(0),
+  totalQty: z.number().int().min(0),
+  status: z.enum(["Active", "SoldOut", "Disabled"]).optional(),
+});
+
+export const ticketingConfigValidation = z.object({
+  enabled: z.boolean(),
+  feePct: z.number().min(0).max(100).optional(),
+  feeFlatPaise: z.number().int().min(0).optional(),
+  gstPct: z.number().min(0).max(100).optional(),
+  maxPerOrder: z.number().int().min(1).max(20).optional(),
+}).partial({ enabled: true });
