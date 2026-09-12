@@ -11,6 +11,8 @@ Paid ticketing for events (built for **Rang De Bhakti**, 800 capacity). Guest ch
 ## Entry
 - QR = `…/my-ticket/<secure-token>` only (no IDs inside).
 - `/admin/ticketing/checkin`: camera scanner + manual entry; ENTRY APPROVED vs ALREADY USED (+ first check-in time); dead for refunded/cancelled.
+- Staff: normal users promoted by admin in `/admin/users` (user↔staff only, admins locked, re-login to take effect). Staff shell shows Ticketing only.
+- Mis-scan undo with mandatory reason note; full check-in history per ticket.
 
 ## Admin (`/admin/ticketing`)
 - Dashboard: capacity/sold/remaining, revenue, order statuses, checked-in, per-tier inventory.

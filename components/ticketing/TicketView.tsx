@@ -24,7 +24,8 @@ interface TicketData {
 
 export default function TicketView({ token }: { token: string }) {
   const { data: session } = useSession();
-  const isAdmin = (session?.user as any)?.role === "admin";
+  const role = (session?.user as any)?.role;
+  const canCheckin = role === "admin" || role === "staff";
   const [data, setData] = useState<TicketData | null>(null);
   const [qr, setQr] = useState("");
   const [error, setError] = useState("");
@@ -116,7 +117,7 @@ export default function TicketView({ token }: { token: string }) {
               Support: {ev.contactInfo.phone}{ev.contactInfo.email ? ` · ${ev.contactInfo.email}` : ""}
             </div>
           )}
-          {isAdmin && data.status === "ACTIVE" && (
+          {canCheckin && data.status === "ACTIVE" && (
             <button onClick={handleCheckin} disabled={checkingIn} className="btn-primary w-full" style={{ marginTop: "1.25rem", justifyContent: "center" }}>
               {checkingIn ? "Checking in…" : "Check In (staff)"}
             </button>

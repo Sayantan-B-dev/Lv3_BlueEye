@@ -22,6 +22,13 @@ const TicketSchema = new mongoose.Schema({
   },
   checkedInAt: { type: Date },
   checkinStaff: { type: String },
+  // Audit trail for gate ops (check-ins + supervisor undos).
+  checkinHistory: [{
+    action: { type: String, enum: ["checkin", "undo"], required: true },
+    at: { type: Date, default: Date.now },
+    staff: { type: String },
+    note: { type: String },
+  }],
 }, { timestamps: true, versionKey: false });
 
 export default mongoose.models.Ticket || mongoose.model("Ticket", TicketSchema);

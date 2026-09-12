@@ -21,6 +21,9 @@ export default function TicketCheckinPage() {
   const [scanning, setScanning] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [undoNote, setUndoNote] = useState("");
+  const [undoing, setUndoing] = useState(false);
+  const [lastToken, setLastToken] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const loopRef = useRef<number>(0);
@@ -29,6 +32,7 @@ export default function TicketCheckinPage() {
     const token = extractToken(raw);
     if (!token) return;
     setScanning(true);
+    setLastToken(token);
     try {
       const res = await fetch("/api/tickets/checkin", {
         method: "POST",
@@ -50,6 +54,33 @@ export default function TicketCheckinPage() {
       setResult({ ok: false, message: "Network error, try again" });
     } finally {
       setScanning(false);
+    }
+  }
+
+  async function undoLast() {
+    if (!lastToken) return;
+    if (!undoNote.trim()) {
+      setResult({ ok: false, message: "Write a reason note to revert a check-in" });
+      return;
+    }
+    setUndoing(true);
+    try {
+      const res = await fetch("/api/tickets/checkin/undo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: lastToken, note: undoNote }),
+      });
+      const d = await res.json();
+      setResult(
+        d.success
+          ? { ok: true, message: d.message, ticket: d.data }
+          : { ok: false, message: d.message || "Undo failed" }
+      );
+      if (d.success) setUndoNote("");
+    } catch {
+      setResult({ ok: false, message: "Network error" });
+    } finally {
+      setUndoing(false);
     }
   }
 
@@ -161,6 +192,26 @@ export default function TicketCheckinPage() {
             {result.firstCheckedInAt && (
               <div style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "var(--text3)" }}>
                 First checked in: {new Date(result.firstCheckedInAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            )}
+            {result.ok && result.ticket && (
+              <div style={{ marginTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "1rem" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--text3)", marginBottom: "0.5rem" }}>
+                  Mis-scan? Revert this check-in with a reason (logged).
+                </div>
+                <div className="flex gap-4" style={{ justifyContent: "center", flexWrap: "wrap" }}>
+                  <input
+                    type="text"
+                    className="filter-input"
+                    style={{ maxWidth: 280 }}
+                    placeholder="Reason, e.g. scanned wrong person"
+                    value={undoNote}
+                    onChange={(e) => setUndoNote(e.target.value)}
+                  />
+                  <button onClick={undoLast} disabled={undoing} className="btn-outline">
+                    {undoing ? "Reverting…" : "Undo check-in"}
+                  </button>
+                </div>
               </div>
             )}
           </div>

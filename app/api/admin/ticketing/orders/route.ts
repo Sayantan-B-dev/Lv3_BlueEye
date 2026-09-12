@@ -1,11 +1,11 @@
 import { searchTicketOrders, refundTicketOrder, createCompOrder } from "@/lib/services/ticketingService";
 import { ticketBuyerValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
-import { requireTicketingAdmin } from "../_guard";
+import { requireTicketingAdmin, requireTicketingStaff } from "../_guard";
 
-// ADMIN: search orders (name/phone/email/order/ticket/payment id).
+// ADMIN + STAFF: search orders (name/phone/email/order/ticket/payment id).
 export async function GET(request: Request) {
-  const { error } = await requireTicketingAdmin();
+  const { error } = await requireTicketingStaff();
   if (error) return error;
   try {
     const { searchParams } = new URL(request.url);

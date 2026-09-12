@@ -1,10 +1,10 @@
 import { getTicketingDashboard } from "@/lib/services/ticketingService";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
-import { requireTicketingAdmin } from "../_guard";
+import { requireTicketingStaff } from "../_guard";
 
-// ADMIN: ticketing dashboard stats (optionally per event).
+// ADMIN + STAFF: ticketing dashboard stats (optionally per event).
 export async function GET(request: Request) {
-  const { error } = await requireTicketingAdmin();
+  const { error } = await requireTicketingStaff();
   if (error) return error;
   try {
     const { searchParams } = new URL(request.url);

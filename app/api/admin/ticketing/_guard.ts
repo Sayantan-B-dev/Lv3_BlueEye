@@ -10,3 +10,16 @@ export async function requireTicketingAdmin() {
   }
   return { error: null as Response | null, session };
 }
+
+/**
+ * Gate-crew guard: admin + staff. Use for read/checkin endpoints.
+ * Money/config endpoints (refund, comp, tiers, config) stay admin-only.
+ */
+export async function requireTicketingStaff() {
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role;
+  if (!session || (role !== "admin" && role !== "staff")) {
+    return { error: apiError("Unauthorized", 401) as Response, session: null };
+  }
+  return { error: null as Response | null, session };
+}

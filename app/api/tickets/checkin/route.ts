@@ -4,11 +4,12 @@ import { checkinTicket } from "@/lib/services/ticketingService";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { rateLimit, clientIp } from "@/lib/utils/rateLimit";
 
-// ADMIN ONLY: scan/verify a ticket QR token and mark CHECKED_IN.
+// ADMIN + STAFF: scan/verify a ticket QR token and mark CHECKED_IN.
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const role = (session?.user as any)?.role;
+    if (!session || (role !== "admin" && role !== "staff")) {
       return apiError("Unauthorized", 401);
     }
     if (!rateLimit(`checkin:${clientIp(request)}`, 120)) {

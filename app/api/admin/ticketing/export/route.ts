@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import TicketOrder from "@/lib/models/TicketOrder";
 import Ticket from "@/lib/models/Ticket";
-import { requireTicketingAdmin } from "../_guard";
+import { requireTicketingStaff } from "../_guard";
 
 function csvCell(v: any): string {
   const s = v === null || v === undefined ? "" : String(v);
   return `"${s.replace(/"/g, '""')}"`;
 }
 
-// ADMIN: export orders+tickets as CSV.
+// ADMIN + STAFF: export orders+tickets as CSV.
 export async function GET(request: Request) {
-  const { error } = await requireTicketingAdmin();
+  const { error } = await requireTicketingStaff();
   if (error) return error;
   try {
     const { searchParams } = new URL(request.url);

@@ -304,6 +304,36 @@ export async function checkinTicket(
   ticket.status = "CHECKED_IN";
   ticket.checkedInAt = new Date();
   ticket.checkinStaff = staff || "staff";
+  ticket.checkinHistory.push({ action: "checkin", at: new Date(), staff: staff || "staff" });
+  await ticket.save();
+  return { ok: true, ticket };
+}
+
+export interface UndoResult {
+  ok: boolean;
+  reason?: "NOT_FOUND" | "NOT_CHECKED_IN" | "NOTE_REQUIRED";
+  ticket?: any;
+}
+
+/** Supervisor undo: revert a mis-scan. Requires a note; everything is logged. */
+export async function undoCheckin(
+  secureToken: string,
+  staff: string,
+  note: string
+): Promise<UndoResult> {
+  if (!note || !note.trim()) return { ok: false, reason: "NOTE_REQUIRED" };
+  await connectToDatabase();
+  const ticket: any = await Ticket.findOne({ secureToken: String(secureToken || "").trim() });
+  if (!ticket) return { ok: false, reason: "NOT_FOUND" };
+  if (ticket.status !== "CHECKED_IN") return { ok: false, reason: "NOT_CHECKED_IN", ticket };
+  ticket.status = "ACTIVE";
+  ticket.checkedInAt = undefined;
+  ticket.checkinHistory.push({
+    action: "undo",
+    at: new Date(),
+    staff: staff || "staff",
+    note: note.trim().slice(0, 300),
+  });
   await ticket.save();
   return { ok: true, ticket };
 }
