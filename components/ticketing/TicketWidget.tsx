@@ -163,7 +163,21 @@ export default function TicketWidget({ slug }: { slug: string }) {
         order_id: d.data.gatewayOrderId,
         prefill: { name: buyer.name, email: buyer.email, contact: buyer.phone },
         theme: { color: "#d4a017" },
-        handler: () => {
+        handler: async (resp: any) => {
+          // No webhook: confirm server-side (HMAC + captured check), then poll.
+          try {
+            await fetch("/api/ticketing/orders/confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                gatewayOrderId: d.data.gatewayOrderId,
+                gatewayPaymentId: resp.razorpay_payment_id,
+                signature: resp.razorpay_signature,
+              }),
+            });
+          } catch {
+            /* poll below will surface the real state */
+          }
           setPhase("processing");
           pollOrder(d.data.orderCode, buyer.email);
         },

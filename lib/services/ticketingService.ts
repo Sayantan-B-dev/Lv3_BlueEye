@@ -6,6 +6,7 @@ import TicketTier from "@/lib/models/TicketTier";
 import TicketOrder from "@/lib/models/TicketOrder";
 import Ticket from "@/lib/models/Ticket";
 import { nextSequence } from "@/lib/models/Counter";
+import { sendTicketConfirmation } from "@/lib/utils/email";
 
 let razorpay: Razorpay | null = null;
 
@@ -378,8 +379,7 @@ export async function refundTicketOrder(orderId: string) {
   return order;
 }
 
-/** Complimentary / guest ticket: Rs 0 order auto-PAID with real QR. */
-export async function createCompOrder(
+/** Complimentary / guest ticket: Rs 0 order auto-PAID with real QR. */export async function createCompOrder(
   slug: string,
   tierCode: string,
   qty: number,
@@ -454,4 +454,83 @@ export async function createCompOrder(
   order.paidAt = new Date();
   await order.save();
   return { orderCode, tickets: minted };
+}
+
+/**
+ * Email the buyer their tickets + QR codes. Call ONLY after the order is PAID.
+ */
+export async function sendOrderConfirmationEmail(gatewayOrderId: string) {
+  await connectToDatabase();
+  const order: any = await TicketOrder.findOne({ gatewayOrderId }).lean();
+  if (!order || order.status !== "PAID") return;
+  const event: any = await Event.findById(order.eventId).lean();
+  const tickets: any[] = await Ticket.find({ orderId: order._id }).lean();
+  const venue = [event?.venue?.name, event?.venue?.city, event?.venue?.state]
+    .filter(Boolean)
+    .join(", ");
+  const support =
+    [event?.contactInfo?.phone, event?.contactInfo?.email].filter(Boolean).join(" · ") ||
+    "Blue Eye Entertainment";
+  await sendTicketConfirmation({
+    toEmail: order.buyer.email,
+    buyerName: order.buyer.name,
+    orderCode: order.orderCode,
+    totalPaise: order.totalPaise,
+    eventTitle: event?.title || "Blue Eye Event",
+    eventDate: event?.startDate || new Date().toISOString(),
+    venue: venue || "See event page for venue",
+    supportContact: support,
+    tickets: tickets.map((t: any) => ({
+      ticketCode: t.ticketCode,
+      tierName: t.tierName,
+      attendeeName: t.attendeeName,
+      secureToken: t.secureToken,
+    })),
+  });
+}
+
+/**
+ * Webhook-less confirmation: verify the checkout signature server-side AND
+ * confirm the payment is captured via the Razorpay API, then fulfill.
+ * Same trust as a webhook (key_secret never leaves the server).
+ */
+export async function confirmRazorpayPayment(
+  gatewayOrderId: string,
+  gatewayPaymentId: string,
+  signature: string
+) {
+  await connectToDatabase();
+  const order: any = await TicketOrder.findOne({ gatewayOrderId });
+  if (!order) throw new Error("Order not found");
+  if (order.status === "PAID") {
+    const existing = await Ticket.find({ orderId: order._id }).lean();
+    return {
+      orderCode: order.orderCode,
+      alreadyProcessed: true,
+      tickets: existing.map((t: any) => ({
+        ticketCode: t.ticketCode,
+        secureToken: t.secureToken,
+        attendeeName: t.attendeeName,
+      })),
+    };
+  }
+  if (!verifyRazorpaySignature(gatewayOrderId, gatewayPaymentId, signature)) {
+    throw new Error("Payment verification failed");
+  }
+  if (!isRazorpayConfigured()) throw new Error("Online payments are not configured yet");
+  const payment: any = await getRazorpay().payments.fetch(gatewayPaymentId);
+  if (payment.order_id !== gatewayOrderId) throw new Error("Payment does not match this order");
+  if (payment.status !== "captured") {
+    order.status = "FAILED";
+    await order.save();
+    throw new Error(`Payment is ${payment.status}, not captured`);
+  }
+  if (Math.round(Number(payment.amount)) !== order.totalPaise) {
+    throw new Error("Paid amount does not match order total");
+  }
+  const result = await fulfillPaidOrder(gatewayOrderId, gatewayPaymentId);
+  sendOrderConfirmationEmail(gatewayOrderId).catch((e) =>
+    console.error("[ticketing] confirmation email fail:", e.message)
+  );
+  return { ...result, alreadyProcessed: false };
 }

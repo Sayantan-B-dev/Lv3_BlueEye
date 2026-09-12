@@ -21,7 +21,7 @@ Paid ticketing for events (built for **Rang De Bhakti**, 800 capacity). Guest ch
 Server-only pricing · webhook-before-tickets (success URL proves nothing) · idempotent webhook · atomic `$expr` inventory guard · backend max 6/order · rate-limited verify · admin-only check-in · email only after PAID.
 
 ## To go live
-1. `RAZORPAY_KEY_ID/SECRET` + `RAZORPAY_WEBHOOK_SECRET` in env; webhook URL = `…/api/ticketing/webhook/razorpay`.
+1. `RAZORPAY_KEY_ID/SECRET` in env (no webhook URL needed — confirm endpoint verifies HMAC + captured status server-side).
 2. Create event in admin, run `scripts/seed-rang-de-bhakti.mjs` (or tier/config APIs).
 3. ₹1 test purchase → check email, QR scan, duplicate scan, refund.
 4. Phase 2 (not built): WhatsApp, Meta CAPI, auto-refunds, coupons.

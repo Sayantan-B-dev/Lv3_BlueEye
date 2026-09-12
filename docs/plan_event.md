@@ -1,6 +1,14 @@
 # BlueEye Event Ticketing — Implementation Plan
 
-> Progress: Phase 1 DB ✅ · Phase 2 service ✅ · Phase 3 public APIs ✅ · Phase 4 admin APIs ✅ · Phase 5 frontend ✅ · Phase 6 admin UI ✅ · Phase 7 email+seed ✅ — COMPLETE (branch `feat/event-ticketing`, unmerged).
+> Progress: Phase 1 DB ✅ · Phase 2 service ✅ · Phase 3 public APIs ✅ · Phase 4 admin APIs ✅ · Phase 5 frontend ✅ · Phase 6 admin UI ✅ · Phase 7 email+seed ✅ · Webhook-less confirm ✅ — COMPLETE (branch `feat/event-ticketing`, unmerged).
+
+## Webhook-less mode (2026-09-12)
+Razorpay webhook needs no dashboard setup: after checkout, the widget POSTs
+`POST /api/ticketing/orders/confirm` (HMAC verified server-side + payment
+`captured` check via Razorpay API) before tickets are minted. The webhook route
+stays dormant for later hardening. Edge case: buyer closes the tab before
+confirm → order stays PENDING → reconcile via Razorpay dashboard + manual
+refund path. `RAZORPAY_WEBHOOK_SECRET` not required.
 
 Event: **Rang De Bhakti** · Target capacity: **800 tickets** · Gateway: **Razorpay**
 Decisions (2026-09-12): guest checkout · one buyer + auto ticket IDs · fees configurable (defaults 0%).
