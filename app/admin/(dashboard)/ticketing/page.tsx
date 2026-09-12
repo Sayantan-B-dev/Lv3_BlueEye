@@ -92,6 +92,8 @@ export default function TicketingDashboardPage() {
             };
           }
           setTierDrafts(drafts);
+        } else if (!silent) {
+          setMsg(s.message || "Failed to load stats");
         }
         if (o.success) {
           const all = o.data as Order[];
@@ -111,18 +113,22 @@ export default function TicketingDashboardPage() {
     fetch("/api/events?limit=50")
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) {
-          const list = d.data.events as Evt[];
+        const list = (d.events || []) as Evt[];
+        if (list.length > 0) {
           setEvents(list);
           const ticked = list.find((e) => e.ticketing?.enabled);
-          const first = (ticked || list[0])?._id || "";
+          const first = (ticked || list[0])._id || "";
           setEventId(first);
           load(first);
         } else {
+          setMsg(d.error || "No events found");
           setLoading(false);
         }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setMsg("Failed to load events");
+        setLoading(false);
+      });
   }, [load]);
 
   useEffect(() => {
@@ -220,7 +226,7 @@ export default function TicketingDashboardPage() {
       setMsg(j.success ? "Ticketing settings saved." : j.message || "Save failed");
       if (j.success) {
         const er = await fetch("/api/events?limit=50").then((r) => r.json());
-        if (er.success) setEvents(er.data.events);
+        if (Array.isArray(er.events)) setEvents(er.events);
         load(eventId, true);
       }
     } catch {
