@@ -33,7 +33,7 @@ interface Evt {
   slug: string;
   status: string;
   startDate: string;
-  ticketing?: { enabled?: boolean; feePct?: number; feeFlatPaise?: number; gstPct?: number; maxPerOrder?: number };
+  ticketing?: { enabled?: boolean; feePct?: number; feeFlatPaise?: number; gstPct?: number; maxPerOrder?: number; locked?: boolean; lockMessage?: string };
   highlights?: string[];
   termsConditions?: string;
   refundPolicy?: string;
@@ -69,7 +69,7 @@ export default function TicketingDashboardPage() {
   const [tierDrafts, setTierDrafts] = useState<Record<string, { price: string; qty: string; status: string }>>({});
   const [savingTier, setSavingTier] = useState<string | null>(null);
   // Config editor (admin)
-  const [cfg, setCfg] = useState({ enabled: false, feePct: "0", feeFlat: "0", gstPct: "0", maxPerOrder: "6" });
+  const [cfg, setCfg] = useState({ enabled: false, feePct: "0", feeFlat: "0", gstPct: "0", maxPerOrder: "6", locked: false, lockMessage: "" });
   const [page, setPage] = useState({ highlights: "", terms: "", refund: "", cname: "", cphone: "", cemail: "" });
   const [savingCfg, setSavingCfg] = useState(false);
 
@@ -144,6 +144,8 @@ export default function TicketingDashboardPage() {
         feeFlat: String((ev.ticketing.feeFlatPaise ?? 0) / 100),
         gstPct: String(ev.ticketing.gstPct ?? 0),
         maxPerOrder: String(ev.ticketing.maxPerOrder ?? 6),
+        locked: !!ev.ticketing.locked,
+        lockMessage: ev.ticketing.lockMessage || "",
       });
     }
     if (ev) {
@@ -218,6 +220,8 @@ export default function TicketingDashboardPage() {
             feeFlatPaise: Math.round(Number(cfg.feeFlat) * 100) || 0,
             gstPct: Number(cfg.gstPct) || 0,
             maxPerOrder: Number(cfg.maxPerOrder) || 6,
+            locked: cfg.locked,
+            lockMessage: cfg.lockMessage,
           },
           highlights: page.highlights.split("\n").map((s) => s.trim()).filter(Boolean),
           termsConditions: page.terms,
@@ -439,11 +443,24 @@ export default function TicketingDashboardPage() {
                 <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>
                   <input type="checkbox" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} /> Ticketing enabled
                 </label>
+                <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>
+                  <input type="checkbox" checked={cfg.locked} onChange={(e) => setCfg({ ...cfg, locked: e.target.checked })} /> Freeze this event page
+                </label>
                 <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>Fee %<input type="number" min={0} className="filter-input" value={cfg.feePct} onChange={(e) => setCfg({ ...cfg, feePct: e.target.value })} /></label>
                 <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>Flat fee ₹<input type="number" min={0} className="filter-input" value={cfg.feeFlat} onChange={(e) => setCfg({ ...cfg, feeFlat: e.target.value })} /></label>
                 <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>GST %<input type="number" min={0} className="filter-input" value={cfg.gstPct} onChange={(e) => setCfg({ ...cfg, gstPct: e.target.value })} /></label>
                 <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>Max / order<input type="number" min={1} className="filter-input" value={cfg.maxPerOrder} onChange={(e) => setCfg({ ...cfg, maxPerOrder: e.target.value })} /></label>
               </div>
+              <label style={{ fontSize: "0.8rem", color: "var(--text2)", display: "block", marginBottom: "0.8rem" }}>
+                Freeze message (this event)
+                <input
+                  className="filter-input"
+                  style={{ marginTop: "0.3rem" }}
+                  placeholder="Defaults to a generic work-ongoing note"
+                  value={cfg.lockMessage}
+                  onChange={(e) => setCfg({ ...cfg, lockMessage: e.target.value })}
+                />
+              </label>
               <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>Highlights (one per line)<textarea rows={3} className="filter-input" value={page.highlights} onChange={(e) => setPage({ ...page, highlights: e.target.value })} style={{ marginTop: "0.3rem" }} /></label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem", marginTop: "0.8rem" }}>
                 <label style={{ fontSize: "0.8rem", color: "var(--text2)" }}>Terms & conditions<textarea rows={3} className="filter-input" value={page.terms} onChange={(e) => setPage({ ...page, terms: e.target.value })} style={{ marginTop: "0.3rem" }} /></label>
