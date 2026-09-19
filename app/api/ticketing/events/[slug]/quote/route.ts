@@ -1,4 +1,4 @@
-import { quoteTickets } from "@/lib/services/ticketingService";
+import { quoteTickets, EventLockedError } from "@/lib/services/ticketingService";
 import { ticketQuoteValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 
@@ -20,6 +20,7 @@ export async function POST(
     const quote = await quoteTickets(slug, parsed.data.tierCode, parsed.data.qty);
     return apiSuccess(quote);
   } catch (error: any) {
+    if (error instanceof EventLockedError) return apiError(error.message, 503);
     const status = /left|unavailable|not enabled|per order/i.test(error.message || "") ? 400 : 500;
     return apiError(error.message || "Failed to price tickets", status);
   }

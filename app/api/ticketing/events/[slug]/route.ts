@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getTicketedEvent } from "@/lib/services/ticketingService";
+import { getEventLockState } from "@/lib/services/eventLockService";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 
 // PUBLIC: ticketing info for an event (tiers + pricing config).
@@ -9,6 +10,8 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+    const lock = await getEventLockState(slug);
+    if (lock.locked) return apiError(lock.message, 503);
     const data = await getTicketedEvent(slug);
     if (!data) return apiError("Ticketing is not available for this event", 404);
     const { event, tiers, config } = data as any;

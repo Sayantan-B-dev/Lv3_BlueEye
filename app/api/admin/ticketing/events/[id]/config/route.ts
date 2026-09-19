@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import Event from "@/lib/models/Event";
 import { ticketingConfigValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { invalidateEventLockCache, revalidateEventPages } from "@/lib/services/eventLockService";
 import { requireTicketingAdmin } from "../../../_guard";
 
 // ADMIN: update ticketing config + event page content for an event.
@@ -23,6 +24,7 @@ export async function PATCH(
       for (const [k, v] of Object.entries(parsed.data)) {
         if (v !== undefined) set[`ticketing.${k}`] = v;
       }
+      if (parsed.data.locked === true) set["ticketing.lockedAt"] = new Date();
     }
     if (Array.isArray(body.highlights)) set.highlights = body.highlights.slice(0, 20);
     if (typeof body.termsConditions === "string") set.termsConditions = body.termsConditions.slice(0, 8000);
@@ -36,8 +38,15 @@ export async function PATCH(
     }
     if (Object.keys(set).length === 0) return apiError("Nothing to update", 400);
     await connectToDatabase();
-    const event = await Event.findByIdAndUpdate(id, { $set: set }, { new: true }).lean();
+    const event = (await Event.findByIdAndUpdate(id, { $set: set }, { new: true }).lean()) as
+      | { slug?: string }
+      | null;
     if (!event) return apiError("Event not found", 404);
+
+    // Public event pages are ISR — mark them stale so a freeze shows up at once.
+    await invalidateEventLockCache();
+    revalidateEventPages();
+
     return apiSuccess(event, "Ticketing config saved");
   } catch (err: any) {
     return apiError(err.message || "Failed to save config", 500);

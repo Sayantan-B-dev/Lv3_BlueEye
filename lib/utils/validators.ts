@@ -107,4 +107,13 @@ export const ticketingConfigValidation = z.object({
   feeFlatPaise: z.number().int().min(0).optional(),
   gstPct: z.number().min(0).max(100).optional(),
   maxPerOrder: z.number().int().min(1).max(20).optional(),
+  // Page freeze (optional so existing clients keep working)
+  locked: z.boolean().optional(),
+  lockMessage: z.string().max(300, "Message must be under 300 characters").optional(),
 }).partial({ enabled: true });
+
+/** Site-wide events lock (one-click freeze of the events section). */
+export const eventsLockValidation = z.object({
+  locked: z.boolean(),
+  message: z.string().max(300, "Message must be under 300 characters").optional(),
+});

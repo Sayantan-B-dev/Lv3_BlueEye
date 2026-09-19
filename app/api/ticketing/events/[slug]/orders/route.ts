@@ -1,4 +1,4 @@
-import { createTicketOrder } from "@/lib/services/ticketingService";
+import { createTicketOrder, EventLockedError } from "@/lib/services/ticketingService";
 import { ticketOrderCreateValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 
@@ -25,6 +25,7 @@ export async function POST(
     );
     return apiSuccess(result, "Order created", 201);
   } catch (error: any) {
+    if (error instanceof EventLockedError) return apiError(error.message, 503);
     const msg = error.message || "Failed to create order";
     const status = /left|unavailable|not enabled|per order|configured|required|email|phone/i.test(msg) ? 400 : 500;
     return apiError(msg, status);

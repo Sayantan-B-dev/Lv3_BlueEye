@@ -13,6 +13,11 @@ const ticketingSchema = new mongoose.Schema({
   feeFlatPaise: { type: Number, default: 0, min: 0 }, // flat fee per order (paise)
   gstPct: { type: Number, default: 0, min: 0 }, // GST %
   maxPerOrder: { type: Number, default: 6, min: 1 },
+  // Public page freeze — independent of `enabled`, so the switch never
+  // touches pricing/config. Blurs the page and stops new ticket purchases.
+  locked: { type: Boolean, default: false },
+  lockMessage: { type: String, trim: true, maxlength: 300 },
+  lockedAt: { type: Date },
 }, { _id: false });
 
 const contactInfoSchema = new mongoose.Schema({

@@ -28,6 +28,12 @@ export const cacheConfig = {
     pendingUserTtlSeconds: envInt("AUTH_PENDING_USER_TTL_SECONDS", 600),
   },
 
+  events: {
+    /** Global events freeze flag (site-wide lock). Invalidated on every write. */
+    lockKey: redisKey("events", "lock"),
+    lockTtlSeconds: envInt("EVENTS_LOCK_CACHE_TTL_SECONDS", 300),
+  },
+
   user: {
     favoritesTtlSeconds: envInt("USER_FAVORITES_CACHE_TTL_SECONDS", 1800),
   },

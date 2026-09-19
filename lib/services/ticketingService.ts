@@ -9,6 +9,25 @@ import { nextSequence } from "@/lib/models/Counter";
 import { sendTicketConfirmation } from "@/lib/utils/email";
 import { invalidateCache } from "@/lib/db/redis";
 import { cacheConfig } from "@/lib/config/cache";
+import { lockStateForEvent } from "@/lib/services/eventLockService";
+
+/** Thrown when a public purchase path is hit while the event page is frozen. */
+export class EventLockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EventLockedError";
+  }
+}
+
+/**
+ * Public purchase gate. Deliberately narrow: staff paths (comp tickets, check-in,
+ * order confirm, Razorpay webhook) stay open so in-flight payments issued before
+ * a freeze can still mint tickets and nobody is left with paid-but-ticketless orders.
+ */
+async function assertPurchaseOpen(event: unknown): Promise<void> {
+  const lock = await lockStateForEvent(event as { ticketing?: { locked?: boolean } } | null);
+  if (lock.locked) throw new EventLockedError(lock.message);
+}
 
 let razorpay: Razorpay | null = null;
 
@@ -69,6 +88,7 @@ export async function quoteTickets(slug: string, tierCode: string, qty: number):
   const data = await getTicketedEvent(slug);
   if (!data) throw new Error("Ticketing is not enabled for this event");
   const { tiers, config } = data;
+  await assertPurchaseOpen(data.event);
   if (qty < 1 || qty > config.maxPerOrder) {
     throw new Error(`You can book 1 to ${config.maxPerOrder} tickets per order`);
   }
