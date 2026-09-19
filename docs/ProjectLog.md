@@ -35,6 +35,7 @@ Phase 5 — Final Polish + Security Hardening
 
 ## Recently Completed
 
+- Events section freeze: one switch in `/admin/events` (plus a per-event lock in the ticketing editor) that blurs the public event pages behind a "Work ongoing" notice and blocks new ticket purchases at the API. Staff check-in, comp tickets and in-flight payment confirmations stay open.
 - Cleaned up legacy/unused directories (`src/`, `scratch/`) and files (`proxy.ts`, `migrate_project.py`, `image_upload_exaple.py`).
 - Regenerated the updated `folder_tree.txt` to match the clean codebase.
 - Fixed `/contact` booking page spacing so the form clears the fixed Navbar on mobile.
