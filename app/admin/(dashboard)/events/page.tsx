@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import BulkDeleteOtpModal from "@/components/ui/BulkDeleteOtpModal";
@@ -34,6 +34,76 @@ export default function AdminEventsPage() {
   const [otpModal, setOtpModal] = useState(false);
   const [pendingBulkDeleteIds, setPendingBulkDeleteIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Site-wide freeze of the public events section.
+  const [siteLock, setSiteLock] = useState({ locked: false, message: "" });
+  const [lockLoading, setLockLoading] = useState(true);
+  const [savingLock, setSavingLock] = useState(false);
+  const [lockMsg, setLockMsg] = useState("");
+  const [lockError, setLockError] = useState("");
+  // The notice text is server-backed, but the first read can land after the admin
+  // has started typing — never let that response overwrite their edit.
+  const lockTouchedRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/ticketing/lock", { cache: "no-store" });
+        const j = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok || !j?.success) {
+          setLockError(j?.message || `Could not read freeze state (HTTP ${res.status})`);
+          return;
+        }
+        setLockError("");
+        setSiteLock(prev => ({
+          locked: !!j.data.locked,
+          message: lockTouchedRef.current ? prev.message : j.data.message || "",
+        }));
+      } catch {
+        if (!cancelled) setLockError("Could not read freeze state (network error).");
+      } finally {
+        if (!cancelled) setLockLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  async function saveSiteLock(locked: boolean) {
+    setSavingLock(true);
+    setLockMsg("");
+    try {
+      const res = await fetch("/api/admin/ticketing/lock", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locked, message: siteLock.message.trim() }),
+      });
+      const j = await res.json().catch(() => null);
+      if (res.ok && j?.success) {
+        lockTouchedRef.current = false;
+        setSiteLock({ locked: !!j.data.locked, message: j.data.message || "" });
+        setLockMsg(locked ? "Events section frozen — visitors now see the notice." : "Events section is live again.");
+      } else {
+        setLockMsg(j?.message || `Save failed (HTTP ${res.status}) — nothing was changed.`);
+      }
+    } catch {
+      setLockMsg("Network error — nothing was changed.");
+    } finally {
+      setSavingLock(false);
+    }
+  }
+
+  // Taking the public section offline is worth one confirmation; going live again is not.
+  const confirmLock = () => setModal({
+    isOpen: true,
+    title: "Freeze the events section?",
+    message: "Every public event page will be replaced by a \"Work ongoing\" notice with the page blurred behind it, and new ticket purchases will be blocked. Ticket links, staff check-in and in-flight payment confirmations keep working. Nothing else on the site is affected.",
+    variant: "warning",
+    showCancel: true,
+    confirmText: "Yes, Freeze",
+    onConfirm: () => saveSiteLock(true),
+  });
 
   const handleBackup = async () => {
     setDropdownOpen(false);
@@ -279,6 +349,87 @@ export default function AdminEventsPage() {
             + Create Event
           </Link>
         </div>
+      </div>
+
+      {/* Public events freeze — one switch for the whole events section */}
+      <div
+        className="admin-card"
+        style={{
+          marginBottom: "1.5rem",
+          borderColor: siteLock.locked ? "rgba(220,60,60,0.5)" : undefined,
+        }}
+      >
+        <div className="flex justify-between items-start gap-6 flex-wrap">
+          <div style={{ minWidth: 0, flex: "1 1 340px" }}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text)" }}>
+                Public events section
+              </h2>
+              <span
+                className={`admin-badge ${siteLock.locked ? "bg-crimson/10 text-crimson border-crimson/20" : "bg-emerald/10 text-emerald border-emerald/20"}`}
+              >
+                {lockLoading ? "Checking…" : siteLock.locked ? "Frozen" : "Live"}
+              </span>
+            </div>
+            <p className="admin-subtitle" style={{ marginTop: "0.4rem" }}>
+              When frozen, <strong>/events</strong> and every event page show a &ldquo;Work ongoing&rdquo;
+              notice with the page blurred behind it, and new ticket purchases are blocked at the API.
+              Ticket links, staff check-in and in-flight payment confirmations keep working, and no
+              other page on the site changes.
+            </p>
+            <label style={{ display: "block", marginTop: "0.9rem", fontSize: "0.8rem", color: "var(--text2)" }}>
+              Notice shown to visitors
+              <input
+                className="filter-input"
+                style={{ marginTop: "0.3rem" }}
+                placeholder="Defaults to a generic work-ongoing message"
+                maxLength={300}
+                value={siteLock.message}
+                onChange={e => {
+                  lockTouchedRef.current = true;
+                  setSiteLock({ ...siteLock, message: e.target.value });
+                }}
+              />
+            </label>
+          </div>
+          <div className="flex gap-3 flex-wrap items-center">
+            <Link
+              href="/events"
+              target="_blank"
+              className="btn-outline py-3 px-6 rounded-xl text-sm font-bold no-underline"
+              title="Open the public events page"
+            >
+              View public page
+            </Link>
+            {siteLock.locked ? (
+              <>
+                <button onClick={() => saveSiteLock(false)} disabled={savingLock} className="btn-primary py-3 px-6 rounded-xl text-sm font-bold">
+                  {savingLock ? "Saving…" : "Unfreeze (go live)"}
+                </button>
+                <button onClick={() => saveSiteLock(true)} disabled={savingLock} className="btn-outline py-3 px-6 rounded-xl text-sm font-bold">
+                  {savingLock ? "Saving…" : "Update notice"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={confirmLock} disabled={savingLock} className="btn-outline py-3 px-6 rounded-xl text-sm font-bold" style={{ borderColor: "rgba(220,60,60,0.5)", color: "var(--crimson)" }}>
+                  {savingLock ? "Saving…" : "Freeze events section"}
+                </button>
+                <button onClick={() => saveSiteLock(false)} disabled={savingLock} className="btn-outline py-3 px-6 rounded-xl text-sm font-bold">
+                  {savingLock ? "Saving…" : "Update notice"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+        {lockMsg && (
+          <div style={{ marginTop: "1rem", fontSize: "0.82rem", color: "var(--text2)" }}>{lockMsg}</div>
+        )}
+        {lockError && (
+          <div style={{ marginTop: "1rem", fontSize: "0.82rem", color: "var(--crimson)" }}>
+            {lockError} You can still freeze or unfreeze — that writes the state directly.
+          </div>
+        )}
       </div>
 
       {/* Elegant Dashboard Stats Widgets */}

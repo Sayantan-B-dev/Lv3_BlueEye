@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { getEvents, getDistinctEventCategories } from "@/lib/services/eventService";
 import EventCard from "@/components/events/EventCard";
+import EventLockGate from "@/components/events/EventLockGate";
+import { getGlobalEventsLock } from "@/lib/services/eventLockService";
 import Link from "next/link";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -7,11 +10,15 @@ import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 export const revalidate = 3600;
 
-export const metadata = pageMetadata({
-  title: "Events & Live Shows",
-  description: `Browse upcoming live events, concerts, and shows managed by ${siteConfig.name}.`,
-  path: "/events",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const lock = await getGlobalEventsLock();
+  return pageMetadata({
+    title: "Events & Live Shows",
+    description: `Browse upcoming live events, concerts, and shows managed by ${siteConfig.name}.`,
+    path: "/events",
+    noIndex: lock.locked,
+  });
+}
 
 export default async function EventsPage({
   searchParams,
@@ -20,9 +27,10 @@ export default async function EventsPage({
 }) {
   const { status, category } = await searchParams;
 
-  const [result, categories] = await Promise.all([
+  const [result, categories, lock] = await Promise.all([
     getEvents({ status, category, limit: 24 }),
     getDistinctEventCategories(),
+    getGlobalEventsLock(),
   ]);
 
   const { events } = result as { events: any[] };
@@ -42,6 +50,7 @@ export default async function EventsPage({
       />
 
       {/* Header */}
+      <EventLockGate locked={lock.locked} message={lock.message}>
       <div style={{ marginBottom: "2.5rem" }}>
         <div className="section-label">Live &amp; Upcoming</div>
         <h1 className="section-title">
@@ -92,6 +101,7 @@ export default async function EventsPage({
           ))}
         </div>
       )}
+      </EventLockGate>
     </div>
   );
 }

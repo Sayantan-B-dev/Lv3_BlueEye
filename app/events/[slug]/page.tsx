@@ -11,6 +11,8 @@ import EventTimeline from "@/components/events/EventTimeline";
 import EventRegistrationForm from "@/components/events/EventRegistrationForm";
 import TicketWidget from "@/components/ticketing/TicketWidget";
 import MyEventTickets from "@/components/ticketing/MyEventTickets";
+import EventLockGate from "@/components/events/EventLockGate";
+import { getEventLockState } from "@/lib/services/eventLockService";
 import Link from "next/link";
 import AdminEditEventButton from "@/components/ui/AdminEditEventButton";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -32,6 +34,9 @@ export async function generateMetadata({
   const event = await getEventBySlug(slug);
   if (!event) return { title: "Event Not Found" };
 
+  // Frozen pages must not be indexed as "Work ongoing".
+  const lock = await getEventLockState(slug);
+
   const description =
     event.shortDescription ||
     (event.description ? event.description.slice(0, 160) : "Join this live event on Blue Eye Entertainment.");
@@ -43,6 +48,7 @@ export async function generateMetadata({
     image: event.coverImage,
     openGraphType: "article",
     ogType: "event",
+    noIndex: lock.locked,
   });
 }
 
@@ -55,6 +61,7 @@ export default async function EventDetailPage({
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
+  const lock = await getEventLockState(slug);
   const registrationCount = await getRegistrationCountByEvent(event._id);
   const spotsLeft = event.capacity > 0 ? event.capacity - registrationCount : null;
   const registrationClosed =
@@ -67,6 +74,7 @@ export default async function EventDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd(event)) }}
       />
+      <EventLockGate locked={lock.locked} message={lock.message}>
       <div className="section-inner" style={{ paddingTop: "2rem", paddingBottom: "5rem" }}>
 
         {/* Top Header / Breadcrumbs & Admin shortcut */}
@@ -265,6 +273,7 @@ export default async function EventDetailPage({
 
         </div>
       </div>
+      </EventLockGate>
     </article>
   );
 }
