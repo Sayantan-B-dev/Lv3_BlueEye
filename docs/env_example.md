@@ -1,3 +1,10 @@
+# Environment Variables Reference
+
+Local-only setup. `.env.example` is git-ignored and kept on each machine —
+this file is the committed reference. Copy values into `.env.local`
+(or `.env.production` for deploys) and fill in real secrets.
+
+```bash
 
 # Database & Cache (MongoDB / Redis)
 # WARNING: Create a dedicated DB user with Read/Write permissions only. Do not use Atlas Admin.
@@ -112,3 +119,4 @@ REVIEWS_ALL_MARQUEE_CACHE_KEY=your_app_prefix:reviews:marquee
 REVIEWS_ALL_MARQUEE_CACHE_TTL_SECONDS=300
 USER_REVIEW_CACHE_PREFIX=your_app_prefix:user:review
 REVIEWS_MINE_CACHE_TTL_SECONDS=300
+```
