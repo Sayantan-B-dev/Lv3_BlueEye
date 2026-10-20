@@ -8,6 +8,7 @@ import { setCache } from "@/lib/db/redis";
 import { cacheConfig, pendingUserCacheKey } from "@/lib/config/cache";
 import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
 import { isEmail } from "@/lib/utils/requestValidation";
+import { verifyTurnstile } from "@/lib/utils/turnstile";
 
 export async function POST(request: Request) {
   const ipLimit = await rateLimit(`register:ip:${clientIp(request)}`, 3, 900, "fail-open");
@@ -19,7 +20,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { name, email, password, username } = await request.json();
+    const { name, email, password, username, turnstileToken } =
+      await request.json();
+
+    const captcha = await verifyTurnstile(turnstileToken, clientIp(request));
+    if (!captcha.ok) {
+      return apiError("Security check failed. Please try again.", 400);
+    }
 
     if (!email || !password || !username) {
       return apiError("Missing required fields", 400);

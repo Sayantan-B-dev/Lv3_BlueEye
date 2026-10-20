@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import TurnstileWidget from "@/components/security/TurnstileWidget";
 
 interface ApplicantFormProps {
   isOpen: boolean;
@@ -34,6 +35,8 @@ export default function ApplicantForm({ isOpen, onClose, onSuccess, initialData 
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   const [form, setForm] = useState({
     name: "",
@@ -61,6 +64,8 @@ export default function ApplicantForm({ isOpen, onClose, onSuccess, initialData 
     if (!isOpen) return;
     setStep("form");
     setErrorMsg("");
+    setTurnstileToken("");
+    setTurnstileReset((n) => n + 1);
     if (initialData) {
       setForm({
         name: initialData.name,
@@ -146,6 +151,17 @@ export default function ApplicantForm({ isOpen, onClose, onSuccess, initialData 
     if (form.videos.length === 0) { setErrorMsg("At least one YouTube video URL is required."); return; }
     if (!form.category) { setErrorMsg("Please select a category."); return; }
 
+    const isEdit = !!initialData;
+
+    if (
+      !isEdit &&
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
+      !turnstileToken
+    ) {
+      setErrorMsg("Please complete the security check.");
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg("");
 
@@ -164,9 +180,9 @@ export default function ApplicantForm({ isOpen, onClose, onSuccess, initialData 
           languages: form.languages,
         },
         media: { images: form.images, videos: form.videos },
+        ...(isEdit ? {} : { turnstileToken }),
       };
 
-      const isEdit = !!initialData;
       const url = isEdit
         ? `/api/users/applications/${initialData!._id}`
         : "/api/artist-applications";
@@ -185,10 +201,14 @@ export default function ApplicantForm({ isOpen, onClose, onSuccess, initialData 
       } else {
         setErrorMsg(result.message || result.error || "Failed to submit application.");
         setStep("error");
+        setTurnstileToken("");
+        setTurnstileReset((n) => n + 1);
       }
     } catch {
       setErrorMsg("Something went wrong. Please try again.");
       setStep("error");
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
     } finally {
       setSubmitting(false);
     }
@@ -378,6 +398,15 @@ export default function ApplicantForm({ isOpen, onClose, onSuccess, initialData 
                 ))}
               </div>
             </div>
+
+            {!initialData && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "center" }}>
+                <TurnstileWidget
+                  onToken={setTurnstileToken}
+                  resetKey={turnstileReset}
+                />
+              </div>
+            )}
 
             <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
               <button type="button" onClick={onClose} className="btn-outline px-8 py-4 rounded-2xl">Cancel</button>

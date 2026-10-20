@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { sendInquiryEmail } from "@/lib/utils/email";
 import { checkCooldown, updateCooldown } from "@/lib/auth/cooldown";
 import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
+import { verifyTurnstile } from "@/lib/utils/turnstile";
 
 // PUBLIC: Submit a new inquiry
 export async function POST(request: Request) {
@@ -35,7 +36,13 @@ export async function POST(request: Request) {
     }
 
     await connectToDatabase();
-    const body = await request.json();
+    const { turnstileToken, ...body } = await request.json();
+
+    const captcha = await verifyTurnstile(turnstileToken, clientIp(request));
+    if (!captcha.ok) {
+      return apiError("Security check failed. Please try again.", 400);
+    }
+
     const result = inquirySchemaValidation.safeParse(body);
     
     if (!result.success) {

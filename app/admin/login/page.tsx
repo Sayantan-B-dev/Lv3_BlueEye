@@ -3,6 +3,7 @@
 import { FormEvent, useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import TurnstileWidget from "@/components/security/TurnstileWidget";
 
 function LoginForm() {
   const router = useRouter();
@@ -14,15 +15,27 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const turnstileEnabled = Boolean(
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  );
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+
+    if (turnstileEnabled && !turnstileToken) {
+      setError("Please complete the security check.");
+      return;
+    }
+
     setLoading(true);
 
     const result = await signIn("credentials", {
       email,
       password,
+      turnstileToken,
       redirect: false,
       callbackUrl,
     });
@@ -30,7 +43,13 @@ function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
+      setError(
+        /security check/i.test(result.error)
+          ? "Security check failed. Please try again."
+          : "Invalid email or password."
+      );
       return;
     }
 
@@ -91,6 +110,15 @@ function LoginForm() {
             </button>
           </div>
         </div>
+
+        {turnstileEnabled ? (
+          <div className="flex justify-center">
+            <TurnstileWidget
+              onToken={setTurnstileToken}
+              resetKey={turnstileReset}
+            />
+          </div>
+        ) : null}
 
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
 

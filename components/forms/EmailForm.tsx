@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import TurnstileWidget from "@/components/security/TurnstileWidget";
 
 type Variant = "booking" | "contact";
 type FormStatus = "idle" | "loading" | "success" | "error" | "cooldown";
@@ -48,6 +49,11 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
   const [statusMsg, setStatusMsg] = useState("");
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const turnstileEnabled = Boolean(
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  );
 
   const isBooking = variant === "booking";
 
@@ -177,6 +183,12 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
     setStatus("loading");
     setStatusMsg("");
 
+    if (turnstileEnabled && !turnstileToken) {
+      setStatus("error");
+      setStatusMsg("Please complete the security check.");
+      return;
+    }
+
     const { artistName, clientPhone, clientAddress, eventDate, eventType, message } = bookingForm;
 
     if (!artistName.trim()) {
@@ -205,6 +217,7 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
       eventDate: eventDate || undefined,
       eventType,
       message: message.trim() || undefined,
+      turnstileToken,
     };
 
     try {
@@ -226,9 +239,13 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
       } else {
         handleCommonError(result);
       }
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
     } catch {
       setStatus("error");
       setStatusMsg("Network error occurred.");
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
     }
   };
 
@@ -236,6 +253,12 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
     e.preventDefault();
     setStatus("loading");
     setStatusMsg("");
+
+    if (turnstileEnabled && !turnstileToken) {
+      setStatus("error");
+      setStatusMsg("Please complete the security check.");
+      return;
+    }
 
     const { message } = contactForm;
     if (!message.trim()) {
@@ -252,6 +275,7 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
           name: sessionName,
           email: sessionEmail,
           message: message.trim(),
+          turnstileToken,
         }),
       });
       const result = await res.json();
@@ -266,9 +290,13 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
       } else {
         handleCommonError(result);
       }
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
     } catch {
       setStatus("error");
       setStatusMsg("Network error. Please try again.");
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
     }
   };
 
@@ -419,6 +447,15 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
               />
             </div>
 
+            {turnstileEnabled && (
+              <div className="flex justify-center">
+                <TurnstileWidget
+                  onToken={setTurnstileToken}
+                  resetKey={turnstileReset}
+                />
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={status === "loading" || isCooldown}
@@ -542,6 +579,15 @@ export default function EmailForm({ variant, title, description, endpoint }: Pro
             disabled={isCooldown}
           />
         </div>
+
+        {turnstileEnabled && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "1.25rem" }}>
+            <TurnstileWidget
+              onToken={setTurnstileToken}
+              resetKey={turnstileReset}
+            />
+          </div>
+        )}
 
         <button
           type="submit"

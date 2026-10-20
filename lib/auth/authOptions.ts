@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/lib/models/User";
+import { verifyTurnstile } from "@/lib/utils/turnstile";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -21,9 +22,15 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        turnstileToken: { label: "Security check", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
+
+        const captcha = await verifyTurnstile(credentials.turnstileToken);
+        if (!captcha.ok) {
+          throw new Error("Security check failed");
+        }
         
         const adminEmail = process.env.ADMIN_EMAIL?.trim();
         const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH?.trim();

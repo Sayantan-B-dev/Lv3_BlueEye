@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLoading } from "@/lib/context/LoadingContext";
 import SwitchAccountPanel from "@/components/auth/SwitchAccountPanel";
+import TurnstileWidget from "@/components/security/TurnstileWidget";
 
 type View = "login" | "register" | "verify" | "forgot-password" | "reset-password";
 
@@ -23,6 +24,11 @@ function LoginPageContent() {
   useEffect(() => {
     if (searchParams.get("view") === "register") setView("register");
   }, [searchParams]);
+
+  useEffect(() => {
+    setTurnstileToken("");
+    setTurnstileReset((n) => n + 1);
+  }, [view]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -35,6 +41,11 @@ function LoginPageContent() {
     code: ""
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const turnstileEnabled = Boolean(
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,13 +53,20 @@ function LoginPageContent() {
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (turnstileEnabled && !turnstileToken) {
+      setError("Please complete the security check.");
+      return;
+    }
+
     setIsLoading(true);
     setLoading(true);
-    setError("");
 
     const result = await signIn("credentials", {
       email: formData.email,
       password: formData.password,
+      turnstileToken,
       redirect: false,
       callbackUrl
     });
@@ -59,11 +77,15 @@ function LoginPageContent() {
 
     if (result?.error) {
       setIsLoading(false);
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
       if (result.error === "Email not verified") {
         setView("verify");
         setError("Please verify your email first.");
       } else if (/banned/i.test(result.error)) {
         setError("This account is banned. Contact support.");
+      } else if (/security check/i.test(result.error)) {
+        setError("Security check failed. Please try again.");
       } else {
         setError("Invalid credentials.");
       }
@@ -75,9 +97,15 @@ function LoginPageContent() {
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (turnstileEnabled && !turnstileToken) {
+      setError("Please complete the security check.");
+      return;
+    }
+
     setIsLoading(true);
     setLoading(true);
-    setError("");
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -86,7 +114,8 @@ function LoginPageContent() {
           name: formData.name,
           email: formData.email,
           username: formData.username,
-          password: formData.password
+          password: formData.password,
+          turnstileToken
         })
       });
       const data = await res.json();
@@ -97,6 +126,8 @@ function LoginPageContent() {
       setIsLoading(false);
     } catch (err: any) {
       setError(err.message);
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
       setIsLoading(false);
     } finally {
       setLoading(false);
@@ -279,6 +310,14 @@ function LoginPageContent() {
                 </button>
               </div>
             </div>
+            {turnstileEnabled && (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <TurnstileWidget
+                  onToken={setTurnstileToken}
+                  resetKey={turnstileReset}
+                />
+              </div>
+            )}
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', marginTop: '0.5rem' }}>
               {loading ? 'Logging in...' : 'Sign In'}
             </button>
@@ -348,6 +387,14 @@ function LoginPageContent() {
                 </button>
               </div>
             </div>
+            {turnstileEnabled && (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <TurnstileWidget
+                  onToken={setTurnstileToken}
+                  resetKey={turnstileReset}
+                />
+              </div>
+            )}
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', justifyContent: 'center', marginTop: '0.5rem' }}>
               {loading ? 'Creating account...' : 'Create Account'}
             </button>

@@ -6,6 +6,7 @@ import ArtistApplicant from "@/lib/models/ArtistApplicant";
 import { artistApplicantSchemaValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
+import { verifyTurnstile } from "@/lib/utils/turnstile";
 
 export async function POST(request: Request) {
   const limit = await rateLimit(`application:${clientIp(request)}`, 2, 3600, "fail-closed");
@@ -20,7 +21,12 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
 
-    const body = await request.json();
+    const { turnstileToken, ...body } = await request.json();
+
+    const captcha = await verifyTurnstile(turnstileToken, clientIp(request));
+    if (!captcha.ok) {
+      return apiError("Security check failed. Please try again.", 400);
+    }
 
     const result = artistApplicantSchemaValidation.safeParse(body);
     if (!result.success) {

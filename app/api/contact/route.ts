@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { checkCooldown, updateCooldown } from "@/lib/auth/cooldown";
 import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
 import { isEmail } from "@/lib/utils/requestValidation";
+import { verifyTurnstile } from "@/lib/utils/turnstile";
 
 const resend = new Resend(process.env.RESEND_API);
 
@@ -32,7 +33,15 @@ export async function POST(request: Request) {
       }, { status: 429 });
     }
 
-    const { name, email, message } = await request.json();
+    const { name, email, message, turnstileToken } = await request.json();
+
+    const captcha = await verifyTurnstile(turnstileToken, clientIp(request));
+    if (!captcha.ok) {
+      return NextResponse.json(
+        { success: false, message: "Security check failed. Please try again." },
+        { status: 400 }
+      );
+    }
 
     if (!name || !email || !message) {
       return NextResponse.json({ success: false, message: "All fields are required" }, { status: 400 });
