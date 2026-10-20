@@ -152,6 +152,24 @@ export async function getArtistsForSitemap(max = 5000) {
   return JSON.parse(JSON.stringify(artists)) as { slug: string; updatedAt?: string }[];
 }
 
+/** Number of artist URLs eligible for the sitemap (capped). */
+export async function countArtistsForSitemap(max = 5000) {
+  await connectToDatabase();
+  const count = await Artist.countDocuments({ slug: { $exists: true, $ne: "" } });
+  return Math.min(count, max);
+}
+
+/** Paginated slice for sitemap shards. */
+export async function getArtistsForSitemapRange(skip: number, limit: number) {
+  await connectToDatabase();
+  const artists = await Artist.find({ slug: { $exists: true, $ne: "" } }, { slug: 1, updatedAt: 1 })
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+  return JSON.parse(JSON.stringify(artists)) as { slug: string; updatedAt?: string }[];
+}
+
 export async function getArtistBySlug(slug: string) {
   await connectToDatabase();
   const artist = await Artist.findOne({ slug }).lean();

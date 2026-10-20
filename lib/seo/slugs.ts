@@ -10,6 +10,19 @@ export function cityPath(city: string): string {
   return `/city/${slugify(city)}`;
 }
 
+/** Canonical paginated path; page 1 stays on the clean URL. */
+export function cityPagePath(city: string, page: number): string {
+  return page <= 1 ? cityPath(city) : `${cityPath(city)}/page/${page}`;
+}
+
+export function categoryPagePath(category: string, page: number): string {
+  return page <= 1 ? categoryPath(category) : `${categoryPath(category)}/page/${page}`;
+}
+
+export function artistPagePath(page: number): string {
+  return page <= 1 ? "/artists" : `/artists/page/${page}`;
+}
+
 /** Map URL slug segment back to the DB category value. */
 export function resolveCategorySlug(slug: string, categories: string[]): string {
   const decoded = decodeURIComponent(slug).trim();

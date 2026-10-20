@@ -120,7 +120,6 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#d4a017" />
-        <link rel="preload" as="image" href="/eye.webp" type="image/webp" fetchPriority="high" />
         <link rel="alternate" hrefLang="en" href={siteConfig.url} />
         <link rel="alternate" hrefLang="x-default" href={siteConfig.url} />
         <script

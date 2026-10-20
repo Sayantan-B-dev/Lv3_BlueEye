@@ -2,9 +2,6 @@
 
 import Link from "next/link";
 import { formatDuration } from "@/lib/utils/formatters";
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 import { useFavorites } from "@/components/providers/FavoritesProvider";
 
@@ -25,6 +22,7 @@ export default function ArtistCard({ artist, index }: { artist: any, index?: num
     <Link 
       className="artist-card reveal" 
       href={`/artists/${artist.slug}`} 
+      prefetch={false}
       style={index !== undefined ? { transitionDelay: `${Math.min(index, 8) * 0.07}s` } : {}}
     >
       <div className="artist-img-wrap">

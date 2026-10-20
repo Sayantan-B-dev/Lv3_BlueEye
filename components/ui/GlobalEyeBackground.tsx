@@ -8,42 +8,114 @@ const IMAGES = [
   { src: "/eye2.webp", width: 1000, height: 1000 },
 ] as const;
 
+const STORAGE_KEY = "blueeye:eye-background:v1";
 const DISPLAY_MS = 2000;
 const FADE_MS = 1000;
+
+type CachedImages = Record<string, string>;
+
+// Survives remounts in the same tab so we do not re-read or re-encode.
+let memoryCache: CachedImages | null = null;
+
+function readCache(): CachedImages {
+  if (memoryCache) return memoryCache;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    memoryCache = parsed as CachedImages;
+    return memoryCache;
+  } catch {
+    return {};
+  }
+}
+
+function writeCache(cache: CachedImages) {
+  memoryCache = cache;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+  } catch {
+    // Quota exceeded or storage disabled — keep the in-memory copy for this tab.
+  }
+}
+
+function toDataUrl(src: string): Promise<string> {
+  return fetch(src, { cache: "force-cache" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Failed to load ${src}`);
+      return response.blob();
+    })
+    .then(
+      (blob) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () =>
+            typeof reader.result === "string"
+              ? resolve(reader.result)
+              : reject(new Error("Unexpected reader result"));
+          reader.onerror = () => reject(reader.error ?? new Error("FileReader failed"));
+          reader.readAsDataURL(blob);
+        })
+    );
+}
 
 export default function GlobalEyeBackground() {
   const eyeRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showSecondImage, setShowSecondImage] = useState(false);
+  const [sources, setSources] = useState<string[] | null>(null);
   const rafRef = useRef<number | null>(null);
 
+  // Read localStorage first; only the very first visit pays for the download.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % IMAGES.length);
-    }, DISPLAY_MS + FADE_MS);
-    return () => clearInterval(timer);
-  }, []);
+    let cancelled = false;
 
-  // Load the second frame after idle so the initial payload stays small.
-  useEffect(() => {
-    const idleId =
-      typeof requestIdleCallback === "function"
-        ? requestIdleCallback(() => setShowSecondImage(true), { timeout: 2500 })
-        : window.setTimeout(() => setShowSecondImage(true), 1500);
+    const load = async () => {
+      const cached = readCache();
+      const cachedSources = IMAGES.map((image) => cached[image.src]);
 
-    return () => {
-      if (typeof cancelIdleCallback === "function" && typeof idleId === "number") {
-        cancelIdleCallback(idleId);
-      } else {
-        clearTimeout(idleId as number);
+      if (cachedSources.every(Boolean)) {
+        if (!cancelled) setSources(cachedSources as string[]);
+        return;
       }
+
+      try {
+        const resolved = await Promise.all(
+          IMAGES.map(async (image) => cached[image.src] || (await toDataUrl(image.src)))
+        );
+        if (cancelled) return;
+
+        const nextCache: CachedImages = { ...cached };
+        IMAGES.forEach((image, i) => {
+          nextCache[image.src] = resolved[i];
+        });
+        writeCache(nextCache);
+        setSources(resolved);
+      } catch {
+        // Any failure falls back to the normal network URLs.
+        if (!cancelled) setSources(IMAGES.map((image) => image.src));
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
   useEffect(() => {
+    if (!sources) return;
+
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % sources.length);
+    }, DISPLAY_MS + FADE_MS);
+    return () => clearInterval(timer);
+  }, [sources]);
+
+  // Tilt interaction.
+  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!eyeRef.current) return;
-
       if (rafRef.current !== null) return;
 
       rafRef.current = requestAnimationFrame(() => {
@@ -70,32 +142,28 @@ export default function GlobalEyeBackground() {
   return (
     <div ref={eyeRef} className="global-eye-container" aria-hidden="true">
       <div className="eyeball-stage">
-        {IMAGES.map((image, i) => {
-          if (i === 1 && !showSecondImage) return null;
-
-          return (
-            <div
-              key={image.src}
-              className="eyeball-slide"
-              style={{
-                opacity: activeIndex === i ? 1 : 0,
-                transition: `opacity ${FADE_MS}ms ease-in-out`,
-              }}
-            >
-              <Image
-                src={image.src}
-                alt={`Eye image ${i + 1}`}
-                fill
-                sizes="min(1000px, 95vw)"
-                className="eyeball-img"
-                draggable={false}
-                priority={i === 0}
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchPriority={i === 0 ? "high" : "low"}
-              />
-            </div>
-          );
-        })}
+        {sources?.map((src, i) => (
+          <div
+            key={IMAGES[i].src}
+            className="eyeball-slide"
+            style={{
+              opacity: activeIndex === i ? 1 : 0,
+              transition: `opacity ${FADE_MS}ms ease-in-out`,
+            }}
+          >
+            <Image
+              src={src}
+              alt={`Eye image ${i + 1}`}
+              fill
+              sizes="min(1000px, 95vw)"
+              className="eyeball-img"
+              draggable={false}
+              unoptimized
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchPriority={i === 0 ? "high" : "low"}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

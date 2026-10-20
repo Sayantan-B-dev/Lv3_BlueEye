@@ -12,7 +12,8 @@ export async function POST(request: Request) {
     if (!session || (role !== "admin" && role !== "staff")) {
       return apiError("Unauthorized", 401);
     }
-    if (!rateLimit(`checkin:${clientIp(request)}`, 120)) {
+    const limit = await rateLimit(`checkin:${clientIp(request)}`, 120, 60, "fail-open");
+    if (!limit.allowed) {
       return apiError("Too many requests, try again shortly", 429);
     }
     const { token, eventId } = await request.json();

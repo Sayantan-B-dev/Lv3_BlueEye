@@ -2,21 +2,18 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { categoryPath } from "@/lib/seo/slugs";
 import ArtistSearchInput from "@/components/search/ArtistSearchInput";
 
-export default function ArtistFilterBar({ 
-  categories, 
-  cities, 
-  basePath = "/artists" 
-}: { 
-  categories: string[], 
-  cities: string[],
-  basePath?: string
+export default function ArtistFilterBar({
+  categories,
+  cities,
+}: {
+  categories: string[];
+  cities: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [city, setCity] = useState(searchParams.get("city") || "");
@@ -30,12 +27,9 @@ export default function ArtistFilterBar({
     if (finalQ) params.set("q", finalQ);
     if (finalCat) params.set("category", finalCat);
     if (finalCity) params.set("city", finalCity);
-    
-    if (basePath.startsWith('/category/') && finalCat) {
-      router.push(`${categoryPath(finalCat)}?${params.toString()}`);
-    } else {
-      router.push(`${basePath}?${params.toString()}`);
-    }
+
+    const query = params.toString();
+    router.push(query ? `/search?${query}` : "/search");
   };
 
   const onCategoryChange = (val: string) => {
@@ -59,29 +53,41 @@ export default function ArtistFilterBar({
           placeholder="Search by name or keyword..."
           category={category || undefined}
           city={city || undefined}
-          submitPath="/artists"
+          submitPath="/search"
         />
       </div>
 
-      <select 
-        value={category} 
+      <select
+        value={category}
         onChange={(e) => onCategoryChange(e.target.value)}
         className="filter-select"
       >
         <option value="">All Categories</option>
-        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        {categories.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
       </select>
 
-      <select 
-        value={city} 
+      <select
+        value={city}
         onChange={(e) => onCityChange(e.target.value)}
         className="filter-select"
       >
         <option value="">All Cities</option>
-        {cities.map(c => <option key={c} value={c}>{c}</option>)}
+        {cities.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
       </select>
 
-      <button onClick={() => handleFilter()} className="btn-primary" style={{ padding: '0.8rem 2rem', borderRadius: '12px' }}>
+      <button
+        onClick={() => handleFilter()}
+        className="btn-primary"
+        style={{ padding: "0.8rem 2rem", borderRadius: "12px" }}
+      >
         Search
       </button>
     </div>

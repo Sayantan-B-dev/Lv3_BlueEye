@@ -8,7 +8,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  if (!rateLimit(`ticket:${clientIp(request)}`, 60)) {
+  const limit = await rateLimit(`ticket:${clientIp(request)}`, 60, 60, "fail-open");
+  if (!limit.allowed) {
     return apiError("Too many requests, try again shortly", 429);
   }
   try {

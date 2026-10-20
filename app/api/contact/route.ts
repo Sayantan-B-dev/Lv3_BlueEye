@@ -3,10 +3,20 @@ import { Resend } from "resend";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { checkCooldown, updateCooldown } from "@/lib/auth/cooldown";
+import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
+import { isEmail } from "@/lib/utils/requestValidation";
 
 const resend = new Resend(process.env.RESEND_API);
 
 export async function POST(request: Request) {
+  const limit = await rateLimit(`contact:${clientIp(request)}`, 3, 600, "fail-closed");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { success: false, message: limit.unavailable ? "Service temporarily unavailable" : "Too many requests" },
+      { status: limit.unavailable ? 503 : 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -26,6 +36,16 @@ export async function POST(request: Request) {
 
     if (!name || !email || !message) {
       return NextResponse.json({ success: false, message: "All fields are required" }, { status: 400 });
+    }
+
+    if (
+      typeof name !== "string" ||
+      typeof message !== "string" ||
+      name.length > 100 ||
+      message.length > 2000 ||
+      !isEmail(email)
+    ) {
+      return NextResponse.json({ success: false, message: "Invalid submission" }, { status: 400 });
     }
 
     const toEmail = process.env.EMAIL_TO || "theblueeyeentertainment@gmail.com";

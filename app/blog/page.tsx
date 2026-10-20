@@ -137,6 +137,7 @@ export default async function BlogPage({
             >
               <Link
                 href={`/blog/${post.slug}`}
+                prefetch={false}
                 style={{ textDecoration: "none", color: "inherit" }}
               >
                 {post.coverImage && (

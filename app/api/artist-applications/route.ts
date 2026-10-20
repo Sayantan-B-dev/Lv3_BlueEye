@@ -5,8 +5,17 @@ import { connectToDatabase } from "@/lib/db/connect";
 import ArtistApplicant from "@/lib/models/ArtistApplicant";
 import { artistApplicantSchemaValidation } from "@/lib/utils/validators";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
 
 export async function POST(request: Request) {
+  const limit = await rateLimit(`application:${clientIp(request)}`, 2, 3600, "fail-closed");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { success: false, message: limit.unavailable ? "Service temporarily unavailable" : "Too many requests" },
+      { status: limit.unavailable ? 503 : 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;

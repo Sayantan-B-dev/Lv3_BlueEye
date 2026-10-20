@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 interface FavoritesContextType {
@@ -10,6 +9,8 @@ interface FavoritesContextType {
   toggleFavorite: (id: string) => Promise<void>;
   loading: boolean;
 }
+
+const STORAGE_KEY = "blueeye:favorites:v1";
 
 const FavoritesContext = createContext<FavoritesContextType>({
   favorites: [],
@@ -22,45 +23,77 @@ export function useFavorites() {
   return useContext(FavoritesContext);
 }
 
+function readCachedFavorites(): string[] | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedFavorites(favorites: string[]) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+  } catch {
+    // Storage is optional; favorites still work for this page.
+  }
+}
+
 export default function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch favorites on mount if authenticated
   useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/users/favorites")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.data)) {
-            setFavorites(data.data);
-          }
-        })
-        .catch((err) => console.error("Failed to load favorites", err))
-        .finally(() => setLoading(false));
-    } else if (status === "unauthenticated") {
-      setFavorites([]);
-      setLoading(false);
-    }
-  }, [status]);
+    let cancelled = false;
+
+    const load = async () => {
+      const cached = readCachedFavorites();
+      if (cancelled) return;
+      if (cached) {
+        setFavorites(cached);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // One request per tab session instead of one per page load.
+        const res = await fetch("/api/users/favorites");
+        const list = res.ok
+          ? await res.json().then((data) =>
+              data.success && Array.isArray(data.data) ? (data.data as string[]) : []
+            )
+          : [];
+        if (cancelled) return;
+        setFavorites(list);
+        writeCachedFavorites(list);
+      } catch {
+        if (!cancelled) setFavorites([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void Promise.resolve().then(load);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isFavorite = (id: string) => favorites.includes(id);
 
   const toggleFavorite = async (id: string) => {
-    if (status !== "authenticated") {
-      router.push(`/login?callbackUrl=${window.location.pathname}`);
-      return;
-    }
-
-    // Optimistic update
     const wasFavorite = isFavorite(id);
-    if (wasFavorite) {
-      setFavorites(favorites.filter((fav) => fav !== id));
-    } else {
-      setFavorites([...favorites, id]);
-    }
+    const optimistic = wasFavorite
+      ? favorites.filter((fav) => fav !== id)
+      : [...favorites, id];
+
+    setFavorites(optimistic);
+    writeCachedFavorites(optimistic);
 
     try {
       const res = await fetch("/api/users/favorites", {
@@ -68,20 +101,23 @@ export default function FavoritesProvider({ children }: { children: React.ReactN
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ artistId: id }),
       });
+
+      if (res.status === 401) {
+        setFavorites(favorites);
+        writeCachedFavorites(favorites);
+        router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+
       const data = await res.json();
-      
-      // Sync with server if needed
       if (data.success && Array.isArray(data.data)) {
         setFavorites(data.data);
+        writeCachedFavorites(data.data);
       }
     } catch (err) {
       console.error("Favorite toggle failed:", err);
-      // Revert optimistic update on error
-      if (wasFavorite) {
-        setFavorites([...favorites, id]);
-      } else {
-        setFavorites(favorites.filter((fav) => fav !== id));
-      }
+      setFavorites(favorites);
+      writeCachedFavorites(favorites);
     }
   };
 

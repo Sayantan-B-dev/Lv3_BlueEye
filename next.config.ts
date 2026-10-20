@@ -24,13 +24,21 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // Netlify exposes the deploy context at build time. Preview/branch builds
+    // must never be indexed; production keeps the full indexing policy.
+    const isDeployPreview =
+      process.env.CONTEXT === "deploy-preview" || process.env.CONTEXT === "branch-deploy";
+    const robotsValue = isDeployPreview
+      ? "noindex, nofollow"
+      : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1";
+
     return [
       {
         // Apply to all routes
         source: "/(.*)",
         headers: [
           // Tell ALL crawlers (Google, Brave, Bing, DuckDuckGo) to index and allow snippets
-          { key: "X-Robots-Tag", value: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
+          { key: "X-Robots-Tag", value: robotsValue },
           // Prevent MIME type sniffing (security)
           { key: "X-Content-Type-Options", value: "nosniff" },
           // Prevent clickjacking

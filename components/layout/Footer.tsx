@@ -37,24 +37,24 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Categories</h4>
             <ul>
-              <li><Link href="/category/singer">Singers</Link></li>
-              <li><Link href="/category/comedian">Comedians</Link></li>
-              <li><Link href="/category/rapper">Rappers</Link></li>
-              <li><Link href="/category/dj">DJs</Link></li>
-              <li><Link href="/category/bollywood">Bollywood Celebrities</Link></li>
-              <li><Link href="/category/tv">TV Artists</Link></li>
+              <li><Link href="/category/singer" prefetch={false}>Singers</Link></li>
+              <li><Link href="/category/comedian" prefetch={false}>Comedians</Link></li>
+              <li><Link href="/category/rapper" prefetch={false}>Rappers</Link></li>
+              <li><Link href="/category/dj" prefetch={false}>DJs</Link></li>
+              <li><Link href="/category/bollywood" prefetch={false}>Bollywood Celebrities</Link></li>
+              <li><Link href="/category/tv" prefetch={false}>TV Artists</Link></li>
             </ul>
           </div>
 
           <div className="footer-col">
             <h4>Top Cities</h4>
             <ul>
-              <li><Link href="/city/mumbai">Mumbai</Link></li>
-              <li><Link href="/city/delhi">Delhi</Link></li>
-              <li><Link href="/city/bengaluru">Bengaluru</Link></li>
-              <li><Link href="/city/kolkata">Kolkata</Link></li>
-              <li><Link href="/city/chennai">Chennai</Link></li>
-              <li><Link href="/city/dubai">Dubai</Link></li>
+              <li><Link href="/city/mumbai" prefetch={false}>Mumbai</Link></li>
+              <li><Link href="/city/delhi" prefetch={false}>Delhi</Link></li>
+              <li><Link href="/city/bengaluru" prefetch={false}>Bengaluru</Link></li>
+              <li><Link href="/city/kolkata" prefetch={false}>Kolkata</Link></li>
+              <li><Link href="/city/chennai" prefetch={false}>Chennai</Link></li>
+              <li><Link href="/city/dubai" prefetch={false}>Dubai</Link></li>
             </ul>
           </div>
 

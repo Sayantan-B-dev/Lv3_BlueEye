@@ -4,15 +4,33 @@ import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { sendResetPasswordEmail } from "@/lib/utils/email";
 import { siteConfig } from "@/lib/config/site";
+import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
+import { isEmail } from "@/lib/utils/requestValidation";
 
 // Handle forgot password request
 
 export async function POST(req: Request) {
+  const ipLimit = await rateLimit(`forgot:ip:${clientIp(req)}`, 3, 900, "fail-open");
+  if (!ipLimit.allowed) {
+    return NextResponse.json(
+      { success: false, message: "Too many requests. Try again later." },
+      { status: 429, headers: { "Retry-After": String(ipLimit.retryAfter) } }
+    );
+  }
+
   try {
     const { email } = await req.json();
 
-    if (!email) {
-      return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
+    if (!isEmail(email)) {
+      return NextResponse.json({ success: false, message: "A valid email is required" }, { status: 400 });
+    }
+
+    const emailLimit = await rateLimit(`forgot:email:${email.toLowerCase()}`, 3, 3600, "fail-open");
+    if (!emailLimit.allowed) {
+      return NextResponse.json(
+        { success: false, message: "Too many requests. Try again later." },
+        { status: 429, headers: { "Retry-After": String(emailLimit.retryAfter) } }
+      );
     }
 
     await connectToDatabase();
