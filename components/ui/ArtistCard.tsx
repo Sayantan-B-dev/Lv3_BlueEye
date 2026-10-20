@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatDuration } from "@/lib/utils/formatters";
+import { ikUrl } from "@/lib/utils/imagekit";
 
 import { useFavorites } from "@/components/providers/FavoritesProvider";
 
@@ -28,14 +29,13 @@ export default function ArtistCard({ artist, index }: { artist: any, index?: num
       <div className="artist-img-wrap">
         <img 
           src={
-            artist.media?.images?.[0] 
-              ? (artist.media.images[0].startsWith('http') 
-                  ? artist.media.images[0] 
-                  : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/tr:w-400,h-300,f-webp,q-70/${artist.media.images[0].startsWith('/') ? artist.media.images[0].slice(1) : artist.media.images[0]}`)
+            artist.media?.images?.[0]
+              ? ikUrl(artist.media.images[0], { width: 400, height: 300, quality: 70 })
               : "https://placehold.co/600x400/1a1a1a/d4a017?text=No+Image"
           } 
           alt={`${artist.name} — ${artist.category || "performer"} — ${artist.location?.city || "India"} based artist`} 
           loading="lazy" 
+          decoding="async"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (!target.src.includes("placehold.co")) {

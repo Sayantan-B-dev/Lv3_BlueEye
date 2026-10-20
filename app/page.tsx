@@ -1,7 +1,7 @@
 import HomeDynamicContent from "@/components/home/HomeDynamicContent";
 import StatsBar from "@/components/home/StatsBar";
 import TestimonialsMarquee from "@/components/home/TestimonialsMarquee";
-import PlasmaWave from "@/components/react-bits/PlasmaWave";
+import dynamic from "next/dynamic";
 import { siteConfig } from "@/lib/config/site";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { connectToDatabase } from "@/lib/db/connect";
@@ -10,6 +10,8 @@ import Event from "@/lib/models/Event";
 import { categoryPath, cityPath } from "@/lib/seo/slugs";
 import { getDistinctCategories, getDistinctCities } from "@/lib/services/searchService";
 import { getHomePageData } from "@/lib/services/homeDataService";
+
+const PlasmaWave = dynamic(() => import("@/components/react-bits/PlasmaWave"));
 
 export const metadata = pageMetadata({
   title: "Book Celebrity Artists — Singers, DJs, Comedians & More in India",

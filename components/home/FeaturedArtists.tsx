@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import MagicBento from "@/components/react-bits/MagicBento";
+import dynamic from "next/dynamic";
+
+const MagicBento = dynamic(() => import("@/components/react-bits/MagicBento"), {
+  ssr: false,
+});
 
 export default function FeaturedArtists({ artists, favorites = [] }: { artists: any[], favorites?: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +36,7 @@ export default function FeaturedArtists({ artists, favorites = [] }: { artists: 
             <h2 className="section-title">Featured <span>Artists</span></h2>
             <p className="section-desc">Top-rated performers trusted by thousands of events across India and globally.</p>
           </div>
-          <Link href="/artists" className="btn-outline">All Artists →</Link>
+          <Link href="/artists" prefetch={false} className="btn-outline">All Artists →</Link>
         </div>
 
         <div className="reveal" style={{ marginTop: '2.5rem' }}>

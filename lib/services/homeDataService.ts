@@ -13,7 +13,9 @@ export type HomePageData = {
 };
 
 export async function getHomePageData(): Promise<HomePageData> {
-  const cached = await getCache<HomePageData>(cacheConfig.homeData.redisKey);
+  // v2: projection now trims artist documents to the fields the homepage renders.
+  const cacheKey = `${cacheConfig.homeData.redisKey}:v2`;
+  const cached = await getCache<HomePageData>(cacheKey);
   if (cached) return cached;
 
   const [randomArtists, categories, counts] = await Promise.all([
@@ -23,6 +25,6 @@ export async function getHomePageData(): Promise<HomePageData> {
   ]);
 
   const freshData: HomePageData = { randomArtists, categories, counts };
-  await setCache(cacheConfig.homeData.redisKey, freshData, cacheConfig.homeData.ttlSeconds);
+  await setCache(cacheKey, freshData, cacheConfig.homeData.ttlSeconds);
   return freshData;
 }

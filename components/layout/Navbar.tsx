@@ -62,7 +62,7 @@ export default function Navbar() {
         }}
       >
         <div className="hdr-inner">
-          <Link href="/" className="logo" onClick={closeNav}>
+          <Link href="/" className="logo" onClick={closeNav} prefetch={false}>
             <div className="logo-icon">
               <Image
                 src="/icon-96.webp"
@@ -81,15 +81,15 @@ export default function Navbar() {
           </Link>
 
           <nav>
-            <Link href="/categories">Categories</Link>
-            <Link href="/artists">Artists</Link>
-            <Link href="/events">Events</Link>
-            <Link href="/about">About</Link>
-            <Link href="/contact">Contact</Link>
+            <Link href="/categories" prefetch={false}>Categories</Link>
+            <Link href="/artists" prefetch={false}>Artists</Link>
+            <Link href="/events" prefetch={false}>Events</Link>
+            <Link href="/about" prefetch={false}>About</Link>
+            <Link href="/contact" prefetch={false}>Contact</Link>
           </nav>
 
           <div className="hdr-actions" style={{ position: 'relative' }}>
-            <Link href="/book-artist" className="btn-primary btn-xs" style={{ padding: '0.5rem 1.25rem' }}>Book Artist ✦</Link>
+            <Link href="/book-artist" prefetch={false} className="btn-primary btn-xs" style={{ padding: '0.5rem 1.25rem' }}>Book Artist ✦</Link>
 
             {/* Account Dropdown Menu (PC Only) - Rendered on the RIGHT of Book Artist */}
             {session ? (
@@ -141,6 +141,7 @@ export default function Navbar() {
                   >
                     <Link 
                       href="/profile" 
+                      prefetch={false}
                       className="dropdown-item" 
                       style={{ 
                         padding: '0.6rem 0.9rem', 
@@ -161,6 +162,7 @@ export default function Navbar() {
                     {user?.role === "admin" && (
                       <Link 
                         href="/admin" 
+                        prefetch={false}
                         className="dropdown-item" 
                         style={{ 
                           padding: '0.6rem 0.9rem', 
@@ -208,7 +210,7 @@ export default function Navbar() {
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} className="pc-only">
-                <Link href="/login" className="btn-outline btn-xs" style={{ padding: '0.5rem 1rem', borderRadius: '10px' }}>Login</Link>
+                <Link href="/login" prefetch={false} className="btn-outline btn-xs" style={{ padding: '0.5rem 1rem', borderRadius: '10px' }}>Login</Link>
               </div>
             )}
 
@@ -223,24 +225,24 @@ export default function Navbar() {
 
       {/* Mobile Nav */}
       <nav className={`mobile-nav ${navOpen ? 'open' : ''}`} id="mobileNav">
-        <Link href="/#categories" onClick={closeNav}>Categories</Link>
-        <Link href="/artists" onClick={closeNav}>Artists</Link>
-        <Link href="/events" onClick={closeNav}>Events</Link>
-        <Link href="/about" onClick={closeNav}>About</Link>
-        <Link href="/contact" onClick={closeNav}>Contact</Link>
+        <Link href="/#categories" onClick={closeNav} prefetch={false}>Categories</Link>
+        <Link href="/artists" onClick={closeNav} prefetch={false}>Artists</Link>
+        <Link href="/events" onClick={closeNav} prefetch={false}>Events</Link>
+        <Link href="/about" onClick={closeNav} prefetch={false}>About</Link>
+        <Link href="/contact" onClick={closeNav} prefetch={false}>Contact</Link>
         {user?.role === "admin" && (
-          <Link href="/admin" onClick={closeNav} style={{ color: 'var(--gold)' }}>Admin Panel</Link>
+          <Link href="/admin" onClick={closeNav} prefetch={false} style={{ color: 'var(--gold)' }}>Admin Panel</Link>
         )}
         <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '1rem 0' }} />
         {session ? (
           <>
-            <Link href="/profile" onClick={closeNav}>My Profile</Link>
+            <Link href="/profile" onClick={closeNav} prefetch={false}>My Profile</Link>
             <button onClick={() => { signOut(); closeNav(); }} style={{ background: 'none', border: 'none', color: 'var(--crimson)', textAlign: 'left', fontSize: '1.25rem', padding: '0.75rem 0', cursor: 'pointer' }}>Logout</button>
           </>
         ) : (
           <>
-            <Link href="/login" onClick={closeNav}>Login</Link>
-            <Link href="/login?view=register" onClick={closeNav}>Register</Link>
+            <Link href="/login" onClick={closeNav} prefetch={false}>Login</Link>
+            <Link href="/login?view=register" onClick={closeNav} prefetch={false}>Register</Link>
           </>
         )}
       </nav>

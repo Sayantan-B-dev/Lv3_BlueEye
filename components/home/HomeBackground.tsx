@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import LightRays from "@/components/react-bits/LightRays";
+import { ikUrl } from "@/lib/utils/imagekit";
+
+const TRAIL_PRELOAD_LIMIT = 3;
 
 export default function HomeBackground({ trailImages }: { trailImages?: string[] }) {
   useEffect(() => {
@@ -24,7 +27,7 @@ export default function HomeBackground({ trailImages }: { trailImages?: string[]
 
         const x = e.clientX - 25;
         const y = e.clientY - 25;
-        const imgSrc = trailImages[currentImageIndex];
+        const imgSrc = ikUrl(trailImages[currentImageIndex], { width: 96, quality: 55 });
         currentImageIndex = (currentImageIndex + 1) % trailImages.length;
 
         if (rafId) cancelAnimationFrame(rafId);
@@ -129,11 +132,17 @@ export default function HomeBackground({ trailImages }: { trailImages?: string[]
       <div className="orb orb3"></div>
       <div className="orb orb4"></div>
       
-      {/* Pre-fetch images */}
+      {/* Pre-fetch a few small trail thumbnails only */}
       {trailImages && (
         <div style={{ display: 'none' }}>
-          {trailImages.map((src, i) => (
-            <img key={i} src={src} alt={`Trail image ${i + 1}`} />
+          {trailImages.slice(0, TRAIL_PRELOAD_LIMIT).map((src, i) => (
+            <img
+              key={i}
+              src={ikUrl(src, { width: 96, quality: 55 })}
+              alt=""
+              loading="eager"
+              decoding="async"
+            />
           ))}
         </div>
       )}

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { searchArtists } from "@/lib/services/searchService";
 import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
-import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
+import { clientIp, rateLimitLocal } from "@/lib/utils/rateLimit";
 import { boundedText, parsePositiveInt } from "@/lib/utils/requestValidation";
 
 export async function GET(request: Request) {
   try {
-    const limitResult = await rateLimit(`search:${clientIp(request)}`, 30, 60, "fail-open");
+    const limitResult = rateLimitLocal(`search:${clientIp(request)}`, 30, 60);
     if (!limitResult.allowed) {
       return NextResponse.json(
         { success: false, message: "Too many requests. Please slow down." },

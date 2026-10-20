@@ -17,22 +17,28 @@ import { LoadingProvider } from "@/lib/context/LoadingContext";
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+  display: "swap",
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
 });
 
 const limelight = Limelight({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-limelight",
+  display: "swap",
+  preload: false,
 });
 
 const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  display: "swap",
+  preload: false,
 });
 
 import { siteConfig } from "@/lib/config/site";

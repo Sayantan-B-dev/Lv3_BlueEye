@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import Link from 'next/link';
+import { ikUrl } from '@/lib/utils/imagekit';
 import './MagicBento.css';
 
 export interface BentoCardProps {
@@ -600,9 +601,11 @@ const MagicBento: React.FC<BentoProps> = ({
     ? artists.slice(0, 6).map(artist => ({
         color: '#120F17',
         title: artist.name,
-        description: artist.tagline || artist.bio || `${artist.city} • ${artist.category}`,
+        description: artist.tagline || `${artist.location?.city || artist.city || 'India'} • ${artist.category}`,
         label: artist.category,
-        image: artist.media?.images?.[0] || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600&auto=format&fit=crop',
+        image: artist.media?.images?.[0]
+          ? ikUrl(artist.media.images[0], { width: 640, quality: 72 })
+          : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600&auto=format&fit=crop',
         slug: artist.slug
       }))
     : cardData;
@@ -641,7 +644,7 @@ const MagicBento: React.FC<BentoProps> = ({
           };
 
           const innerContent = (
-            <Link href={`/artists/${(card as any).slug || '#'}`} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', height: '100%', textDecoration: 'none', position: 'relative', zIndex: 5 }}>
+            <Link href={`/artists/${(card as any).slug || '#'}`} prefetch={false} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', height: '100%', textDecoration: 'none', position: 'relative', zIndex: 5 }}>
               <div className="magic-bento-card__header">
                 <div className="magic-bento-card__label" style={{ background: 'var(--gold)', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{card.label}</div>
               </div>

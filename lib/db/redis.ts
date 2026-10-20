@@ -33,7 +33,10 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), COMMAND_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: controller.signal, cache: "no-store" });
+    // Next.js 16 does not cache fetch by default, so no explicit `no-store`
+    // here — that option would force any page touching Redis into dynamic
+    // rendering and defeat ISR/static generation.
+    return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }

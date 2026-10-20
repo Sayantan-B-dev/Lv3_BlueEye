@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import EventStatusBadge from "./EventStatusBadge";
+import { ikUrl } from "@/lib/utils/imagekit";
 
 export default function EventCard({ event }: { event: any }) {
   const date = event.startDate
@@ -28,7 +29,8 @@ export default function EventCard({ event }: { event: any }) {
       {/* Cover Image */}
       <div style={{ position: "relative", height: 200, background: "rgba(255,255,255,0.04)", overflow: "hidden" }}>
         {event.coverImage ? (
-          <img src={event.coverImage} alt={event.title}
+          <img src={ikUrl(event.coverImage, { width: 680, quality: 72 })} alt={event.title}
+            loading="lazy" decoding="async"
             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>

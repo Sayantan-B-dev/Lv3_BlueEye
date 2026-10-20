@@ -1,5 +1,6 @@
 import EventStatusBadge from "./EventStatusBadge";
 import Link from "next/link";
+import { ikUrl } from "@/lib/utils/imagekit";
 
 export default function EventHero({ event }: { event: any }) {
   const startDate = event.startDate
@@ -14,7 +15,8 @@ export default function EventHero({ event }: { event: any }) {
       {/* Cover */}
       <div style={{ height: "clamp(220px, 35vw, 380px)", background: "rgba(255,255,255,0.04)", position: "relative" }}>
         {event.coverImage ? (
-          <img src={event.coverImage} alt={event.title}
+          <img src={ikUrl(event.coverImage, { width: 1200, quality: 75 })} alt={event.title}
+            fetchPriority="high" decoding="async"
             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{

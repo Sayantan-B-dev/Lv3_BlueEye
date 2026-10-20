@@ -1,5 +1,34 @@
 import type { NextConfig } from "next";
 
+const PUBLIC_PAGE_CACHE_SOURCES = [
+  "/",
+  "/about",
+  "/contact",
+  "/for-artists",
+  "/privacy-policy",
+  "/terms",
+  "/book-artist",
+  "/categories",
+  "/login",
+  "/register",
+  "/reset-password",
+  "/profile",
+  "/switch-account",
+  "/artists",
+  "/artists/:path*",
+  "/city/:path*",
+  "/category/:path*",
+  "/blog",
+  "/blog/:path*",
+  "/events",
+  "/events/:path*",
+  "/robots.txt",
+  "/site.webmanifest",
+  "/sitemap.xml",
+  "/images-sitemap.xml",
+  "/sitemaps/:path*",
+];
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.2"],
   // NextAuth domain configuration - ensure cookies work correctly across domains
@@ -63,6 +92,17 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
+      // Cache anonymous public pages at the Netlify CDN so repeat traffic never
+      // reaches a function. Auth/admin/search routes are intentionally excluded.
+      ...PUBLIC_PAGE_CACHE_SOURCES.map((source) => ({
+        source,
+        headers: [
+          {
+            key: "Netlify-CDN-Cache-Control",
+            value: "public, s-maxage=3600, stale-while-revalidate=86400",
+          },
+        ],
+      })),
     ];
   },
 };

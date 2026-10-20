@@ -90,6 +90,22 @@ export async function rateLimit(
 }
 
 /**
+ * Per-instance limiter for high-volume public GETs.
+ *
+ * These routes are hit constantly by crawlers and browsers; spending Upstash
+ * commands on every request would exhaust the free tier faster than it saves
+ * compute. Shared, distributed limits for these paths belong at the edge.
+ */
+export function rateLimitLocal(
+  key: string,
+  limit = 60,
+  windowSeconds = 60
+): RateLimitResult {
+  const local = localRateLimit(key, limit, windowSeconds * 1000);
+  return { ...local, degraded: false, unavailable: false };
+}
+
+/**
  * Netlify provides x-nf-client-connection-ip from its edge and overwrites
  * client-supplied values. Only fall back to forwarded headers when absent.
  */

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { categoryPath } from "@/lib/seo/slugs";
+import { ikUrl } from "@/lib/utils/imagekit";
 import ArtistSearchInput from "@/components/search/ArtistSearchInput";
 
 interface Artist {
@@ -138,7 +139,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
         
         {/* Left Side Section — Centered and kept to 50% width on Desktop */}
         <div className="hero-left">
-          <div className="hero-badge">India's No. 1 Artist Booking Platform</div>
+          <div className="hero-badge">India&apos;s No. 1 Artist Booking Platform</div>
 
           <h1 className="hero-title">
             Book the <em>Perfect Artist</em><br />for Every Stage
@@ -173,15 +174,15 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
           </form>
 
           <div className="hero-tags">
-            <Link href="/search?category=singer" className="hero-tag">
+            <Link href="/search?category=singer" prefetch={false} className="hero-tag">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
               singer
             </Link>
-            <Link href="/search?category=Comedian" className="hero-tag">
+            <Link href="/search?category=Comedian" prefetch={false} className="hero-tag">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/><path d="M9.5 10c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/><path d="M12 18c-2.4 0-4.4-1.2-5.4-3h10.8c-1 1.8-3 3-5.4 3Z"/><path d="M22 12A10 10 0 1 1 12 2a10 10 0 0 1 10 10Z"/></svg>
               Comedian
             </Link>
-            <Link href="/search?category=DJ" className="hero-tag">
+            <Link href="/search?category=DJ" prefetch={false} className="hero-tag">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 12l5 5"/></svg>
               DJ
             </Link>
@@ -199,13 +200,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
                 className="carousel-slide" 
                 key={activeArtist._id}
                 style={{
-                  backgroundImage: `url(${
-                    activeArtist.media?.images?.[0] 
-                      ? (activeArtist.media.images[0].startsWith('http') 
-                          ? activeArtist.media.images[0] 
-                          : `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ""}/${activeArtist.media.images[0].startsWith('/') ? activeArtist.media.images[0].slice(1) : activeArtist.media.images[0]}`)
-                      : "https://placehold.co/600x400/1a1a1a/d4a017?text=No+Image"
-                  })`
+                  backgroundImage: `url(${ikUrl(activeArtist.media?.images?.[0], { width: 640, quality: 72 }) || "https://placehold.co/600x400/1a1a1a/d4a017?text=No+Image"})`
                 }}
               >
                 <span className="carousel-live-badge">FEATURED</span>
@@ -222,7 +217,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
                       <span key={g} className="carousel-genre-pill">{g}</span>
                     ))}
                   </div>
-                  <Link href={`/artists/${activeArtist.slug}`} className="carousel-book-btn">
+                  <Link href={`/artists/${activeArtist.slug}`} prefetch={false} className="carousel-book-btn">
                     View Profile ↗
                   </Link>
                 </div>
@@ -248,6 +243,7 @@ export default function HeroSection({ categories, artists: initialArtists }: { c
                   <Link 
                     href={categoryPath(cat.name)} 
                     key={cat.name} 
+                    prefetch={false}
                     className="category-pulse-box"
                     style={{ animationDelay: delay }}
                   >

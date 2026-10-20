@@ -212,7 +212,19 @@ export async function getRandomArtists(limit: number = 10) {
   await connectToDatabase();
   const artists = await Artist.aggregate([
     { $match: { "media.images": { $exists: true, $not: { $size: 0 } } } },
-    { $sample: { size: limit } }
+    { $sample: { size: limit } },
+    {
+      $project: {
+        name: 1,
+        slug: 1,
+        category: 1,
+        tagline: 1,
+        location: 1,
+        "performance.genres": 1,
+        "performance.duration_minutes": 1,
+        "media.images": { $slice: ["$media.images", 1] },
+      },
+    },
   ]);
   return JSON.parse(JSON.stringify(artists));
 }

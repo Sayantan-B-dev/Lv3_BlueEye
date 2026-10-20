@@ -56,6 +56,7 @@ Important files:
 * `docs/ProjectSRS.md` — requirements & schemas
 * `docs/ProjectLog.md` — current status
 * `docs/ProjectTree.md` — file structure
+* `docs/CLOUDFLARE_TURNSTILE_SETUP.md` — Cloudflare DNS/proxy, WAF, cache, Turnstile
 
 ## Admin Access
 

@@ -165,7 +165,7 @@ export default function CategoryGrid({
             <h2 className="section-title">Explore by <span>Category</span></h2>
             <p className="section-desc">Find exactly what your event needs — from intimate Ghazal nights to high-energy concert performances.</p>
           </div>
-          <Link href="/artists" className="btn-outline">View All →</Link>
+          <Link href="/artists" prefetch={false} className="btn-outline">View All →</Link>
         </div>
 
         <div className="cat-grid">
@@ -176,7 +176,7 @@ export default function CategoryGrid({
             const realCount = counts[categoryName] || counts[name] || counts[name.slice(0, -1)] || counts[slug.charAt(0).toUpperCase() + slug.slice(1)] || 0;
 
             return (
-              <Link key={slug} className="cat-card reveal" href={categoryPath(categoryName)} style={{ transitionDelay: `${i * 0.05}s` }}>
+              <Link key={slug} className="cat-card reveal" href={categoryPath(categoryName)} prefetch={false} style={{ transitionDelay: `${i * 0.05}s` }}>
                 <div className="cat-icon">{icon}</div>
                 <span className="cat-name">{name}</span>
                 <span className="cat-count">{realCount} Artists</span>

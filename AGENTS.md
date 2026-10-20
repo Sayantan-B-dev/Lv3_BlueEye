@@ -27,8 +27,9 @@ Before implementing UI changes, read `DESIGN.md` for architecture decisions and 
 
 # Commit workflow
 
-Before committing, run `npm run build` to verify the build passes.
-If it fails, fix the issue before committing.
+The project owner runs `npm run build` manually. Do **not** run it unless the
+owner explicitly asks; verify with `npx tsc --noEmit`, lint, and dev smoke tests
+instead.
 
 ## Git and Commit Rules
 
@@ -50,10 +51,10 @@ Adapt this sequence to the repository's actual Git history. Do not recreate or f
 - One commit must represent one complete, verified feature. Do not commit half-built or knowingly broken work.
 - Do not commit tiny or unrelated changes individually. Group related changes into a meaningful commit or ask the owner whether to commit them.
 - **Exception:** If the owner explicitly instructs the agent to commit, including for a small fix or documentation change, commit as instructed after completing the required verification.
-- Before requesting confirmation, run the applicable lint checks, TypeScript type-check, production build, and relevant tests. Report the results accurately.
+- Before requesting confirmation, run the applicable lint checks, TypeScript type-check, and relevant tests. The owner runs the production build.
 
 ### Mandatory Pre-Commit Verification
-Before creating any commit, the agent **must run `npm run build` and verify that the production build succeeds**.
+The owner performs `npm run build` manually. Do **not** run it; ask the owner to confirm the production build passed before committing.
 
 Follow this sequence:
 
@@ -61,8 +62,8 @@ Follow this sequence:
 2. Run the project's applicable lint command.
 3. Run the TypeScript type-check command, if configured.
 4. Run relevant unit and integration tests.
-5. Run `npm run build`.
-6. Resolve any failures caused by the changes and repeat the relevant checks, including the production build.
+5. Confirm with the owner that `npm run build` succeeded after the changes.
+6. Resolve any failures caused by the changes and repeat the relevant checks.
 7. Review the final diff and ensure no secrets, generated artifacts, unrelated changes, or unintended files are included.
 8. Stage only the intended files and create the commit when authorized.
 

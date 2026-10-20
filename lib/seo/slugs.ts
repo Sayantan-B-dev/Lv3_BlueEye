@@ -23,6 +23,17 @@ export function artistPagePath(page: number): string {
   return page <= 1 ? "/artists" : `/artists/page/${page}`;
 }
 
+/** Canonical blog path; page 1 stays on the clean URL. */
+export function blogPagePath(page: number, category?: string): string {
+  const base = category ? `/blog/category/${slugify(category)}` : "/blog";
+  return page <= 1 ? base : `${base}/page/${page}`;
+}
+
+/** Canonical events status path (lowercase slug segment). */
+export function eventStatusPath(status: string): string {
+  return `/events/status/${slugify(status)}`;
+}
+
 /** Map URL slug segment back to the DB category value. */
 export function resolveCategorySlug(slug: string, categories: string[]): string {
   const decoded = decodeURIComponent(slug).trim();

@@ -2,14 +2,35 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
+const CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=31536000, immutable",
+  "Netlify-CDN-Cache-Control": "public, s-maxage=31536000, immutable",
+};
+
+const IMAGE_HOSTS = new Set(["ik.imagekit.io", "i0.wp.com", "images.unsplash.com"]);
+
+async function safeImageUrl(raw: string): Promise<string | null> {
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" || !IMAGE_HOSTS.has(url.hostname)) return null;
+    const res = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(4000),
+    });
+    return res.ok ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const title = searchParams.get("title") || "Blue Eye Entertainment";
-    const description = searchParams.get("description") || "";
-    const imageUrl = searchParams.get("image") || "";
+    const title = (searchParams.get("title") || "Blue Eye Entertainment").slice(0, 120);
+    const description = (searchParams.get("description") || "").slice(0, 200);
+    const requestedImage = searchParams.get("image") || "";
     const type = searchParams.get("type") || "default";
-    const category = searchParams.get("category") || "";
+    const category = (searchParams.get("category") || "").slice(0, 40);
 
     const gold = "#d4a017";
     const saffron = "#f59e0b";
@@ -17,10 +38,9 @@ export async function GET(request: Request) {
     const text = "#f5f0eb";
     const muted = "#9ca3af";
 
-    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://blueeyeentertainment.in").replace(/\/+$/, "");
-    const logoSrc = `${baseUrl}/icon-96.webp`;
-
-    const showImage = imageUrl && type === "artist";
+    const showImage = Boolean(requestedImage) && type === "artist";
+    const imageUrl = showImage ? await safeImageUrl(requestedImage) : null;
+    const renderImage = showImage && imageUrl !== null;
 
     return new ImageResponse(
       (
@@ -66,7 +86,7 @@ export async function GET(request: Request) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: showImage ? "60px" : "0",
+              gap: renderImage ? "60px" : "0",
               padding: "60px 80px",
               width: "100%",
               maxWidth: "1000px",
@@ -76,8 +96,8 @@ export async function GET(request: Request) {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                flex: showImage ? 1.5 : 1,
-                maxWidth: showImage ? "600px" : "900px",
+                flex: renderImage ? 1.5 : 1,
+                maxWidth: renderImage ? "600px" : "900px",
               }}
             >
               {/* Logo + Brand */}
@@ -89,13 +109,23 @@ export async function GET(request: Request) {
                   marginBottom: "16px",
                 }}
               >
-                <img
-                  src={logoSrc}
-                  alt=""
-                  width={48}
-                  height={48}
-                  style={{ borderRadius: "8px", border: `2px solid ${gold}` }}
-                />
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "8px",
+                    border: `2px solid ${gold}`,
+                    background: "#120c08",
+                    color: gold,
+                    fontSize: 20,
+                    fontWeight: 800,
+                  }}
+                >
+                  BE
+                </div>
                 <span
                   style={{
                     fontSize: 28,
@@ -136,7 +166,7 @@ export async function GET(request: Request) {
               {/* Title */}
               <h1
                 style={{
-                  fontSize: showImage ? 48 : 56,
+                  fontSize: renderImage ? 48 : 56,
                   fontWeight: 800,
                   lineHeight: 1.15,
                   margin: "0 0 12px 0",
@@ -181,13 +211,13 @@ export async function GET(request: Request) {
                   color: muted,
                 }}
               >
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: gold, display: "inline-block" }} />
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: gold, display: "flex" }} />
                 India&apos;s Premium Artist Booking Platform
               </div>
             </div>
 
             {/* Artist image (right side) */}
-            {showImage && imageUrl && (
+            {renderImage && imageUrl && (
               <div
                 style={{
                   width: 280,
@@ -217,6 +247,7 @@ export async function GET(request: Request) {
       {
         width: 1200,
         height: 630,
+        headers: CACHE_HEADERS,
       }
     );
   } catch (error) {
@@ -239,7 +270,14 @@ export async function GET(request: Request) {
           Blue Eye Entertainment
         </div>
       ),
-      { width: 1200, height: 630 }
+      {
+        width: 1200,
+        height: 630,
+        headers: {
+          "Cache-Control": "public, max-age=300",
+          "Netlify-CDN-Cache-Control": "public, s-maxage=300",
+        },
+      }
     );
   }
 }

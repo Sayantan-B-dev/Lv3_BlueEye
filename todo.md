@@ -2,10 +2,10 @@
 
 **Updated:** 2026-10-21
 **Branch:** currently `main` (no implementation branch created yet)
-**Build:** not run — deferred by request (last build attempt was blocked by a stale/other `next build` lock)
+**Build:** owner-run on 2026-10-21: passed (5,479 static pages). A second round of edits (OG cache/hardening, auth-page CDN headers, prefetch/session changes) was made after that build and still needs an owner rebuild.
 **Production changes deployed:** none
 
-Reference telemetry (Netlify, one period): **92,686 requests · 428.9 MB · RSC 79.1K requests / 208 MB / 47.7K function invocations**.
+Reference telemetry (Netlify, two periods): **92,686 requests · 428.9 MB · RSC 79.1K requests / 208 MB / 47.7K function invocations**; latest 24 h: **88,513 requests · ~0.87% errors**. Top offenders: `/login` 6.3K, `/privacy-policy` 5.1K, `/contact` 5K, `/book-artist` 5K, `/about` 4.8K, `/for-artists` 4.7K, `/` 4.1K, `/sitemap.xml` 1.1K / 73.84 MB, `/og` 423 (24.6% errors).
 
 ---
 
@@ -14,13 +14,14 @@ Reference telemetry (Netlify, one period): **92,686 requests · 428.9 MB · RSC 
 | Area | Status |
 | --- | --- |
 | Redis client / env mismatch | Implemented — live connectivity not tested |
-| RSC prefetch storm | Implemented — effect not measured |
-| Static city/category/artists pages | Implemented — build output not verified |
-| Sitemap index + shards | Implemented — sizes/URL counts not measured |
-| Shared rate limiting | Implemented — concurrency/expiry tests not run |
-| Session / favorites requests | Implemented |
+| RSC prefetch storm | Implemented for cards, footer, navbar and homepage — effect not measured |
+| Static city/category/artists pages | Implemented — page 1 confirmed `○`/`●` in owner build |
+| `/blog` + `/events` static routes | Implemented — confirmed `○`; pagination routes remain dynamic |
+| Sitemap index + shards | Implemented — confirmed `○`/`●`; bandwidth not yet measured |
+| Shared rate limiting | Implemented — public GETs now local-only; concurrency/expiry tests not run |
+| Session / favorites requests | Implemented — focus refetch disabled |
 | Edge (Cloudflare / Netlify rules) | **Blocked** — needs DNS approval, no changes made |
-| Production metrics (P2) | **Blocked** — no deploy, no baseline captured |
+| Production metrics (P2) | **Blocked** — no deploy, post-change report not captured |
 | Background image localStorage cache | Implemented — runtime not observed |
 
 ---
@@ -31,7 +32,7 @@ Reference telemetry (Netlify, one period): **92,686 requests · 428.9 MB · RSC 
 - No synthetic load testing, no DDoS simulation, no crawler spoofing.
 - No geo-blocking, no Chrome-UA blocking, no blanket `noindex`.
 - Never log or commit `UPSTASH_REDIS_REST_TOKEN`.
-- `npm run build` was deliberately not run after the last edits.
+- The owner runs `npm run build` manually; the agent verifies with `npx tsc --noEmit`, lint and dev smoke tests.
 
 ---
 
@@ -55,7 +56,7 @@ Reference telemetry (Netlify, one period): **92,686 requests · 428.9 MB · RSC 
 - [x] `components/layout/Footer.tsx` — all 12 city/category links `prefetch={false}`.
 - [x] `app/blog/page.tsx` — post links `prefetch={false}`.
 - [x] New city/category/artists listings — card, pagination and related links `prefetch={false}`.
-- [x] Primary navigation links keep default prefetch.
+- [x] Primary navigation, homepage cards/banners and account links now `prefetch={false}` too.
 - [ ] Before/after RSC request counts not measured (requires deploy).
 
 ### P0-3. Make city/category/artist listings cacheable — implemented
@@ -73,8 +74,8 @@ Root cause: pages destructured `searchParams`, forcing dynamic rendering despite
 - [x] `components/artists/ArtistsBrowseView.tsx` — shared view.
 - [x] Filters now navigate to `/search` (`components/ui/ArtistFilterBar.tsx`); no client component reads `searchParams` on a static listing page.
 - [x] `lib/seo/slugs.ts` — `cityPagePath`, `categoryPagePath`, `artistPagePath`.
-- [ ] Cache-hit behavior (`MISS` then `HIT`, zero repeat invocations) not verified — needs a running server.
-- [ ] `blog` and `events` still read `searchParams` and remain dynamic; not part of this P0 item, still a known residual cost.
+- [ ] Cache-hit behavior (`MISS` then `HIT`, zero repeat invocations) not verified on Netlify — needs deploy.
+- [x] `blog` and `events` no longer read `searchParams`; filters use `/blog/category/...` and `/events/status/...` (see follow-up).
 
 ### P0-4. Shrink and cache `/sitemap.xml` — implemented
 
@@ -85,8 +86,8 @@ Root cause: pages destructured `searchParams`, forcing dynamic rendering despite
 - [x] Invalid `lastModified` values are omitted instead of throwing/serializing `Invalid Date`.
 - [x] `lib/services/artistService.ts` — added `countArtistsForSitemap` and `getArtistsForSitemapRange` (slug + updatedAt only).
 - [x] `app/images-sitemap.xml/route.ts` — `force-static`, ISR 24 h, CDN cache header.
-- [ ] Actual URL counts by type, compressed/uncompressed size and DB query count not measured (needs runtime + DB access).
-- [ ] `generateSitemaps`-style index behavior replaced by explicit routes — intended to avoid uncertainty; route resolution not build-verified.
+- [ ] Actual URL counts by type, compressed/uncompressed size and DB query count not measured (needs DB metrics).
+- [x] Route resolution confirmed by the owner build: `/sitemap.xml` `○`, `/sitemaps/[id]` `●` (6 shards).
 
 ### P0-5. Shared, atomic rate limiting — implemented
 
@@ -148,15 +149,53 @@ Root cause: pages destructured `searchParams`, forcing dynamic rendering despite
 
 ## Residual risks / known gaps
 
-1. **No build has been run since these edits.** TypeScript (`tsc --noEmit`) and ESLint on the new/changed files pass, but route conflicts and prerender behavior are unconfirmed.
-2. A stale/other `next build` lock delayed verification; no build was started by this session afterwards.
+1. **The owner build passed for the route refactor**, but the later OG/cache/prefetch/session edits were made after it and are not build-verified yet. `tsc --noEmit` and dev smoke tests pass.
+2. The second round is intentionally left for the owner to rebuild; do not run `npm run build` from an agent session.
 3. Redis behavior in production is unverified; missing/invalid credentials fall back to per-instance limits and no shared cache.
 4. City/category pagination URLs are new (`/city/x/page/2`); old `?page=` links still resolve to page 1 and should be redirected later if needed.
 5. Filters now land on `/search` (dynamic, low volume) instead of filtering in place on category pages — intentional trade-off to make listings static.
-6. `blog` and `events` listing pages remain dynamic (read `searchParams`) and still invoke functions on every request.
+6. Blog/event **listing page 1** is static; paginated routes (`/blog/page/[page]`, `/blog/category/[category]/page/[page]`) remain dynamic.
 7. Cloudflare is the only layer that can absorb a real flood; none of that is configured.
 
 ---
+
+## Follow-up — 2026-10-21 (bot / credit hardening)
+
+- [x] `/blog` + `/blog/page/[page]` + `/blog/category/[category]` (+ pagination) — no `searchParams`, static page 1.
+- [x] `/events` + `/events/status/[status]` — status filters are static routes.
+- [x] `/category/[category]/[city]` — static page 1; `/page/[page]` for pagination.
+- [x] `Netlify-CDN-Cache-Control` on public page sources (`next.config.ts`).
+- [x] ImageKit transforms for homepage hero/trail/cards, blog covers, event covers (`lib/utils/imagekit.ts`).
+- [x] Homepage artist aggregation projected to rendered fields (`lib/services/artistService.ts`); cache key bumped to `…:v2`.
+- [x] Public GET limits moved to per-instance (`rateLimitLocal`) so Upstash commands are reserved for writes/auth.
+- [x] Font preload trimmed; `PlasmaWave` and `MagicBento` split into lazy chunks.
+- [x] Removed explicit `cache: "no-store"` from the Redis REST fetch so pages can stay static/ISR.
+- [x] `robots.txt` disallows AhrefsBot / SemrushBot / MJ12bot; also Amzn-SearchBot and meta-externalagent.
+- [x] Production build (owner-run) confirms `○ /`, `/blog`, `/events`, `/login`, `/profile` and `● /blog/category/[category]`, `/events/status/[status]`, `/category/[category]/[city]`.
+- [x] CDN cache headers extended to auth pages (`/login`, `/register`, `/reset-password`, `/profile`, `/switch-account`), sitemaps, robots, manifest.
+- [x] `/og` cache headers (1y immutable) + input caps + image-host allowlist + no self-fetch logo (fixes SSRF/error-rate risk).
+- [x] `SessionProvider` no longer refetches on window focus; prefetch disabled on nav/home links to cut RSC function calls.
+- [x] Verified `npx tsc --noEmit`; dev smoke test passes for home, blog, events, category/city, artists, sitemap, login, robots.
+- [x] Confirmed `Netlify-CDN-Cache-Control` on `/login` and `/artists` locally.
+- [x] Dev page weight after image transforms: 55 → 53 requests, 2.10 MB → 1.21 MB wire, images 909 KB → 77 KB.
+
+- [ ] Cloudflare proxy/WAF/Bot Fight Mode + edge rate limits — needs DNS approval.
+- [ ] Turnstile/CAPTCHA on contact, inquiries, applications, register/login — needs site keys.
+- [ ] `/artists/page/[page]`, `/city/[city]/page/[page]`, `/category/[category]/page/[page]`, `/category/[category]/[city]/page/[page]` remain dynamic; page 1 is static.
+- [ ] Legacy `?page=` / `?category=` / `?status=` URLs render page 1 (no redirect), same tradeoff as city/category.
+- [ ] Cloudflare Transform Rule to strip `utm_*` / `fbclid` / `gclid` — query strings fragment the CDN cache.
+- [ ] Netlify usage alerts (function invocations, bandwidth) not configured.
+- [x] `/og` 500s fixed (Satori `inline-block` -> `flex`); local default and artist images return 200 PNG.
+- [ ] Verify `/og` on the deployed site after the rebuild.
+
+### Final steps (owner, in order)
+
+1. Rebuild + deploy the second round (`npm run build`). The previous build predates the OG, auth-page cache, prefetch and session edits.
+2. Smoke-test the deploy: `/`, `/blog`, `/events`, `/category/singer/mumbai`, `/login`, `/sitemap.xml`, `/robots.txt`, and `/og?title=Test`.
+3. Enable Netlify usage alerts for function invocations and bandwidth; wait 24 h and compare against the reference numbers above.
+4. Cloudflare (needs DNS approval): follow `docs/CLOUDFLARE_TURNSTILE_SETUP.md`. Free plan supports 5 custom WAF rules (one UA-block rule), 10 cache rules, and **one** rate limiting rule limited to 10 s windows / 10 s block / IP counting / Block action. Keep `/api/ticketing/webhook/razorpay` excluded.
+5. Turnstile: create site + secret keys (free; no DNS change required), then wire verification into contact, inquiry, application, register and login forms as described in the same doc.
+6. Only if telemetry still shows meaningful paginated-route cost, add `generateStaticParams` for the top pagination routes.
 
 ## Do not
 

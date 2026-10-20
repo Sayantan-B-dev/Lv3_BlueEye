@@ -5,7 +5,7 @@ import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { z } from "zod";
-import { clientIp, rateLimit } from "@/lib/utils/rateLimit";
+import { clientIp, rateLimitLocal } from "@/lib/utils/rateLimit";
 import { boundedText, parsePositiveInt } from "@/lib/utils/requestValidation";
 
 const createArtistSchema = z.object({
@@ -33,7 +33,7 @@ const createArtistSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const limitResult = await rateLimit(`artists:${clientIp(request)}`, 60, 60, "fail-open");
+    const limitResult = rateLimitLocal(`artists:${clientIp(request)}`, 60, 60);
     if (!limitResult.allowed) {
       return NextResponse.json(
         { success: false, message: "Too many requests. Please slow down." },

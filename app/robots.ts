@@ -44,6 +44,14 @@ export default function robots(): MetadataRoute.Robots {
         disallow: "/",
       },
       {
+        userAgent: "Amzn-SearchBot",
+        disallow: "/",
+      },
+      {
+        userAgent: "meta-externalagent",
+        disallow: "/",
+      },
+      {
         userAgent: "PerplexityBot",
         disallow: "/",
       },
@@ -57,6 +65,19 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: "DotBot",
+        disallow: "/",
+      },
+      // High-volume SEO scrapers observed in production telemetry.
+      {
+        userAgent: "AhrefsBot",
+        disallow: "/",
+      },
+      {
+        userAgent: "SemrushBot",
+        disallow: "/",
+      },
+      {
+        userAgent: "MJ12bot",
         disallow: "/",
       },
     ],
