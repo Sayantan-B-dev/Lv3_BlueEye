@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "optimize-images": "node scripts/optimize-images.mjs",
-    "optimize-favicons": "node scripts/optimize-favicons.mjs"
+    "optimize-favicons": "node scripts/optimize-favicons.mjs",
+    "audit:cloudflare": "node scripts/audit-cloudflare.mjs",
+    "test": "npm run test:cache",
+    "test:cache": "node --experimental-strip-types --test scripts/test-cache-policy.mjs",
+    "test:redis": "node scripts/test-redis.mjs"
   },
   "dependencies": {
     "@imagekit/javascript": "^5.3.0",
