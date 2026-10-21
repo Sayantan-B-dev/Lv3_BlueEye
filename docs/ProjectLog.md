@@ -40,6 +40,7 @@ Phase 5 — Final Polish + Security Hardening
 - Cleaned up legacy/unused directories (`src/`, `scratch/`) and files (`proxy.ts`, `migrate_project.py`, `image_upload_exaple.py`).
 - Regenerated the updated `folder_tree.txt` to match the clean codebase.
 - Fixed `/contact` booking page spacing so the form clears the fixed Navbar on mobile.
+- Added the Cloudflare cache/503 investigation branch: public HTML cache policy, private auth-page no-store headers, Mongo timeout/retry hardening, Cloudflare-aware client IPs, `/og` noindex/cache headers, and bounded cache/Redis audit scripts. Report: `docs/CLOUDFLARE_CACHE_503_AUDIT.md`. No production deploy or edge rule was applied.
 
 ## Important Decisions
 

@@ -1,9 +1,10 @@
 # TODO — BlueEye abuse / cost containment
 
 **Updated:** 2026-10-21
-**Branch:** currently `main` (no implementation branch created yet)
-**Build:** owner-run on 2026-10-21: passed (5,479 static pages). A second round of edits (OG cache/hardening, auth-page CDN headers, prefetch/session changes) was made after that build and still needs an owner rebuild.
-**Production changes deployed:** none
+**Branch:** `investigate/cloudflare-cache-503` (created from `b389c7b`)
+**Build:** owner-run after the Cloudflare/cache/503 changes on 2026-10-21: **passed**. The investigation branch has **not** been deployed.
+**Production changes deployed:** none for the investigation branch; `b389c7b` was pushed upstream but fork/deploy sync is unverified.
+**Audit:** see `docs/CLOUDFLARE_CACHE_503_AUDIT.md`. Baseline: 8.35% Cloudflare cache hit rate, ~37.02K Dynamic requests, 602 HTTP 503s, zero edge rate-limit actions.
 
 Reference telemetry (Netlify, two periods): **92,686 requests · 428.9 MB · RSC 79.1K requests / 208 MB / 47.7K function invocations**; latest 24 h: **88,513 requests · ~0.87% errors**. Top offenders: `/login` 6.3K, `/privacy-policy` 5.1K, `/contact` 5K, `/book-artist` 5K, `/about` 4.8K, `/for-artists` 4.7K, `/` 4.1K, `/sitemap.xml` 1.1K / 73.84 MB, `/og` 423 (24.6% errors).
 
@@ -172,7 +173,8 @@ Root cause: pages destructured `searchParams`, forcing dynamic rendering despite
 - [x] Removed explicit `cache: "no-store"` from the Redis REST fetch so pages can stay static/ISR.
 - [x] `robots.txt` disallows AhrefsBot / SemrushBot / MJ12bot; also Amzn-SearchBot and meta-externalagent.
 - [x] Production build (owner-run) confirms `○ /`, `/blog`, `/events`, `/login`, `/profile` and `● /blog/category/[category]`, `/events/status/[status]`, `/category/[category]/[city]`.
-- [x] CDN cache headers extended to auth pages (`/login`, `/register`, `/reset-password`, `/profile`, `/switch-account`), sitemaps, robots, manifest.
+- [x] CDN cache headers extended to sitemaps, robots, manifest.
+- [x] Auth-page shared caching removed after the Cloudflare audit: `/login`, `/register`, `/reset-password`, `/profile`, `/switch-account`, `/search`, admin and ticket routes now send `private, no-store` on the investigation branch.
 - [x] `/og` cache headers (1y immutable) + input caps + image-host allowlist + no self-fetch logo (fixes SSRF/error-rate risk).
 - [x] `SessionProvider` no longer refetches on window focus; prefetch disabled on nav/home links to cut RSC function calls.
 - [x] Verified `npx tsc --noEmit`; dev smoke test passes for home, blog, events, category/city, artists, sitemap, login, robots.
@@ -204,3 +206,24 @@ Root cause: pages destructured `searchParams`, forcing dynamic rendering despite
 - Do not cache authenticated or personalized responses publicly.
 - Do not add a paid service beyond what is already in use without approval.
 - Do not treat a passing build as proof of traffic reduction.
+
+## Investigation — Cloudflare origin traffic, cache misses, 503s (2026-10-21)
+
+Branch: `investigate/cloudflare-cache-503` (from `b389c7b`). Report: `docs/CLOUDFLARE_CACHE_503_AUDIT.md`.
+
+- [x] Baseline captured: 8.35% Cloudflare cache hit rate, ~37.02K Dynamic requests, 602 503s, 10 500s, zero edge rate-limit actions.
+- [x] Confirmed Cloudflare does not cache extensionless HTML; Netlify CDN caches it but Cloudflare still reports `DYNAMIC`.
+- [x] Confirmed RSC variant returns `text/x-component` on the same URL; cache rules must bypass RSC/prefetch.
+- [x] Removed auth pages from shared caching; they now send `private, no-store`.
+- [x] Added shared `s-maxage`/`stale-while-revalidate` headers for public HTML and sitemaps.
+- [x] Added `netlify.toml` image/font cache headers for `public/` assets.
+- [x] Hardened Mongo connection with 5 s selection/connect timeouts and rejected-promise reset.
+- [x] Changed `clientIp()` to prefer `cf-connecting-ip` behind Cloudflare.
+- [x] Added `/og` `s-maxage`, `CDN-Cache-Control`, and `X-Robots-Tag: noindex` (kept crawlable for social previews).
+- [x] Added `npm test`, `npm run test:redis`, and `npm run audit:cloudflare`; all local checks pass.
+- [x] Wrote manual Cloudflare Cache/WAF/rate-limit rules and rollback steps.
+- [x] Owner production build passed after the investigation changes.
+- [ ] Deploy the branch and verify Netlify/Cloudflare behavior; no deploy made yet.
+- [ ] Apply Cloudflare rules manually; no DNS/env changes made by the agent.
+- [ ] Correlate 602 503s with Netlify function logs / Cloudflare request logs.
+- [ ] Re-run the audit after deploy and compare against the 8.35% baseline.
