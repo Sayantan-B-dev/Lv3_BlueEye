@@ -1,33 +1,13 @@
 import type { NextConfig } from "next";
-
-const PUBLIC_PAGE_CACHE_SOURCES = [
-  "/",
-  "/about",
-  "/contact",
-  "/for-artists",
-  "/privacy-policy",
-  "/terms",
-  "/book-artist",
-  "/categories",
-  "/login",
-  "/register",
-  "/reset-password",
-  "/profile",
-  "/switch-account",
-  "/artists",
-  "/artists/:path*",
-  "/city/:path*",
-  "/category/:path*",
-  "/blog",
-  "/blog/:path*",
-  "/events",
-  "/events/:path*",
-  "/robots.txt",
-  "/site.webmanifest",
-  "/sitemap.xml",
-  "/images-sitemap.xml",
-  "/sitemaps/:path*",
-];
+import {
+  PRIVATE_CACHE_CONTROL,
+  PRIVATE_HTML_SOURCES,
+  SHARED_HTML_CACHE_CONTROL,
+  SHARED_HTML_NETLIFY_CACHE_CONTROL,
+  SHARED_HTML_SOURCES,
+  SHARED_NON_HTML_SOURCES,
+  SHARED_STATIC_CACHE_CONTROL,
+} from "./lib/cache/publicRoutes";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.2"],
@@ -92,15 +72,39 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
-      // Cache anonymous public pages at the Netlify CDN so repeat traffic never
-      // reaches a function. Auth/admin/search routes are intentionally excluded.
-      ...PUBLIC_PAGE_CACHE_SOURCES.map((source) => ({
+      // Advertise shared caching to both Netlify and Cloudflare. Cloudflare
+      // still needs a Cache Rule for extensionless HTML; RSC/prefetch requests
+      // must bypass that rule so they never share an HTML cache entry.
+      ...SHARED_HTML_SOURCES.map((source) => ({
         source,
         headers: [
+          { key: "Cache-Control", value: SHARED_HTML_CACHE_CONTROL },
           {
             key: "Netlify-CDN-Cache-Control",
-            value: "public, s-maxage=3600, stale-while-revalidate=86400",
+            value: SHARED_HTML_NETLIFY_CACHE_CONTROL,
           },
+          { key: "CDN-Cache-Control", value: SHARED_HTML_NETLIFY_CACHE_CONTROL },
+        ],
+      })),
+      ...SHARED_NON_HTML_SOURCES.map((source) => ({
+        source,
+        headers: [
+          { key: "Cache-Control", value: SHARED_STATIC_CACHE_CONTROL },
+          {
+            key: "Netlify-CDN-Cache-Control",
+            value: SHARED_HTML_NETLIFY_CACHE_CONTROL,
+          },
+          { key: "CDN-Cache-Control", value: SHARED_HTML_NETLIFY_CACHE_CONTROL },
+        ],
+      })),
+      // Auth, admin, search and ticket pages must never be shared-cached.
+      ...PRIVATE_HTML_SOURCES.map((source) => ({
+        source,
+        headers: [
+          { key: "Cache-Control", value: PRIVATE_CACHE_CONTROL },
+          { key: "Netlify-CDN-Cache-Control", value: "no-store" },
+          { key: "CDN-Cache-Control", value: "no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       })),
     ];
