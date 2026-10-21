@@ -3,8 +3,10 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 
 const CACHE_HEADERS = {
-  "Cache-Control": "public, max-age=31536000, immutable",
+  "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
   "Netlify-CDN-Cache-Control": "public, s-maxage=31536000, immutable",
+  "CDN-Cache-Control": "public, s-maxage=31536000, immutable",
+  "X-Robots-Tag": "noindex, nofollow",
 };
 
 const IMAGE_HOSTS = new Set(["ik.imagekit.io", "i0.wp.com", "images.unsplash.com"]);
@@ -274,8 +276,10 @@ export async function GET(request: Request) {
         width: 1200,
         height: 630,
         headers: {
-          "Cache-Control": "public, max-age=300",
+          "Cache-Control": "public, max-age=300, s-maxage=300",
           "Netlify-CDN-Cache-Control": "public, s-maxage=300",
+          "CDN-Cache-Control": "public, s-maxage=300",
+          "X-Robots-Tag": "noindex, nofollow",
         },
       }
     );
