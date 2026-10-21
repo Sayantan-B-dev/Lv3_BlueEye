@@ -106,10 +106,14 @@ export function rateLimitLocal(
 }
 
 /**
- * Netlify provides x-nf-client-connection-ip from its edge and overwrites
- * client-supplied values. Only fall back to forwarded headers when absent.
+ * Behind Cloudflare, Netlify sees the Cloudflare edge as the connection peer.
+ * Prefer Cloudflare's client IP so shared limits do not bucket every visitor
+ * behind the same edge address. Netlify headers remain the fallback.
  */
 export function clientIp(request: Request): string {
+  const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflareIp) return cloudflareIp;
+
   const netlifyIp = request.headers.get("x-nf-client-connection-ip")?.trim();
   if (netlifyIp) return netlifyIp;
 

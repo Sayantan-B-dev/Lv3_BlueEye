@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __mongoose:
     | {
       conn: typeof mongoose | null;
@@ -35,12 +34,19 @@ export async function connectToDatabase() {
       1,
       parseInt(process.env.MONGODB_MAX_POOL_SIZE || "10", 10) || 10
     );
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, {
-      dbName: process.env.MONGODB_DB_NAME || "BlueEyeEntertainment",
-      maxPoolSize,
-      minPoolSize: 0,
-      maxIdleTimeMS: 30000,
-    });
+    cached.promise = mongoose
+      .connect(process.env.MONGODB_URI, {
+        dbName: process.env.MONGODB_DB_NAME || "BlueEyeEntertainment",
+        maxPoolSize,
+        minPoolSize: 0,
+        maxIdleTimeMS: 30000,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
+      })
+      .catch((error) => {
+        cached.promise = null;
+        throw error;
+      });
   }
 
   cached.conn = await cached.promise;
