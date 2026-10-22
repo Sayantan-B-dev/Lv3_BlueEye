@@ -7,6 +7,7 @@ MVP is functionally complete pending final polish and deployment (Phase 5).
 
 ## Latest Major Changes
 
+- SEO/bot/sitemap hardening on branch `perf/seo-bot-sitemap-hardening`: sitemap now lists all 10,588 eligible artists across 11 shards with stable `_id` ordering, `robots.ts` uses a tested allow/block policy, legacy query URLs 301 to static routes, out-of-range shards return 404, and Artist city/search/date indexes were added. `tsc`, 30 tests, targeted ESLint, and dev smoke pass. No production build or Cloudflare change was made.
 - Cost/abuse hardening on branch `perf/netlify-function-reduction`: favorites requests are now gated on authenticated sessions, homepage session/favorites fetching is de-duplicated, personalized `/api/users/*` and `/api/reviews/mine` responses send private no-store headers, `/book-artist` and `/privacy-policy` are server components with metadata, and `robots.ts` no longer advertises `/_next/image`. No production deploy, DNS, or Cloudflare rule was applied.
 - Added Gmail SMTP fallback for user OTP emails (verification + password reset): sends directly to the real user inbox, bypassing the Resend sandbox `EMAIL_TO` redirect. TODO: fill real `SMTP_USER` + `SMTP_APP_PASSWORD` in `.env.local`.
 - Added tilted `Recommended` badge on Google buttons (login + register views).
