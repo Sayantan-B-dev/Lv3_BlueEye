@@ -6,9 +6,14 @@ import {
   countArtistsForSitemap,
   getArtistsForSitemapRange,
 } from "@/lib/services/artistService";
+import {
+  MAX_ARTIST_URLS,
+  SITEMAP_SHARD_SIZE,
+  getArtistShardBounds,
+  getArtistShardCount,
+} from "@/lib/seo/sitemapMath";
 
-export const SITEMAP_SHARD_SIZE = 1000;
-export const MAX_ARTIST_URLS = 5000;
+export { MAX_ARTIST_URLS, SITEMAP_SHARD_SIZE };
 
 type Entry = MetadataRoute.Sitemap[number];
 
@@ -33,12 +38,12 @@ function entry(
 export async function getSitemapShardIds(): Promise<string[]> {
   let artistCount = 0;
   try {
-    artistCount = await countArtistsForSitemap(MAX_ARTIST_URLS);
+    artistCount = await countArtistsForSitemap();
   } catch {
     artistCount = 0;
   }
 
-  const artistShards = Math.max(1, Math.ceil(artistCount / SITEMAP_SHARD_SIZE));
+  const artistShards = getArtistShardCount(artistCount);
   return ["pages", ...Array.from({ length: artistShards }, (_, i) => `artists-${i + 1}`)];
 }
 
@@ -133,14 +138,11 @@ async function getPagesShard(): Promise<Entry[]> {
 }
 
 async function getArtistShard(shardNumber: number): Promise<Entry[]> {
-  const skip = (shardNumber - 1) * SITEMAP_SHARD_SIZE;
-  if (skip >= MAX_ARTIST_URLS) return [];
+  const bounds = getArtistShardBounds(shardNumber);
+  if (!bounds) return [];
 
   try {
-    const artists = await getArtistsForSitemapRange(
-      skip,
-      Math.min(SITEMAP_SHARD_SIZE, MAX_ARTIST_URLS - skip)
-    );
+    const artists = await getArtistsForSitemapRange(bounds.skip, bounds.limit);
     return artists.map((artist) =>
       entry(`/artists/${artist.slug}`, {
         priority: 0.8,

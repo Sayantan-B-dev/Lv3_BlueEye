@@ -17,8 +17,15 @@ import AdminEditArtistButton from "@/components/ui/AdminEditArtistButton";
 
 export const revalidate = 3600;
 
+/**
+ * Keep build-time pre-rendering bounded independently of the sitemap. The full
+ * catalog is listed in the sitemap; remaining profiles render on demand and are
+ * cached by ISR.
+ */
+const ARTIST_STATIC_PARAM_LIMIT = 5000;
+
 export async function generateStaticParams() {
-  const artists = await getArtistsForSitemap();
+  const artists = await getArtistsForSitemap(ARTIST_STATIC_PARAM_LIMIT);
   return artists.map((a) => ({ slug: a.slug }));
 }
 
