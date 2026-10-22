@@ -60,6 +60,11 @@ export async function GET(
     return new Response("Not Found", { status: 404 });
   }
 
+  const shardIds = await getSitemapShardIds();
+  if (!shardIds.includes(shardId)) {
+    return new Response("Not Found", { status: 404 });
+  }
+
   const entries = await getSitemapShard(shardId);
   return new Response(toXml(entries), { headers: CACHE_HEADERS });
 }

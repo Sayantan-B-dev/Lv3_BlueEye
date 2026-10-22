@@ -16,7 +16,7 @@ const SORT_MAP: Record<string, Record<string, 1 | -1>> = {
 export async function getArtists(params: { category?: string; city?: string; page?: number; limit?: number; featured?: boolean; q?: string; missing?: string; sort?: string }) {
   await connectToDatabase();
   
-  const conditions: any[] = [];
+  const conditions: Record<string, unknown>[] = [];
   
   if (params.q) {
     conditions.push({ $text: { $search: params.q } });
@@ -152,18 +152,22 @@ export async function getArtistsForSitemap(max = 5000) {
   return JSON.parse(JSON.stringify(artists)) as { slug: string; updatedAt?: string }[];
 }
 
-/** Number of artist URLs eligible for the sitemap (capped). */
-export async function countArtistsForSitemap(max = 5000) {
+/** Number of artist URLs eligible for the sitemap. */
+export async function countArtistsForSitemap() {
   await connectToDatabase();
-  const count = await Artist.countDocuments({ slug: { $exists: true, $ne: "" } });
-  return Math.min(count, max);
+  return Artist.countDocuments({ slug: { $exists: true, $ne: "" } });
 }
 
-/** Paginated slice for sitemap shards. */
+/**
+ * Paginated slice for sitemap shards.
+ * `_id` keeps shard boundaries stable across independent ISR revalidations;
+ * sorting by `updatedAt` could move an artist between shards and duplicate or
+ * skip URLs while the shards refresh at different times.
+ */
 export async function getArtistsForSitemapRange(skip: number, limit: number) {
   await connectToDatabase();
   const artists = await Artist.find({ slug: { $exists: true, $ne: "" } }, { slug: 1, updatedAt: 1 })
-    .sort({ updatedAt: -1 })
+    .sort({ _id: 1 })
     .skip(skip)
     .limit(limit)
     .lean();
@@ -182,23 +186,25 @@ export async function getArtistById(id: string) {
   return artist ? JSON.parse(JSON.stringify(artist)) : null;
 }
 
-export async function createArtist(data: any) {
+export async function createArtist(data: Record<string, unknown>) {
   await connectToDatabase();
-  if (!data.slug) {
-    data.slug = slugify(data.name);
+  const payload = { ...data };
+  if (!payload.slug && typeof payload.name === "string") {
+    payload.slug = slugify(payload.name);
   }
-  return Artist.create(data);
+  return Artist.create(payload);
 }
 
-export async function updateArtist(id: string, data: any) {
+export async function updateArtist(id: string, data: Record<string, unknown>) {
   await connectToDatabase();
-  if (data.name && !data.slug) {
-    data.slug = slugify(data.name);
+  const payload = { ...data };
+  if (typeof payload.name === "string" && !payload.slug) {
+    payload.slug = slugify(payload.name);
   }
   const artist = await Artist.findById(id);
   if (!artist) throw new Error("Artist not found");
 
-  Object.assign(artist, data);
+  Object.assign(artist, payload);
   await artist.save(); // triggers pre-save hook
   return artist;
 }

@@ -12,6 +12,7 @@
  *                failure the route returns 503 instead of accepting writes.
  */
 import { isRedisConfigured, redisIncr } from "@/lib/db/redis";
+import { clientIpFromHeaders, localRateLimit } from "./rateLimitCore";
 
 export type RateLimitPolicy = "fail-open" | "fail-closed";
 
@@ -24,34 +25,6 @@ export type RateLimitResult = {
   /** True when a fail-closed route must refuse the request (503). */
   unavailable: boolean;
 };
-
-type Bucket = { count: number; resetAt: number };
-
-const buckets = new Map<string, Bucket>();
-const MAX_LOCAL_KEYS = 10_000;
-
-function localRateLimit(
-  key: string,
-  limit: number,
-  windowMs: number
-): { allowed: boolean; remaining: number; retryAfter: number } {
-  const now = Date.now();
-  if (buckets.size > MAX_LOCAL_KEYS) buckets.clear();
-
-  const existing = buckets.get(key);
-  if (!existing || now >= existing.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: limit - 1, retryAfter: Math.ceil(windowMs / 1000) };
-  }
-
-  existing.count += 1;
-  const retryAfter = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
-  return {
-    allowed: existing.count <= limit,
-    remaining: Math.max(0, limit - existing.count),
-    retryAfter,
-  };
-}
 
 export async function rateLimit(
   key: string,
@@ -111,15 +84,5 @@ export function rateLimitLocal(
  * behind the same edge address. Netlify headers remain the fallback.
  */
 export function clientIp(request: Request): string {
-  const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
-  if (cloudflareIp) return cloudflareIp;
-
-  const netlifyIp = request.headers.get("x-nf-client-connection-ip")?.trim();
-  if (netlifyIp) return netlifyIp;
-
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp) return realIp;
-
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || "unknown";
+  return clientIpFromHeaders(request.headers);
 }

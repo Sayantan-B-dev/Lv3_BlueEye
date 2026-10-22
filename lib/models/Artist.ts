@@ -53,6 +53,10 @@ const artistSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false });
 
 artistSchema.index({ name: "text", about: "text", category: "text" });
+artistSchema.index({ "location.city": 1 });
+artistSchema.index({ "search.city_lower": 1, "search.category_lower": 1 });
+artistSchema.index({ createdAt: -1 });
+artistSchema.index({ updatedAt: -1 });
 
 artistSchema.pre("save", function () {
   this.search = {

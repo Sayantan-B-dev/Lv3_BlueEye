@@ -1,89 +1,10 @@
 import { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/seo/metadata";
+import { buildRobotsRules } from "@/lib/seo/robotsPolicy";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: ["/"],
-        disallow: [
-          "/admin/",
-          "/api/",
-          "/login",
-          "/register",
-          "/profile",
-          "/reset-password",
-          "/switch-account",
-          "/my-ticket/",
-        ],
-      },
-      {
-        userAgent: "GPTBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "ClaudeBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "Claude-SearchBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "ChatGPT-User",
-        disallow: "/",
-      },
-      {
-        userAgent: "CCBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "Bytespider",
-        disallow: "/",
-      },
-      {
-        userAgent: "Amazonbot",
-        disallow: "/",
-      },
-      {
-        userAgent: "Amzn-SearchBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "meta-externalagent",
-        disallow: "/",
-      },
-      {
-        userAgent: "PerplexityBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "Applebot-Extended",
-        disallow: "/",
-      },
-      {
-        userAgent: "PetalBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "DotBot",
-        disallow: "/",
-      },
-      // High-volume SEO scrapers observed in production telemetry.
-      {
-        userAgent: "AhrefsBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "SemrushBot",
-        disallow: "/",
-      },
-      {
-        userAgent: "MJ12bot",
-        disallow: "/",
-      },
-    ],
+    rules: buildRobotsRules(),
     sitemap: [siteUrl("/sitemap.xml"), siteUrl("/images-sitemap.xml")],
   };
 }

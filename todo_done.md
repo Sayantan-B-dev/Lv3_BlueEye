@@ -1,8 +1,26 @@
 # DONE — BlueEye abuse / cost containment
 
-**Updated:** 2026-10-22
-**Source:** checked items moved from `todo.md`; implementation on `perf/netlify-function-reduction`.
+**Updated:** 2026-10-23
+**Source:** checked items moved from `todo.md`; implementation on `perf/netlify-function-reduction` and `perf/seo-bot-sitemap-hardening`.
 **Pending:** `todo.md` · **Manual/owner:** `todo_mannual.md`
+
+## 2026-10-23 implementation — `perf/seo-bot-sitemap-hardening`
+
+- [x] Database audit (read-only): 10,588 artists; all 10,588 have slug/name/category; 244 missing city, 1,000 missing image, 4 missing about; zero duplicate name groups; 12 categories, 584 cities, 253 category+city combinations with count ≥ 3.
+- [x] Confirmed existing indexes: `_id`, sparse unique `id`, unique `slug`, `name`, `category`, and text. Added `location.city`, `search.city_lower + search.category_lower`, `createdAt`, and `updatedAt` indexes.
+- [x] Sitemap includes all 10,588 eligible artists instead of stopping at 1,000/5,000; 1,000 URLs per shard and a 50,000-URL protocol safety cap.
+- [x] Artist shards sort by `_id` for stable pagination; duplicate `skip` call removed; sitemap count query is uncapped.
+- [x] `generateStaticParams` remains at 5,000 artists to avoid a build-time regression; sitemap and on-demand ISR cover the rest.
+- [x] `robots.ts` now uses pure `buildRobotsRules()`: public pages allowed for search/social, private routes disallowed, AI/SEO scrapers blocked, `/_next/image` not advertised.
+- [x] Avoided explicit Googlebot/Bingbot groups because specific groups override `*` and would drop private disallows.
+- [x] Legacy query URLs now 301 to static routes: `?page=`, `?category=`, `?city=` on `/artists`; `?page=` on `/blog`; `?status=` on `/events`; pagination on city/category/blog-category paths.
+- [x] Out-of-range sitemap shards now return 404 instead of an empty 200 sitemap.
+- [x] Extracted `localRateLimit()` and `clientIpFromHeaders()` into dependency-free `lib/utils/rateLimitCore.ts`.
+- [x] Added tests for robots policy, sitemap shard math, legacy redirects, local rate limits/client IP, and auth-before-data ordering in all seven private API routes.
+- [x] `npm test` passes 30/30; `npx tsc --noEmit` and targeted ESLint pass.
+- [x] Dev smoke: `/robots.txt` has the new policy; `/sitemap.xml` lists 11 artist shards; `artists-1.xml` has 1,000 URLs; `artists-11.xml` has 588; `artists-12.xml` returns 404; all legacy sample redirects return 301 to canonical paths.
+- [x] Confirmed live Cloudflare still reports `DYNAMIC` for `/`, `/artists`, and `/sitemap.xml`; edge cache rules are required.
+- [x] Confirmed production robots is stale until deploy; no production build, deploy, DNS, or Cloudflare change was made.
 
 ## 2026-10-22 audit findings
 
@@ -76,9 +94,9 @@
 - [x] `lib/seo/slugs.ts` — `cityPagePath`, `categoryPagePath`, `artistPagePath`.
 - [x] `blog` and `events` no longer read `searchParams`; category/status filters use static routes.
 - [x] Sitemap index added at `app/sitemap.xml/route.ts`.
-- [x] Sitemap shards added at `app/sitemaps/[id]/route.ts` (`pages`, `artists-1…artists-5`), 1,000 URLs per artist shard, ISR 24 hours.
+- [x] Sitemap shards added at `app/sitemaps/[id]/route.ts` (initially `pages` + `artists-1…artists-5`, later 11 artist shards on 2026-10-23), 1,000 URLs per artist shard, ISR 24 hours.
 - [x] Sitemap index and shards set `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`.
-- [x] `lib/seo/sitemapData.ts` centralizes entries, de-duplicates URLs, and caps at 5,000 artist URLs.
+- [x] `lib/seo/sitemapData.ts` centralizes entries and de-duplicates URLs. The original 5,000 artist cap was removed on 2026-10-23.
 - [x] Invalid sitemap `lastModified` values are omitted.
 - [x] `lib/services/artistService.ts` — added `countArtistsForSitemap` and `getArtistsForSitemapRange`.
 - [x] `app/images-sitemap.xml/route.ts` — `force-static`, ISR 24 hours, CDN cache header.
