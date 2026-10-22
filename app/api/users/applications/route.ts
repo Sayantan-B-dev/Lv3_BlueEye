@@ -1,21 +1,21 @@
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { connectToDatabase } from "@/lib/db/connect";
 import ArtistApplicant from "@/lib/models/ArtistApplicant";
 import User from "@/lib/models/User";
-import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { getErrorMessage, privateApiSuccess, privateApiError } from "@/lib/utils/apiResponse";
 import mongoose from "mongoose";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return apiError("Unauthorized", 401);
+    const sessionUser = session?.user;
+    if (!sessionUser?.email) return privateApiError("Unauthorized", 401);
 
     await connectToDatabase();
 
-    const sessionEmail = session.user.email.toLowerCase();
-    const sessionUserId = (session.user as any).id;
+    const sessionEmail = sessionUser.email.toLowerCase();
+    const sessionUserId = sessionUser.id;
 
     // Resolve the real DB user ID
     let dbUserId: string | null = null;
@@ -52,8 +52,8 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .lean();
 
-    return apiSuccess(applications);
-  } catch (error: any) {
-    return apiError(error.message || "Failed to fetch applications", 500);
+    return privateApiSuccess(applications);
+  } catch (error) {
+    return privateApiError(getErrorMessage(error, "Failed to fetch applications"), 500);
   }
 }

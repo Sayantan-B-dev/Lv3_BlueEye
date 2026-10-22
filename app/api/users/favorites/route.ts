@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/lib/models/User";
-import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { getErrorMessage, privateApiSuccess, privateApiError } from "@/lib/utils/apiResponse";
 import { getCache, setCache, invalidateCache } from "@/lib/db/redis";
 import {
   cacheConfig,
@@ -14,15 +13,15 @@ import {
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return apiError("Unauthorized", 401);
+    const userId = session?.user?.id;
+    if (!userId) return privateApiError("Unauthorized", 401);
 
-    const userId = (session.user as any).id;
     const cacheKey = userFavoritesCacheKey(userId);
 
     // 1. Try to fetch from Redis
-    const cachedFavs = await getCache<any[]>(cacheKey);
+    const cachedFavs = await getCache<unknown>(cacheKey);
     if (cachedFavs) {
-      return apiSuccess(cachedFavs);
+      return privateApiSuccess(cachedFavs);
     }
 
     // 2. Pull from MongoDB
@@ -33,26 +32,26 @@ export async function GET() {
     // 3. Cache inside Redis for 30 minutes (1800 seconds)
     await setCache(cacheKey, favorites, cacheConfig.user.favoritesTtlSeconds);
     
-    return apiSuccess(favorites);
-  } catch (error: any) {
-    return apiError(error.message || "Failed to fetch favorites", 500);
+    return privateApiSuccess(favorites);
+  } catch (error) {
+    return privateApiError(getErrorMessage(error, "Failed to fetch favorites"), 500);
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return apiError("Unauthorized", 401);
+    const userId = session?.user?.id;
+    if (!userId) return privateApiError("Unauthorized", 401);
 
     const { artistId } = await request.json();
-    const userId = (session.user as any).id;
     const cacheKey = userFavoritesCacheKey(userId);
     const cacheIdsKey = userFavoritesIdsCacheKey(userId);
 
     await connectToDatabase();
 
     const user = await User.findById(userId);
-    if (!user) return apiError("User not found", 404);
+    if (!user) return privateApiError("User not found", 404);
 
     const index = user.favorites.indexOf(artistId);
     if (index > -1) {
@@ -67,8 +66,8 @@ export async function POST(request: Request) {
     await invalidateCache(cacheKey);
     await invalidateCache(cacheIdsKey);
 
-    return apiSuccess(user.favorites, "Favorites updated");
-  } catch (error: any) {
-    return apiError(error.message || "Failed to update favorites", 500);
+    return privateApiSuccess(user.favorites, "Favorites updated");
+  } catch (error) {
+    return privateApiError(getErrorMessage(error, "Failed to update favorites"), 500);
   }
 }

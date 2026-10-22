@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/lib/models/User";
-import { apiSuccess, apiError } from "@/lib/utils/apiResponse";
+import { getErrorMessage, privateApiSuccess, privateApiError } from "@/lib/utils/apiResponse";
 import { invalidateCache } from "@/lib/db/redis";
 import {
   userFavoritesCacheKey,
@@ -15,44 +14,50 @@ import mongoose from "mongoose";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) return apiError("Unauthorized", 401);
+    const sessionUser = session?.user;
+    if (!sessionUser) return privateApiError("Unauthorized", 401);
 
-    const userId = (session.user as any).id;
+    const userId = sessionUser.id;
     await connectToDatabase();
 
     let user = null;
     if (userId && mongoose.Types.ObjectId.isValid(userId)) {
       user = await User.findById(userId).select("name username email role address contactDetails").lean();
     }
-    if (!user && session.user.email) {
-      user = await User.findOne({ email: session.user.email }).select("name username email role address contactDetails").lean();
+    if (!user && sessionUser.email) {
+      user = await User.findOne({ email: sessionUser.email }).select("name username email role address contactDetails").lean();
     }
 
     if (!user) {
       // If still not found in DB (e.g. predefined static admin without DB record yet),
       // return a default fallback record so the profile UI can load and write to it.
-      return apiSuccess({
-        name: session.user.name || "Admin",
-        email: session.user.email,
-        role: (session.user as any).role || "admin",
-        username: (session.user as any).username || "admin",
+      return privateApiSuccess({
+        name: sessionUser.name || "Admin",
+        email: sessionUser.email,
+        role: sessionUser.role || "admin",
+        username: sessionUser.username || "admin",
         address: "",
         contactDetails: ""
       });
     }
 
-    return apiSuccess(user);
-  } catch (error: any) {
-    return apiError(error.message || "Failed to fetch profile", 500);
+    return privateApiSuccess(user);
+  } catch (error) {
+    return privateApiError(getErrorMessage(error, "Failed to fetch profile"), 500);
   }
 }
 
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) return apiError("Unauthorized", 401);
+    const sessionUser = session?.user;
+    if (!sessionUser) return privateApiError("Unauthorized", 401);
 
-    const userId = (session.user as any).id;
+    const userId = sessionUser.id;
+    const sessionRole =
+      sessionUser.role === "admin" || sessionUser.role === "staff" || sessionUser.role === "user"
+        ? sessionUser.role
+        : "admin";
     const { name, address, contactDetails } = await request.json();
 
     await connectToDatabase();
@@ -61,17 +66,17 @@ export async function PUT(request: Request) {
     if (userId && mongoose.Types.ObjectId.isValid(userId)) {
       user = await User.findById(userId);
     }
-    if (!user && session.user.email) {
-      user = await User.findOne({ email: session.user.email });
+    if (!user && sessionUser.email) {
+      user = await User.findOne({ email: sessionUser.email });
     }
 
     if (!user) {
       // Provision DB record for predefined admin / unprovisioned users on first save
       user = await User.create({
-        name: name || session.user.name || "Admin",
-        email: session.user.email || "",
-        role: (session.user as any).role || "admin",
-        username: (session.user as any).username || "admin",
+        name: name || sessionUser.name || "Admin",
+        email: sessionUser.email || "",
+        role: sessionRole,
+        username: sessionUser.username || "admin",
         address: address || "",
         contactDetails: contactDetails || "",
         isVerified: true
@@ -83,7 +88,7 @@ export async function PUT(request: Request) {
       await user.save();
     }
 
-    return apiSuccess({
+    return privateApiSuccess({
       name: user.name,
       username: user.username,
       email: user.email,
@@ -91,8 +96,8 @@ export async function PUT(request: Request) {
       address: user.address,
       contactDetails: user.contactDetails
     }, "Profile updated successfully");
-  } catch (error: any) {
-    return apiError(error.message || "Failed to update profile", 500);
+  } catch (error) {
+    return privateApiError(getErrorMessage(error, "Failed to update profile"), 500);
   }
 }
 
@@ -101,9 +106,10 @@ export async function PUT(request: Request) {
 export async function DELETE() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) return apiError("Unauthorized", 401);
+    const sessionUser = session?.user;
+    if (!sessionUser) return privateApiError("Unauthorized", 401);
 
-    const userId = (session.user as any).id;
+    const userId = sessionUser.id;
 
     await connectToDatabase();
 
@@ -111,19 +117,19 @@ export async function DELETE() {
     if (userId && mongoose.Types.ObjectId.isValid(userId)) {
       user = await User.findById(userId);
     }
-    if (!user && session.user.email) {
-      user = await User.findOne({ email: session.user.email });
+    if (!user && sessionUser.email) {
+      user = await User.findOne({ email: sessionUser.email });
     }
 
     if (!user) {
-      return apiError("User not found", 404);
+      return privateApiError("User not found", 404);
     }
 
     // Admin credentials come from environment variables, so removing their DB
     // record would just be undone on the next login. Admins are deleted from
     // the database directly instead.
     if (user.role === "admin") {
-      return apiError(
+      return privateApiError(
         "Admin accounts cannot be deleted from here. Please contact the platform owner.",
         403
       );
@@ -137,8 +143,8 @@ export async function DELETE() {
     await invalidateCache(userFavoritesIdsCacheKey(deletedId));
     await invalidateCache(userReviewCacheKey(deletedId));
 
-    return apiSuccess(null, "Your profile has been deleted");
-  } catch (error: any) {
-    return apiError(error.message || "Failed to delete profile", 500);
+    return privateApiSuccess(null, "Your profile has been deleted");
+  } catch (error) {
+    return privateApiError(getErrorMessage(error, "Failed to delete profile"), 500);
   }
 }
