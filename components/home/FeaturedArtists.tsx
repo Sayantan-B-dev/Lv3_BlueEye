@@ -8,7 +8,7 @@ const MagicBento = dynamic(() => import("@/components/react-bits/MagicBento"), {
   ssr: false,
 });
 
-export default function FeaturedArtists({ artists, favorites = [] }: { artists: any[], favorites?: string[] }) {
+export default function FeaturedArtists({ artists }: { artists: unknown[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

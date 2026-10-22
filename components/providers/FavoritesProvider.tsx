@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface FavoritesContextType {
   favorites: string[];
@@ -44,10 +45,22 @@ function writeCachedFavorites(favorites: string[]) {
 
 export default function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { status } = useSession();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status !== "authenticated") {
+      if (status === "unauthenticated") {
+        try {
+          sessionStorage.removeItem(STORAGE_KEY);
+        } catch {
+          // Storage is optional.
+        }
+      }
+      return;
+    }
+
     let cancelled = false;
 
     const load = async () => {
@@ -60,13 +73,16 @@ export default function FavoritesProvider({ children }: { children: React.ReactN
       }
 
       try {
-        // One request per tab session instead of one per page load.
+        // One request per authenticated tab session instead of one per page load.
         const res = await fetch("/api/users/favorites");
-        const list = res.ok
-          ? await res.json().then((data) =>
-              data.success && Array.isArray(data.data) ? (data.data as string[]) : []
-            )
-          : [];
+        if (cancelled) return;
+        if (!res.ok) {
+          setFavorites([]);
+          return;
+        }
+        const list = await res.json().then((data) =>
+          data.success && Array.isArray(data.data) ? (data.data as string[]) : []
+        );
         if (cancelled) return;
         setFavorites(list);
         writeCachedFavorites(list);
@@ -82,15 +98,19 @@ export default function FavoritesProvider({ children }: { children: React.ReactN
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [status]);
 
-  const isFavorite = (id: string) => favorites.includes(id);
+  const effectiveFavorites = status === "authenticated" ? favorites : [];
+  const effectiveLoading =
+    status === "loading" ? true : status === "unauthenticated" ? false : loading;
+
+  const isFavorite = (id: string) => effectiveFavorites.includes(id);
 
   const toggleFavorite = async (id: string) => {
     const wasFavorite = isFavorite(id);
     const optimistic = wasFavorite
-      ? favorites.filter((fav) => fav !== id)
-      : [...favorites, id];
+      ? effectiveFavorites.filter((fav) => fav !== id)
+      : [...effectiveFavorites, id];
 
     setFavorites(optimistic);
     writeCachedFavorites(optimistic);
@@ -122,7 +142,9 @@ export default function FavoritesProvider({ children }: { children: React.ReactN
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, isFavorite, toggleFavorite, loading }}>
+    <FavoritesContext.Provider
+      value={{ favorites: effectiveFavorites, isFavorite, toggleFavorite, loading: effectiveLoading }}
+    >
       {children}
     </FavoritesContext.Provider>
   );

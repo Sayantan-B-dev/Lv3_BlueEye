@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
 import HomeBackground from "./HomeBackground";
 import HeroSection from "./HeroSection";
 import CategoryGrid from "./CategoryGrid";
@@ -28,7 +27,6 @@ function progressFromReady(ready: Record<HomeSectionKey, boolean>) {
 }
 
 export default function HomeDynamicContent({ initialData: _initialData }: { initialData?: HomePageData | null }) {
-  const { data: session } = useSession();
   const initialData = _initialData ?? null;
   const hasServerData = !!initialData;
   const [data, setData] = useState<Partial<HomePageData>>(initialData ?? {});
@@ -39,7 +37,6 @@ export default function HomeDynamicContent({ initialData: _initialData }: { init
   );
   const [progress, setProgress] = useState(hasServerData ? 100 : 0);
   const [showProgress, setShowProgress] = useState(!hasServerData);
-  const [favorites, setFavorites] = useState<string[]>([]);
 
   const markReady = useCallback((key: HomeSectionKey) => {
     setReady((prev) => {
@@ -145,22 +142,6 @@ export default function HomeDynamicContent({ initialData: _initialData }: { init
     };
   }, [finishLoading, markReady, hasServerData]);
 
-  useEffect(() => {
-    if (!session) return;
-
-    async function loadFavorites() {
-      try {
-        const res = await fetch("/api/users/favorites").then((r) => r.json());
-        if (res.success && Array.isArray(res.data)) {
-          setFavorites(res.data.map((f: { _id?: string }) => f._id || f));
-        }
-      } catch (err) {
-        console.error("Failed to load favorites:", err);
-      }
-    }
-    loadFavorites();
-  }, [session]);
-
   const trailImages = useMemo(() => {
     if (!data.randomArtists) return [] as string[];
     return data.randomArtists
@@ -213,7 +194,7 @@ export default function HomeDynamicContent({ initialData: _initialData }: { init
 
       {ready.featured ? (
         <div className="home-section-enter">
-          <FeaturedArtists artists={displayArtists} favorites={favorites} />
+          <FeaturedArtists artists={displayArtists} />
         </div>
       ) : (
         <FeaturedSkeleton />
