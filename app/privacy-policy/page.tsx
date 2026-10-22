@@ -1,8 +1,15 @@
-"use client";
-
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import EmailForm from "@/components/forms/EmailForm";
+import { pageMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
+  description:
+    "How BlueEye Entertainment collects, uses, shares and protects your personal information when you browse artists, submit inquiries or book performers.",
+  path: "/privacy-policy",
+});
 
 const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "theblueeyeentertainment@gmail.com";
 const phone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 91379 52580";
