@@ -7,6 +7,7 @@ MVP is functionally complete pending final polish and deployment (Phase 5).
 
 ## Latest Major Changes
 
+- Cost/abuse hardening on branch `perf/netlify-function-reduction`: favorites requests are now gated on authenticated sessions, homepage session/favorites fetching is de-duplicated, personalized `/api/users/*` and `/api/reviews/mine` responses send private no-store headers, `/book-artist` and `/privacy-policy` are server components with metadata, and `robots.ts` no longer advertises `/_next/image`. No production deploy, DNS, or Cloudflare rule was applied.
 - Added Gmail SMTP fallback for user OTP emails (verification + password reset): sends directly to the real user inbox, bypassing the Resend sandbox `EMAIL_TO` redirect. TODO: fill real `SMTP_USER` + `SMTP_APP_PASSWORD` in `.env.local`.
 - Added tilted `Recommended` badge on Google buttons (login + register views).
 - Added optional `clientAddress` (300 chars) to booking inquiries: model, validation, form, admin + profile display, notification email.
@@ -41,6 +42,7 @@ Phase 5 — Final Polish + Security Hardening
 - Regenerated the updated `folder_tree.txt` to match the clean codebase.
 - Fixed `/contact` booking page spacing so the form clears the fixed Navbar on mobile.
 - Added the Cloudflare cache/503 investigation branch: public HTML cache policy, private auth-page no-store headers, Mongo timeout/retry hardening, Cloudflare-aware client IPs, `/og` noindex/cache headers, and bounded cache/Redis audit scripts. Report: `docs/CLOUDFLARE_CACHE_503_AUDIT.md`. No production deploy or edge rule was applied.
+- Cost-reduction branch `perf/netlify-function-reduction`: favorites fetch gated on auth, private no-store headers on personalized APIs, `/book-artist` and `/privacy-policy` converted to server components, `/_next/image` removed from robots allow, and touched API routes cleaned of lint errors. Owner build, `tsc`, tests, and targeted ESLint pass. Deploy and edge-rule verification remain pending.
 
 ## Important Decisions
 
