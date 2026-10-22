@@ -10,8 +10,13 @@
     "optimize-images": "node scripts/optimize-images.mjs",
     "optimize-favicons": "node scripts/optimize-favicons.mjs",
     "audit:cloudflare": "node scripts/audit-cloudflare.mjs",
-    "test": "npm run test:cache",
+    "test": "npm run test:cache && npm run test:robots && npm run test:sitemap && npm run test:legacy && npm run test:limits && npm run test:private-api",
     "test:cache": "node --experimental-strip-types --test scripts/test-cache-policy.mjs",
+    "test:robots": "node --experimental-strip-types --test scripts/test-robots.mjs",
+    "test:sitemap": "node --experimental-strip-types --test scripts/test-sitemap.mjs",
+    "test:legacy": "node --experimental-strip-types --test scripts/test-legacy-routes.mjs",
+    "test:limits": "node --experimental-strip-types --test scripts/test-limits.mjs",
+    "test:private-api": "node --experimental-strip-types --test scripts/test-private-api.mjs",
     "test:redis": "node scripts/test-redis.mjs"
   },
   "dependencies": {
