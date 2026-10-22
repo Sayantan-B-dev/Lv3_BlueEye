@@ -9,6 +9,8 @@ import {
 
 export const SITEMAP_SHARD_SIZE = 1000;
 export const MAX_ARTIST_URLS = 5000;
+// Avoid advertising thin category/city landing pages as SEO targets.
+export const MIN_CATEGORY_CITY_ARTISTS = 5;
 
 type Entry = MetadataRoute.Sitemap[number];
 
@@ -69,7 +71,7 @@ async function getPagesShard(): Promise<Entry[]> {
         getBlogPostsForSitemap().catch(() => [] as SitemapRow[]),
         getLatestCategoryUpdates().catch(() => [] as { category: string; updatedAt: Date }[]),
         getLatestCityUpdates().catch(() => [] as { city: string; updatedAt: Date }[]),
-        getCategoryCityCounts(3).catch(() => [] as { category: string; city: string; count: number }[]),
+        getCategoryCityCounts(MIN_CATEGORY_CITY_ARTISTS).catch(() => [] as { category: string; city: string; count: number }[]),
       ]);
 
     const categoryUpdateMap = new Map(
@@ -157,7 +159,7 @@ async function getArtistShard(shardNumber: number): Promise<Entry[]> {
 export async function getSitemapShard(id: string): Promise<Entry[]> {
   if (id === "pages") return getPagesShard();
 
-  const match = /^artists-(\d+)$/.exec(id);
+  const match = /^artists-(\\d+)$/.exec(id);
   if (!match) return [];
   return getArtistShard(Number.parseInt(match[1], 10));
 }
